@@ -1,0 +1,14 @@
+name: Smoke
+on:
+  push:
+    branches: ['**']
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Toolchain check
+        run: |
+          java -version
+          gradle --version || true
+          echo "$ANDROID_HOME"
+          ls "$ANDROID_HOME" || true
