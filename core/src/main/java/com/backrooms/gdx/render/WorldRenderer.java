@@ -173,6 +173,8 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         if (ready) {
             shader.end();
         }
+        // Leave the state the 2D pass expects: SpriteBatch binds its font and UI textures to unit 0.
+        Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
     }
 
     @Override

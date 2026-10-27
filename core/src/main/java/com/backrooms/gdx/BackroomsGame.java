@@ -28,7 +28,8 @@ public final class BackroomsGame extends Game {
         settings = new GameSettings();
         settings.load();
         assets = new Assets();
-        if (System.getProperty("backrooms.autostart") != null) {
+        if (System.getProperty("backrooms.autostart") != null
+                && System.getProperty("backrooms.title") == null) {
             startGame();
         } else {
             titleScreen = new TitleScreen(this);
