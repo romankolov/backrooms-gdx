@@ -86,7 +86,13 @@ public final class LightBaker {
         return i < 0 ? 0 : (i > 255 ? 255 : i);
     }
 
-    private static void bakeTexel(WorldGen gen, float wx, float wz, float[] up, float[] side, int index) {
+    private static void bakeTexel(WorldGen gen, float wx0, float wz0, float[] up, float[] side,
+                                  int index) {
+        // Floor, ceiling and wall corner vertices sit exactly on wall lines. Sampling there would
+        // read the inside of the wall and paint a black seam along every wall, so the probe is
+        // pushed out into the room first.
+        float wx = slideOutOfWallX(gen, wx0, wz0);
+        float wz = slideOutOfWallZ(gen, wx, wz0);
         int ci = Hash.floorInt(wx);
         int cj = Hash.floorInt(wz);
         float fy = gen.floorY(ci, cj);
@@ -157,6 +163,32 @@ public final class LightBaker {
         side[index] = 0.2126f * (sr * sideScale + ambient * 0.9f)
                 + 0.7152f * (sg * sideScale + ambient)
                 + 0.0722f * (sb * sideScale + ambient * 0.9f);
+    }
+
+    private static float slideOutOfWallX(WorldGen gen, float x, float z) {
+        int j = Hash.floorInt(z);
+        float th = WorldGen.WALL_HALF_THICKNESS + 0.12f;
+        for (int i = Hash.floorInt(x) - 1; i <= Hash.floorInt(x) + 1; i++) {
+            if (!gen.vWall(i, j)) continue;
+            if (Math.abs(x - i) < th) {
+                float toCentre = (i + 0.5f) - x;
+                return x + Math.signum(toCentre == 0f ? 1f : toCentre) * (th - Math.abs(x - i) + 0.01f);
+            }
+        }
+        return x;
+    }
+
+    private static float slideOutOfWallZ(WorldGen gen, float x, float z) {
+        int i = Hash.floorInt(x);
+        float th = WorldGen.WALL_HALF_THICKNESS + 0.12f;
+        for (int j = Hash.floorInt(z) - 1; j <= Hash.floorInt(z) + 1; j++) {
+            if (!gen.hWall(i, j)) continue;
+            if (Math.abs(z - j) < th) {
+                float toCentre = (j + 0.5f) - z;
+                return z + Math.signum(toCentre == 0f ? 1f : toCentre) * (th - Math.abs(z - j) + 0.01f);
+            }
+        }
+        return z;
     }
 
     private static final int AO_PROBES = 8;

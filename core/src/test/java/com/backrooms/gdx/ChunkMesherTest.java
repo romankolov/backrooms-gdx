@@ -76,15 +76,15 @@ public class ChunkMesherTest {
         ChunkBuild build = ChunkMesher.build(gen, data);
         assertEquals(LightBaker.TEXELS * LightBaker.TEXELS, build.lightmap.length);
 
-        boolean bright = false;
-        boolean dark = false;
+        int min = 255;
+        int max = 0;
         for (int texel : build.lightmap) {
             int r = (texel >>> 24) & 0xff;
-            if (r > 60) bright = true;
-            if (r < 20) dark = true;
+            min = Math.min(min, r);
+            max = Math.max(max, r);
         }
-        assertTrue("there should be lit areas", bright);
-        assertTrue("there should be shadowed areas", dark);
+        assertTrue("there should be lit areas, brightest texel was " + max, max > 150);
+        assertTrue("there should be shadowed areas, darkest texel was " + min, min < max - 50);
     }
 
     @Test
