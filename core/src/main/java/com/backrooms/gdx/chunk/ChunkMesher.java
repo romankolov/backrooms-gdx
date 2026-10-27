@@ -157,12 +157,14 @@ public final class ChunkMesher {
                 if (h <= 0f) {
                     continue;
                 }
+                // Both faces run all the way up to the taller of the two ceilings: stopping at
+                // the own ceiling would leave a sliver of void along the top of the wall.
                 mb.setLightmapOffset(-0.3f, 0f);
-                mb.rectGradient(x - th, loW, z, 0f, 0f, 1f, 0f, hiW - loW, 0f, -1f, 0f, 0f,
-                        MeshBuilder.MAT_WALL, loW, 1f / Math.max(0.01f, hiW - loW));
+                mb.rectGradient(x - th, loW, z, 0f, 0f, 1f, 0f, hi - loW, 0f, -1f, 0f, 0f,
+                        MeshBuilder.MAT_WALL, loW, 1f / Math.max(0.01f, hi - loW));
                 mb.setLightmapOffset(0.3f, 0f);
-                mb.rectGradient(x + th, loE, z, 0f, 0f, 1f, 0f, hiE - loE, 0f, 1f, 0f, 0f,
-                        MeshBuilder.MAT_WALL, loE, 1f / Math.max(0.01f, hiE - loE));
+                mb.rectGradient(x + th, loE, z, 0f, 0f, 1f, 0f, hi - loE, 0f, 1f, 0f, 0f,
+                        MeshBuilder.MAT_WALL, loE, 1f / Math.max(0.01f, hi - loE));
                 mb.setLightmapOffset(0f, 0f);
                 // End caps where the wall run stops.
                 if (!d.vWallAt(li, lj - 1)) {
@@ -194,11 +196,11 @@ public final class ChunkMesher {
                     continue;
                 }
                 mb.setLightmapOffset(0f, -0.3f);
-                mb.rectGradient(x, loN, z - th, 1f, 0f, 0f, 0f, hiN - loN, 0f, 0f, 0f, -1f,
-                        MeshBuilder.MAT_WALL, loN, 1f / Math.max(0.01f, hiN - loN));
+                mb.rectGradient(x, loN, z - th, 1f, 0f, 0f, 0f, hi - loN, 0f, 0f, 0f, -1f,
+                        MeshBuilder.MAT_WALL, loN, 1f / Math.max(0.01f, hi - loN));
                 mb.setLightmapOffset(0f, 0.3f);
-                mb.rectGradient(x, loS, z + th, 1f, 0f, 0f, 0f, hiS - loS, 0f, 0f, 0f, 1f,
-                        MeshBuilder.MAT_WALL, loS, 1f / Math.max(0.01f, hiS - loS));
+                mb.rectGradient(x, loS, z + th, 1f, 0f, 0f, 0f, hi - loS, 0f, 0f, 0f, 1f,
+                        MeshBuilder.MAT_WALL, loS, 1f / Math.max(0.01f, hi - loS));
                 mb.setLightmapOffset(0f, 0f);
                 if (!d.hWallAt(li - 1, lj)) {
                     mb.rect(x, lo, z - th, 0f, 0f, th * 2f, 0f, h, 0f, -1f, 0f, 0f,
