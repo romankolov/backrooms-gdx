@@ -50,8 +50,11 @@ jobs:
       - name: Check the APK can actually start
         shell: bash
         run: |
-          set -u
-          AAPT2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1)
+          exec > >(tee apk-check.log) 2>&1
+          echo "ANDROID_HOME=${ANDROID_HOME:-unset} ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          echo "build-tools present:"; ls "$SDK/build-tools" 2>&1 | head
+          AAPT2=$(find "$SDK" -type f -name aapt2 2>/dev/null | sort -V | tail -1)
           echo "using aapt2: ${AAPT2:-none}"
           status=0
           for f in $(find android/build/outputs/apk -name '*.apk'); do
@@ -59,29 +62,59 @@ jobs:
 
             # 1. Native libraries: without libgdx.so the app dies with UnsatisfiedLinkError.
             for abi in arm64-v8a armeabi-v7a x86_64; do
-              if ! unzip -l "$f" | grep -q "lib/$abi/libgdx.so"; then
+              if unzip -l "$f" | grep -q "lib/$abi/libgdx.so"; then
+                echo "ok: lib/$abi/libgdx.so"
+              else
                 echo "FATAL: $f is missing lib/$abi/libgdx.so"; status=1
               fi
             done
 
             # 2. The launcher activity must exist. A relative name in the manifest resolves
             #    against the namespace, so a class in a sub package has to be fully qualified.
-            if [ -n "${AAPT2:-}" ]; then
-              BADGING=$("$AAPT2" dump badging "$f" 2>&1)
-              echo "$BADGING" | grep -E "^(package|launchable-activity|native-code|sdkVersion)" || true
-              if ! echo "$BADGING" | grep -q "launchable-activity: name='com.backrooms.gdx.android.AndroidLauncher'"; then
+            if [ -n "$AAPT2" ]; then
+              "$AAPT2" dump badging "$f" > badging.txt 2>&1 || echo "(aapt2 failed)"
+              grep -E "^(package|launchable-activity|native-code|sdkVersion|targetSdkVersion)" badging.txt || true
+              if grep -q "launchable-activity: name='com.backrooms.gdx.android.AndroidLauncher'" badging.txt; then
+                echo "ok: launcher activity"
+              else
                 echo "FATAL: $f does not declare com.backrooms.gdx.android.AndroidLauncher"; status=1
               fi
             fi
 
             # 3. ...and the class must really be in the dex.
-            if ! unzip -p "$f" classes.dex | strings | grep -q "Lcom/backrooms/gdx/android/AndroidLauncher;"; then
+            if unzip -p "$f" classes.dex | strings | grep -q "Lcom/backrooms/gdx/android/AndroidLauncher;"; then
+              echo "ok: AndroidLauncher in classes.dex"
+            else
               echo "FATAL: AndroidLauncher is not in classes.dex"; status=1
             fi
-            echo "-- libs: $(unzip -l "$f" | grep -c 'lib/.*\.so')"
+            echo "-- shared libraries packaged: $(unzip -l "$f" | grep -c 'lib/.*\.so')"
           done
-          [ "$status" = "0" ] && echo "APK sanity checks passed"
+          if [ "$status" = "0" ]; then echo "APK sanity checks passed"; fi
           exit $status
+
+      - name: Publish APK check
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p docs/ci
+          {
+            echo "# APK sanity check"
+            echo
+            echo "Commit: ${GITHUB_SHA}"
+            echo
+            echo '```'
+            cat apk-check.log 2>/dev/null || echo "(no log)"
+            echo '```'
+          } > docs/ci/apk-check.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f docs/ci/apk-check.md
+          git diff --cached --quiet || git commit -m "chore: APK check log [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}" || true
+          gh issue comment 1 --body-file docs/ci/apk-check.md || true
 
       - name: Collect APKs
         if: success()
