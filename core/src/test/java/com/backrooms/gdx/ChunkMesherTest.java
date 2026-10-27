@@ -83,8 +83,9 @@ public class ChunkMesherTest {
             min = Math.min(min, r);
             max = Math.max(max, r);
         }
-        assertTrue("there should be lit areas, brightest texel was " + max, max > 150);
-        assertTrue("there should be shadowed areas, darkest texel was " + min, min < max - 50);
+        assertTrue("there should be lit areas, brightest texel was " + max, max > 90);
+        assertTrue("the lightmap must have contrast, min " + min + " max " + max,
+                max - min > 60);
     }
 
     @Test

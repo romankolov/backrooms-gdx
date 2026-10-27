@@ -30,6 +30,7 @@ uniform float u_exposure;
 uniform float u_normalStrength;
 uniform vec2 u_resolution;
 uniform float u_lightRange;
+uniform float u_debug;
 
 float hash12(vec2 p) {
     vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -125,6 +126,15 @@ void main() {
     float vig = pow(16.0 * q.x * q.y * (1.0 - q.x) * (1.0 - q.y), 0.22);
     color *= mix(0.74, 1.0, vig);
     color += (hash12(gl_FragCoord.xy + fract(u_time) * 97.3) - 0.5) * 0.018;
+
+    if (u_debug > 0.5) {
+        // Material debug view: red wallpaper, green carpet, blue ceiling, yellow panel.
+        vec3 c = v_mat < 0.5 ? vec3(1.0, 0.2, 0.2)
+               : (v_mat < 1.5 ? vec3(0.2, 1.0, 0.2)
+               : (v_mat < 2.5 ? vec3(0.2, 0.4, 1.0) : vec3(1.0, 1.0, 0.2)));
+        gl_FragColor = vec4(c, 1.0);
+        return;
+    }
 
     gl_FragColor = vec4(pow(max(color, vec3(0.0)), vec3(0.4545)), 1.0);
 }

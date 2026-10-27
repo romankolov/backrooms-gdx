@@ -50,6 +50,7 @@ public final class PlayScreen extends ScreenAdapter {
     private float exposure = 1.05f;
     private int seed;
     private final boolean spin;
+    private final boolean debugView = System.getProperty("backrooms.debug") != null;
 
     public PlayScreen(BackroomsGame game, int seed) {
         this.game = game;
@@ -204,7 +205,8 @@ public final class PlayScreen extends ScreenAdapter {
 
         renderer.begin(camera, time, camera.position, torchPos, torchDir,
                 player.torchOn ? 1f : 0f, fogDensity, exposure,
-                settings.quality > 0 ? 1.0f : 0.35f, 3.0f);
+                settings.quality > 0 ? 1.0f : 0.35f, 3.0f,
+                debugView ? 1f : 0f);
         renderer.draw(world, camera);
         renderer.end();
 

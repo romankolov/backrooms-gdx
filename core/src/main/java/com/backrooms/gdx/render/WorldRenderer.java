@@ -105,7 +105,7 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
     /** Binds the shader and the shared textures. */
     public void begin(Camera camera, float time, Vector3 cameraPos, Vector3 torchPos,
                       Vector3 torchDir, float torchOn, float fogDensity, float exposure,
-                      float normalStrength, float lightRange) {
+                      float normalStrength, float lightRange, float debug) {
         drawnChunks = 0;
         drawnVertices = 0;
         if (!ready) {
@@ -126,6 +126,7 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         shader.setUniformf("u_exposure", exposure);
         shader.setUniformf("u_normalStrength", normalStrength);
         shader.setUniformf("u_lightRange", lightRange);
+        shader.setUniformf("u_debug", debug);
         shader.setUniformf("u_resolution", Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         bind(UNIT_FLOOR, floorTex, "u_floorTex");
