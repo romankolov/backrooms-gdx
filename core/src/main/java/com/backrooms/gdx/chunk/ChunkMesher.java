@@ -167,6 +167,10 @@ public final class ChunkMesher {
                 if (h <= 0f) {
                     continue;
                 }
+                // Shift each wall line's wallpaper so parallel walls do not line up.
+                float uOff = ((li * 7 + lj * 13) % 11) * 0.11f;
+                float vOff = ((li * 5 + lj * 3) % 7) * 0.14f;
+                mb.setUvOffset(uOff, vOff);
                 // Both faces run all the way up to the taller of the two ceilings: stopping at
                 // the own ceiling would leave a sliver of void along the top of the wall.
                 mb.setLightmapOffset(-0.3f, 0f);
@@ -205,6 +209,7 @@ public final class ChunkMesher {
                 if (h <= 0f) {
                     continue;
                 }
+                mb.setUvOffset(((li * 3 + lj * 7) % 11) * 0.11f, ((li * 2 + lj * 5) % 7) * 0.14f);
                 mb.setLightmapOffset(0f, -0.3f);
                 mb.rectGradient(x, loN, z - th, 1f, 0f, 0f, 0f, hi - loN, 0f, 0f, 0f, -1f,
                         MeshBuilder.MAT_WALL, loN, 1f / Math.max(0.01f, hi - loN));
@@ -229,6 +234,7 @@ public final class ChunkMesher {
     // ---------------------------------------------------------------------------------------------
 
     private static void emitFixtures(MeshBuilder mb, ChunkData d) {
+        mb.setUvOffset(0f, 0f);
         int size = ChunkData.SIZE;
         int pad = ChunkData.PAD;
         for (int lj = pad; lj < size - pad; lj++) {

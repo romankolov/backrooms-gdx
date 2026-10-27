@@ -25,11 +25,19 @@ public final class MeshBuilder {
     private final float lmScale;
     private float lmOffX;
     private float lmOffZ;
+    private float uvOffU;
+    private float uvOffV;
 
     public MeshBuilder(float lmOriginX, float lmOriginZ, float lmScale) {
         this.lmOriginX = lmOriginX;
         this.lmOriginZ = lmOriginZ;
         this.lmScale = lmScale;
+    }
+
+    /** Shifts the tiling of the following rectangles so large surfaces do not repeat in step. */
+    public void setUvOffset(float u, float v) {
+        this.uvOffU = u;
+        this.uvOffV = v;
     }
 
     /** Nudges the lightmap lookup of the following rectangles, e.g. off a thin wall into the room. */
@@ -137,6 +145,8 @@ public final class MeshBuilder {
             u = x;
             v = y;
         }
+        u += uvOffU;
+        v += uvOffV;
         int i = floatsUsed;
         vertices[i] = x;
         vertices[i + 1] = y;

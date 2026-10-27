@@ -30,7 +30,7 @@ public final class LightBaker {
     /** Multiplier applied in the shader to recover HDR irradiance. */
     public static final float RANGE = 1.6f;
 
-    private static final float LIGHT_RADIUS = 13f;
+    private static final float LIGHT_RADIUS = 11f;
     private static final float LIGHT_INTENSITY = 1.55f;
     private static final float FALLOFF = 0.62f;
     private static final float FIXTURE_Y_OFFSET = 0.06f;
@@ -42,6 +42,9 @@ public final class LightBaker {
         float x0 = data.chunkX * WorldGen.CHUNK_SIZE - PAD;
         float z0 = data.chunkZ * WorldGen.CHUNK_SIZE - PAD;
 
+        // The fixtures that can reach this chunk, collected once instead of per texel.
+        float[] fixtures = collectFixtures(gen, x0, z0);
+
         float[] up = new float[TEXELS * TEXELS * 3];
         float[] side = new float[TEXELS * TEXELS];
 
@@ -49,7 +52,7 @@ public final class LightBaker {
             float wz = z0 + (tj + 0.5f) * TEXEL_SIZE;
             for (int ti = 0; ti < TEXELS; ti++) {
                 float wx = x0 + (ti + 0.5f) * TEXEL_SIZE;
-                bakeTexel(gen, wx, wz, up, side, tj * TEXELS + ti);
+                bakeTexel(gen, fixtures, wx, wz, up, side, tj * TEXELS + ti);
             }
         }
 
@@ -86,8 +89,39 @@ public final class LightBaker {
         return i < 0 ? 0 : (i > 255 ? 255 : i);
     }
 
-    private static void bakeTexel(WorldGen gen, float wx0, float wz0, float[] up, float[] side,
-                                  int index) {
+    /** Packs the fixtures near a chunk as (x, z, ceilingY, power) tuples. */
+    private static float[] collectFixtures(WorldGen gen, float x0, float z0) {
+        float[] tmp = new float[256];
+        int count = 0;
+        int li0 = WorldGen.fixtureIndex(x0 - LIGHT_RADIUS) - 1;
+        int li1 = WorldGen.fixtureIndex(x0 + WorldGen.CHUNK_SIZE + LIGHT_RADIUS) + 1;
+        int lj0 = WorldGen.fixtureIndex(z0 - LIGHT_RADIUS) - 1;
+        int lj1 = WorldGen.fixtureIndex(z0 + WorldGen.CHUNK_SIZE + LIGHT_RADIUS) + 1;
+        for (int lj = lj0; lj <= lj1; lj++) {
+            int cz = WorldGen.fixtureCell(lj);
+            for (int li = li0; li <= li1; li++) {
+                int cx = WorldGen.fixtureCell(li);
+                if (!gen.fixtureAt(cx, cz) || !gen.fixtureAlive(cx, cz)) {
+                    continue;
+                }
+                if (count + 4 > tmp.length) {
+                    float[] bigger = new float[tmp.length * 2];
+                    System.arraycopy(tmp, 0, bigger, 0, count);
+                    tmp = bigger;
+                }
+                tmp[count++] = cx + 0.5f;
+                tmp[count++] = cz + 0.5f;
+                tmp[count++] = gen.ceilY(cx, cz) - FIXTURE_Y_OFFSET;
+                tmp[count++] = gen.fixturePower(cx, cz);
+            }
+        }
+        float[] out = new float[count];
+        System.arraycopy(tmp, 0, out, 0, count);
+        return out;
+    }
+
+    private static void bakeTexel(WorldGen gen, float[] fixtures, float wx0, float wz0, float[] up,
+                                  float[] side, int index) {
         // Floor, ceiling and wall corner vertices sit exactly on wall lines. Sampling there would
         // read the inside of the wall and paint a black seam along every wall, so the probe is
         // pushed out into the room first.
@@ -101,56 +135,42 @@ public final class LightBaker {
         float er = 0f, eg = 0f, eb = 0f;     // up facing
         float sr = 0f, sg = 0f, sb = 0f;     // vertical
 
-        int li0 = WorldGen.fixtureIndex(wx - LIGHT_RADIUS) - 1;
-        int li1 = WorldGen.fixtureIndex(wx + LIGHT_RADIUS) + 1;
-        int lj0 = WorldGen.fixtureIndex(wz - LIGHT_RADIUS) - 1;
-        int lj1 = WorldGen.fixtureIndex(wz + LIGHT_RADIUS) + 1;
-
-        for (int lj = lj0; lj <= lj1; lj++) {
-            int cz = WorldGen.fixtureCell(lj);
-            for (int li = li0; li <= li1; li++) {
-                int cx = WorldGen.fixtureCell(li);
-                if (!gen.fixtureAt(cx, cz) || !gen.fixtureAlive(cx, cz)) {
-                    continue;
-                }
-                float lx = cx + 0.5f;
-                float lz = cz + 0.5f;
-                float ly = gen.ceilY(cx, cz) - FIXTURE_Y_OFFSET;
-                float dx = lx - wx;
-                float dy = ly - py;
-                float dz = lz - wz;
-                float distSq = dx * dx + dy * dy + dz * dz;
-                if (distSq > LIGHT_RADIUS * LIGHT_RADIUS) {
-                    continue;
-                }
-                float dist = (float) Math.sqrt(distSq);
-                if (dist < 0.0001f) {
-                    continue;
-                }
-                if (blocked(gen, wx, py, wz, lx, ly, lz)) {
-                    continue;
-                }
-                float power = gen.fixturePower(cx, cz);
-                float atten = LIGHT_INTENSITY * power / (1f + distSq * FALLOFF);
-                // Fluorescent tubes are warm white with a slight green cast.
-                float cr = atten * 1.05f;
-                float cg = atten * 1.00f;
-                float cb = atten * 0.84f;
-                float ndlUp = dy / dist;
-                if (ndlUp > 0f) {
-                    er += cr * ndlUp;
-                    eg += cg * ndlUp;
-                    eb += cb * ndlUp;
-                }
-                float ndlSide = 0.5f * ((Math.abs(dx) + Math.abs(dz)) / dist);
-                sr += cr * ndlSide;
-                sg += cg * ndlSide;
-                sb += cb * ndlSide;
+        for (int f = 0; f < fixtures.length; f += 4) {
+            float lx = fixtures[f];
+            float lz = fixtures[f + 1];
+            float ly = fixtures[f + 2];
+            float dx = lx - wx;
+            float dy = ly - py;
+            float dz = lz - wz;
+            float distSq = dx * dx + dy * dy + dz * dz;
+            if (distSq > LIGHT_RADIUS * LIGHT_RADIUS) {
+                continue;
             }
+            float dist = (float) Math.sqrt(distSq);
+            if (dist < 0.0001f || blocked(gen, wx, py, wz, lx, ly, lz)) {
+                continue;
+            }
+            float atten = LIGHT_INTENSITY * fixtures[f + 3] / (1f + distSq * FALLOFF);
+            // Fluorescent tubes are warm white with a slight green cast.
+            float cr = atten * 1.05f;
+            float cg = atten * 1.00f;
+            float cb = atten * 0.84f;
+            float ndlUp = dy / dist;
+            if (ndlUp > 0f) {
+                er += cr * ndlUp;
+                eg += cg * ndlUp;
+                eb += cb * ndlUp;
+            }
+            float ndlSide = 0.5f * ((Math.abs(dx) + Math.abs(dz)) / dist);
+            sr += cr * ndlSide;
+            sg += cg * ndlSide;
+            sb += cb * ndlSide;
         }
 
         float aoUp = ambientOcclusion(gen, wx, py, wz, true);
-        float aoSide = ambientOcclusion(gen, wx, py + 1.2f, wz, false);
+        // The wall's own occlusion correlates strongly with the floor's and costs another five
+        // ray casts per texel, so it is approximated from it instead.
+        float aoSide = 0.45f + 0.55f * aoUp;
 
         float upScale = 0.10f + 0.90f * aoUp;
         float sideScale = 0.08f + 0.92f * aoSide;
@@ -191,8 +211,8 @@ public final class LightBaker {
         return z;
     }
 
-    private static final int AO_PROBES = 8;
-    private static final float AO_LENGTH = 2.1f;
+    private static final int AO_PROBES = 5;
+    private static final float AO_LENGTH = 1.7f;
 
     /**
      * Fraction of short probe rays that escape, in [0,1]. Eight probes around the point: for a
