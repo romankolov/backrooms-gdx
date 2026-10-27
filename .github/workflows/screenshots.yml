@@ -62,6 +62,7 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" -f body="$BODY" || true
 
       - name: Commit screenshots
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -70,7 +71,8 @@ jobs:
             echo "screenshots unchanged"
           else
             git commit -m "docs: update rendered screenshots [skip ci]"
-            git push
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
       - name: Upload screenshots
