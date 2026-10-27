@@ -24,7 +24,13 @@ thrown away behind you, so the map never ends and memory never grows.
 
 ## Screenshots
 
-Rendered by CI on software OpenGL (llvmpipe), 1280×720:
+Rendered by CI on software OpenGL (llvmpipe), 1280×720, seed 20241027:
+
+![A corridor](screenshots/shot1.png)
+
+Captured by CI from the real Android build on an API 30 emulator (portrait, touch controls):
+
+![Running on Android](screenshots/android/ingame.png)
 
 `python3 tools/map_preview.py out.png 20241027 168` also draws a top-down plan of any seed:
 
@@ -87,7 +93,13 @@ through a wall or sinking through the floor), plus a streaming test that builds 
 `.github/workflows/android.yml` runs the tests, builds debug and release APKs on every push and
 uploads them as artifacts; pushing a tag such as `v1.0.0` publishes both APKs to a GitHub release.
 `.github/workflows/screenshots.yml` boots the desktop build under Xvfb with software GL, renders the
-level and commits the PNGs in `screenshots/` (visual regression by eyeball).
+level and commits the PNGs in `screenshots/` (visual regression by eyeball); it fails instead of
+committing if the world shader did not compile or a frame comes out blank.
+`.github/workflows/emulator.yml` goes one step further: it boots a real Android emulator, installs
+the APK, starts the launcher, waits, drives the touch controls, screenshots the result into
+`screenshots/android/` and fails if the app is not running, never drew anything, or logged a crash.
+Its diagnostics (emulator log, filtered logcat, shader compile log) are committed to
+`docs/ci/emulator-report.md`.
 
 To sign a release build, put these in the environment before running Gradle:
 `BACKROOMS_KEYSTORE`, `BACKROOMS_KEYSTORE_PASSWORD`, `BACKROOMS_KEY_ALIAS`,
@@ -176,7 +188,12 @@ if your device needs it.
 
 ## Known limitations / next steps
 
-* No device-side profiling yet; the render distance menu item is the only quality switch.
+* Frame rate on real phones is unverified: the emulator renders with a software rasteriser, so its
+  numbers (≈4 fps at 1080×1920) say nothing about a GPU. The render distance menu item is the only
+  quality switch.
+* One GLSL ES trap is worth remembering: a uniform declared in both shader stages must have the
+  same precision, and a `precision` statement is ES-only (wrap it in `#ifdef GL_ES`). Both rules are
+  enforced by `ShaderPrecisionTest`, because a violation only shows up on the device.
 * Entities (the occasional something in the corridors) are not implemented.
 * The desktop build is a development tool, not a shipped target.
 * Multi-threaded chunk building uses up to 2 workers; a job system would scale to more cores.
