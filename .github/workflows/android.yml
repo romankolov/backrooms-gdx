@@ -82,7 +82,8 @@ jobs:
             fi
 
             # 3. ...and the class must really be in the dex.
-            if unzip -p "$f" classes.dex | strings | grep -q "Lcom/backrooms/gdx/android/AndroidLauncher;"; then
+            # The debug build is multidex, so search every classes*.dex.
+            if unzip -p "$f" 'classes*.dex' | strings | grep -q "Lcom/backrooms/gdx/android/AndroidLauncher;"; then
               echo "ok: AndroidLauncher in classes.dex"
             else
               echo "FATAL: AndroidLauncher is not in classes.dex"; status=1
