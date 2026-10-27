@@ -23,8 +23,10 @@ public final class WorldGen {
     public static final float ROOM_HEIGHT = 2.9f;
     /** Room grid period, in cells. */
     public static final int MACRO = 6;
-    /** Light fixtures sit on this lattice (in cells). */
-    public static final int LIGHT_SPACING = 4;
+    /** Light fixtures sit on this lattice (in cells), one per room. */
+    public static final int LIGHT_SPACING = MACRO;
+    /** Fixtures are placed on cells with this phase inside the room lattice. */
+    public static final int LIGHT_PHASE = 3;
     /** Height quantisation of the terrain; also the tread height of the stairs. */
     public static final float HEIGHT_STEP = 0.25f;
     /** Highest the player can step up without jumping. */
@@ -188,11 +190,20 @@ public final class WorldGen {
 
     /** True when a fluorescent fixture is mounted on the ceiling of this cell. */
     public boolean fixtureAt(int cellX, int cellZ) {
-        if (Hash.floorMod(cellX, LIGHT_SPACING) != 0) return false;
-        if (Hash.floorMod(cellZ, LIGHT_SPACING) != 0) return false;
-        int h = Hash.hash2(seed ^ 0x2f9c3d11, Hash.floorDiv(cellX, LIGHT_SPACING),
-                Hash.floorDiv(cellZ, LIGHT_SPACING));
-        return (h & 255) < 236;                   // a few sockets are empty
+        if (Hash.floorMod(cellX - LIGHT_PHASE, LIGHT_SPACING) != 0) return false;
+        if (Hash.floorMod(cellZ - LIGHT_PHASE, LIGHT_SPACING) != 0) return false;
+        int h = Hash.hash2(seed ^ 0x2f9c3d11, fixtureIndex(cellX), fixtureIndex(cellZ));
+        return (h & 255) < 232;                   // a few sockets are empty
+    }
+
+    /** Index of a fixture along the light lattice. */
+    public static int fixtureIndex(float worldCoordinate) {
+        return Hash.floorDiv(Hash.floorInt(worldCoordinate) - LIGHT_PHASE, LIGHT_SPACING);
+    }
+
+    /** Cell coordinate of a fixture lattice index. */
+    public static int fixtureCell(int index) {
+        return index * LIGHT_SPACING + LIGHT_PHASE;
     }
 
     /** False for the burned-out tubes, which still have geometry but no light. */

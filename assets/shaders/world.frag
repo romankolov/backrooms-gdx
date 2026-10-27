@@ -44,7 +44,10 @@ vec3 aces(vec3 x) {
 void main() {
     vec3 albedo;
     vec3 nmap;
-    vec4 lm = texture2D(u_lightmap, v_lm);
+    // The lightmap is sqrt encoded to keep gradient precision in the dark end.
+    vec4 raw = texture2D(u_lightmap, v_lm);
+    vec4 lm = vec4(raw.rgb * raw.rgb, raw.a * raw.a);   // <- decoded irradiance / u_lightRange
+    float side = lm.a;
     vec3 irr;
     vec3 emission = vec3(0.0);
 
@@ -53,8 +56,8 @@ void main() {
         vec2 uv = v_uv * 0.4166;             // one tile every 2.4m
         albedo = texture2D(u_wallTex, uv).rgb;
         nmap = texture2D(u_wallNormal, uv).rgb;
-        float g = mix(0.38, 1.24, v_aux * v_aux);
-        irr = vec3(1.0, 0.985, 0.90) * (lm.a * u_lightRange) * g;
+        float g = mix(0.26, 1.18, v_aux * v_aux);
+        irr = vec3(1.0, 0.985, 0.90) * side * u_lightRange * g;
     } else if (v_mat < 1.5) {
         // ---- carpet ----
         vec2 uv = v_uv * 0.5;                // one tile every 2m
@@ -66,7 +69,7 @@ void main() {
         vec2 uv = v_uv * 0.5;
         albedo = texture2D(u_ceilTex, uv).rgb;
         nmap = texture2D(u_ceilNormal, uv).rgb;
-        irr = lm.rgb * u_lightRange * 0.92;
+        irr = lm.rgb * u_lightRange * 0.60;
     } else {
         // ---- fluorescent panel ----
         vec2 p = fract(v_pos.xz + 0.5) * 2.0;
@@ -74,7 +77,7 @@ void main() {
         float tubes = 0.72 + 0.28 * sin(p.y * 26.0);
         albedo = mix(vec3(0.30, 0.30, 0.29), vec3(0.94, 0.93, 0.86), frame);
         nmap = vec3(0.5, 0.5, 1.0);
-        irr = lm.rgb * u_lightRange * 0.35;
+        irr = lm.rgb * u_lightRange * 0.30;
         emission = vec3(1.0, 0.985, 0.90) * (0.35 + 0.65 * frame) * tubes * v_emit * 3.2;
     }
 
@@ -99,7 +102,7 @@ void main() {
     vec3 H = normalize(V + vec3(0.0, 1.0, 0.0));
     float gloss = v_mat < 1.5 ? 26.0 : 14.0;
     float spec = pow(max(dot(nb, H), 0.0), gloss) * (v_mat < 1.5 ? 0.55 : 0.22);
-    float illum = dot(lm.rgb, vec3(0.3333));
+    float illum = dot(lm.rgb, vec3(0.3333));   // already decoded
 
     vec3 color = albedo * irr + emission;
     color += vec3(1.0, 0.97, 0.88) * spec * illum * u_lightRange;

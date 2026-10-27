@@ -47,7 +47,7 @@ public final class PlayScreen extends ScreenAdapter {
     private float fade = 1f;
     private boolean teleporting;
     private float fogDensity;
-    private float exposure = 1.35f;
+    private float exposure = 1.05f;
     private int seed;
     private final boolean spin;
 
@@ -116,7 +116,7 @@ public final class PlayScreen extends ScreenAdapter {
     private void updateCameraRange() {
         float far = (settings.renderDistance + 1) * 16f + 8f;
         camera.far = far;
-        fogDensity = 1.62f / far;
+        fogDensity = 2.15f / far;
         camera.update();
     }
 

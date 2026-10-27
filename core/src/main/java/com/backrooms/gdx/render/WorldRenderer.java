@@ -32,9 +32,9 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
     private static final int UNIT_CEIL_N = 5;
     private static final int UNIT_LIGHTMAP = 6;
 
-    public static final float FOG_COLOR_R = 0.42f;
-    public static final float FOG_COLOR_G = 0.38f;
-    public static final float FOG_COLOR_B = 0.24f;
+    public static final float FOG_COLOR_R = 0.235f;
+    public static final float FOG_COLOR_G = 0.215f;
+    public static final float FOG_COLOR_B = 0.135f;
 
     private static final VertexAttribute[] ATTRIBUTES = {
             new VertexAttribute(VertexAttributes.Usage.Position, 3, "a_position"),

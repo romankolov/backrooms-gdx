@@ -5,7 +5,6 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Disposable;
 import com.backrooms.gdx.Assets;
-import com.backrooms.gdx.util.Hash;
 import com.backrooms.gdx.world.WorldGen;
 
 /**
@@ -65,18 +64,15 @@ public final class AudioManager implements Disposable {
 
     /** Distance to the closest working ceiling fixture, or -1 when there is none nearby. */
     private float nearestFixture(float x, float z) {
-        int spacing = WorldGen.LIGHT_SPACING;
-        int ci = Hash.floorInt(x);
-        int cj = Hash.floorInt(z);
         float best = -1f;
-        int i0 = Hash.floorDiv(ci - 13, spacing);
-        int i1 = Hash.floorDiv(ci + 13, spacing);
-        int j0 = Hash.floorDiv(cj - 13, spacing);
-        int j1 = Hash.floorDiv(cj + 13, spacing);
+        int i0 = WorldGen.fixtureIndex(x - 13f) - 1;
+        int i1 = WorldGen.fixtureIndex(x + 13f) + 1;
+        int j0 = WorldGen.fixtureIndex(z - 13f) - 1;
+        int j1 = WorldGen.fixtureIndex(z + 13f) + 1;
         for (int j = j0; j <= j1; j++) {
             for (int i = i0; i <= i1; i++) {
-                int cx = i * spacing;
-                int cz = j * spacing;
+                int cx = WorldGen.fixtureCell(i);
+                int cz = WorldGen.fixtureCell(j);
                 if (!gen.fixtureAt(cx, cz) || !gen.fixtureAlive(cx, cz)) {
                     continue;
                 }

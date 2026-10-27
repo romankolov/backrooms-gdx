@@ -28,10 +28,11 @@ public final class LightBaker {
     /** Padding between the chunk edge and the lightmap border, in metres. */
     public static final float PAD = TEXEL_SIZE;
     /** Multiplier applied in the shader to recover HDR irradiance. */
-    public static final float RANGE = 3f;
+    public static final float RANGE = 1.6f;
 
-    private static final float LIGHT_RADIUS = 15f;
-    private static final float LIGHT_INTENSITY = 2.7f;
+    private static final float LIGHT_RADIUS = 13f;
+    private static final float LIGHT_INTENSITY = 1.55f;
+    private static final float FALLOFF = 0.62f;
     private static final float FIXTURE_Y_OFFSET = 0.06f;
 
     private LightBaker() {
@@ -73,8 +74,15 @@ public final class LightBaker {
         }
     }
 
+    /**
+     * Values are stored sqrt encoded so that the dark range (where the eye is most sensitive and
+     * where the fluorescent falloff lives) keeps its gradient. The shader squares them back.
+     */
     private static int encode(float v) {
-        int i = (int) (v * (255f / RANGE) + 0.5f);
+        float t = v / RANGE;
+        if (t < 0f) t = 0f;
+        if (t > 1f) t = 1f;
+        int i = (int) (Math.sqrt(t) * 255f + 0.5f);
         return i < 0 ? 0 : (i > 255 ? 255 : i);
     }
 
@@ -87,15 +95,15 @@ public final class LightBaker {
         float er = 0f, eg = 0f, eb = 0f;     // up facing
         float sr = 0f, sg = 0f, sb = 0f;     // vertical
 
-        int li0 = Hash.floorDiv(Hash.floorInt(wx - LIGHT_RADIUS) - 1, WorldGen.LIGHT_SPACING);
-        int li1 = Hash.floorDiv(Hash.floorInt(wx + LIGHT_RADIUS) + 1, WorldGen.LIGHT_SPACING);
-        int lj0 = Hash.floorDiv(Hash.floorInt(wz - LIGHT_RADIUS) - 1, WorldGen.LIGHT_SPACING);
-        int lj1 = Hash.floorDiv(Hash.floorInt(wz + LIGHT_RADIUS) + 1, WorldGen.LIGHT_SPACING);
+        int li0 = WorldGen.fixtureIndex(wx - LIGHT_RADIUS) - 1;
+        int li1 = WorldGen.fixtureIndex(wx + LIGHT_RADIUS) + 1;
+        int lj0 = WorldGen.fixtureIndex(wz - LIGHT_RADIUS) - 1;
+        int lj1 = WorldGen.fixtureIndex(wz + LIGHT_RADIUS) + 1;
 
         for (int lj = lj0; lj <= lj1; lj++) {
-            int cz = lj * WorldGen.LIGHT_SPACING;
+            int cz = WorldGen.fixtureCell(lj);
             for (int li = li0; li <= li1; li++) {
-                int cx = li * WorldGen.LIGHT_SPACING;
+                int cx = WorldGen.fixtureCell(li);
                 if (!gen.fixtureAt(cx, cz) || !gen.fixtureAlive(cx, cz)) {
                     continue;
                 }
@@ -117,7 +125,7 @@ public final class LightBaker {
                     continue;
                 }
                 float power = gen.fixturePower(cx, cz);
-                float atten = LIGHT_INTENSITY * power / (1f + distSq * 0.42f);
+                float atten = LIGHT_INTENSITY * power / (1f + distSq * FALLOFF);
                 // Fluorescent tubes are warm white with a slight green cast.
                 float cr = atten * 1.05f;
                 float cg = atten * 1.00f;
@@ -138,9 +146,9 @@ public final class LightBaker {
         float aoUp = ambientOcclusion(gen, wx, py, wz, true);
         float aoSide = ambientOcclusion(gen, wx, py + 1.2f, wz, false);
 
-        float upScale = 0.16f + 0.84f * aoUp;
-        float sideScale = 0.12f + 0.88f * aoSide;
-        float ambient = 0.030f * aoUp;
+        float upScale = 0.10f + 0.90f * aoUp;
+        float sideScale = 0.08f + 0.92f * aoSide;
+        float ambient = 0.012f * aoUp;
 
         up[index * 3] = er * upScale + ambient;
         up[index * 3 + 1] = eg * upScale + ambient * 1.02f;
