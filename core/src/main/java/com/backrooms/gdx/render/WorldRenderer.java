@@ -78,9 +78,7 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
             Gdx.app.error("BackroomsGL", "SHADER FAILED: " + shaderLog);
         } else {
             ready = true;
-            Gdx.app.log("BackroomsGL", "shader compiled, variety="
-                    + shader.getVertexShaderSource().length() + "/"
-                    + shader.getFragmentShaderSource().length());
+            Gdx.app.log("BackroomsGL", "world shader compiled");
         }
     }
 
@@ -131,7 +129,10 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
 
         shader.begin();
         shader.setUniformMatrix("u_projView", projView);
+        // The full clock goes to the vertex shader (highp); the fragment shader gets a wrapped
+        // value that mediump can hold exactly. See the precision notes in the shader sources.
         shader.setUniformf("u_time", time);
+        shader.setUniformf("u_grainTime", time % 64f);
         shader.setUniformf("u_camPos", cameraPos.x, cameraPos.y, cameraPos.z);
         shader.setUniformf("u_flashPos", torchPos.x, torchPos.y, torchPos.z);
         shader.setUniformf("u_flashDir", torchDir.x, torchDir.y, torchDir.z);

@@ -25,7 +25,9 @@ uniform vec3 u_flashDir;
 uniform float u_flashOn;
 uniform vec3 u_fogColor;
 uniform float u_fogDensity;
-uniform float u_time;
+// NOT u_time: a uniform declared in both stages must share the exact same precision, and
+// the raw clock would overflow mediump anyway. The grain only needs a small wrapped value.
+uniform float u_grainTime;
 uniform float u_exposure;
 uniform float u_normalStrength;
 uniform vec2 u_resolution;
@@ -125,7 +127,7 @@ void main() {
     vec2 q = gl_FragCoord.xy / u_resolution;
     float vig = pow(16.0 * q.x * q.y * (1.0 - q.x) * (1.0 - q.y), 0.22);
     color *= mix(0.74, 1.0, vig);
-    color += (hash12(gl_FragCoord.xy + fract(u_time) * 97.3) - 0.5) * 0.018;
+    color += (hash12(gl_FragCoord.xy + u_grainTime * 97.3) - 0.5) * 0.018;
 
     if (u_debug > 0.5) {
         // Material debug view: red wallpaper, green carpet, blue ceiling, yellow panel.

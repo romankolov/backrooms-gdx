@@ -1,4 +1,8 @@
 // Backrooms world vertex shader (GLSL ES 1.00, runs on any GLES2 phone).
+// highp is always available in vertex shaders; the fragment shader stays mediump, so any
+// uniform shared by both stages must be declared with the same precision in both files.
+precision highp float;
+
 attribute vec3 a_position;
 attribute vec3 a_normal;
 attribute vec2 a_uv;
