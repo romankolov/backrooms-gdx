@@ -24,7 +24,6 @@ public class AndroidLauncher extends AndroidApplication {
         config.useCompass = false;
         config.useGyroscope = false;
         config.useImmersiveMode = true;  // full screen, no navigation bar
-        config.hideStatusBar = true;
         config.disableAudio = false;
         // 16-bit depth is plenty for a 60m draw distance and saves bandwidth.
         config.r = 8;
