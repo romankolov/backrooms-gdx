@@ -52,7 +52,7 @@ public final class PlayScreen extends ScreenAdapter {
     private boolean waitingForWorld = true;
     private float waited;
     private float fogDensity;
-    private float exposure = 1.05f;
+    private float exposure = 0.95f;
     private int seed;
     private final boolean spin;
     private final boolean debugView = System.getProperty("backrooms.debug", "0").trim()

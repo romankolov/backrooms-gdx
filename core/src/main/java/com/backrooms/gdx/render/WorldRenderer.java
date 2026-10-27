@@ -32,9 +32,40 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
     private static final int UNIT_CEIL_N = 5;
     private static final int UNIT_LIGHTMAP = 6;
 
-    public static final float FOG_COLOR_R = 0.235f;
-    public static final float FOG_COLOR_G = 0.215f;
-    public static final float FOG_COLOR_B = 0.135f;
+    /**
+     * The colour the corridors fade into, expressed as it finally appears on screen (sRGB 0..1).
+     * The shader mixes fog <em>before</em> exposure, filmic tone mapping and gamma, so the value it
+     * receives has to be inverted through that whole grade - see {@link #fogInput}. Using the
+     * display value directly made the distance wash out to pale cream.
+     */
+    public static final float FOG_COLOR_R = 0.170f;
+    public static final float FOG_COLOR_G = 0.158f;
+    public static final float FOG_COLOR_B = 0.108f;
+
+    /** Displayed fog colour -> the linear value the shader must mix towards. */
+    public static float fogInput(float display, float exposure) {
+        double target = Math.pow(Math.max(display, 0f), 1.0 / 0.4545);
+        return (float) (inverseAces(target) / exposure);
+    }
+
+    private static double acesCurve(double x) {
+        double v = (x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14);
+        return Math.max(0.0, Math.min(1.0, v));
+    }
+
+    private static double inverseAces(double y) {
+        double lo = 0.0;
+        double hi = 16.0;
+        for (int i = 0; i < 40; i++) {
+            double mid = 0.5 * (lo + hi);
+            if (acesCurve(mid) < y) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        return 0.5 * (lo + hi);
+    }
 
     private static final VertexAttribute[] ATTRIBUTES = {
             new VertexAttribute(VertexAttributes.Usage.Position, 3, "a_position"),
@@ -137,7 +168,8 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         shader.setUniformf("u_flashPos", torchPos.x, torchPos.y, torchPos.z);
         shader.setUniformf("u_flashDir", torchDir.x, torchDir.y, torchDir.z);
         shader.setUniformf("u_flashOn", torchOn);
-        shader.setUniformf("u_fogColor", FOG_COLOR_R, FOG_COLOR_G, FOG_COLOR_B);
+        shader.setUniformf("u_fogColor", fogInput(FOG_COLOR_R, exposure),
+                fogInput(FOG_COLOR_G, exposure), fogInput(FOG_COLOR_B, exposure));
         shader.setUniformf("u_fogDensity", fogDensity);
         shader.setUniformf("u_exposure", exposure);
         shader.setUniformf("u_normalStrength", normalStrength);

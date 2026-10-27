@@ -65,19 +65,19 @@ void main() {
         albedo = texture2D(u_wallTex, uv).rgb;
         nmap = texture2D(u_wallNormal, uv).rgb;
         float g = mix(0.55, 1.12, pow(v_aux, 0.8));
-        irr = wallLight * g * 0.72;
+        irr = wallLight * g * 0.60;
     } else if (v_mat < 1.5) {
         // ---- carpet ----
         vec2 uv = v_uv * 0.5;                // one tile every 2m
         albedo = texture2D(u_floorTex, uv).rgb;
         nmap = texture2D(u_floorNormal, uv).rgb;
-        irr = mix(lm.rgb * u_lightRange * 0.82, wallLight * 0.55, vert);
+        irr = mix(lm.rgb * u_lightRange * 0.70, wallLight * 0.50, vert);
     } else if (v_mat < 2.5) {
         // ---- ceiling tiles ----
         vec2 uv = v_uv * 0.5;
         albedo = texture2D(u_ceilTex, uv).rgb;
         nmap = texture2D(u_ceilNormal, uv).rgb;
-        irr = mix(lm.rgb * u_lightRange * 0.42, wallLight * 0.62, vert);
+        irr = mix(lm.rgb * u_lightRange * 0.30, wallLight * 0.58, vert);
     } else {
         // ---- fluorescent panel ----
         vec2 p = fract(v_pos.xz + 0.5) * 2.0;
@@ -126,7 +126,7 @@ void main() {
     // ---- vignette + a little sensor grain: cheap 1990s camcorder feel ----
     vec2 q = gl_FragCoord.xy / u_resolution;
     float vig = pow(16.0 * q.x * q.y * (1.0 - q.x) * (1.0 - q.y), 0.22);
-    color *= mix(0.74, 1.0, vig);
+    color *= mix(0.62, 1.0, vig);
     color += (hash12(gl_FragCoord.xy + u_grainTime * 97.3) - 0.5) * 0.018;
 
     if (u_debug > 0.5) {
