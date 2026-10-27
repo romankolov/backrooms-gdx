@@ -48,12 +48,18 @@ jobs:
           mkdir -p screenshots
           xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
             -Dbackrooms.autostart=1 -Dbackrooms.spin=1 -Dbackrooms.seed=20241027 \
-            -Dbackrooms.frames=270 -Dbackrooms.capture=screenshots || true
+            -Dbackrooms.frames=270 -Dbackrooms.capture=screenshots > render.log 2>&1 || true
+          tail -c 4000 render.log
           ls -la screenshots
 
-      - name: Failures
-        if: failure()
-        run: echo "screenshot render failed, see log"
+      - name: Report render log
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ls screenshots/*.png >/dev/null 2>&1; then exit 0; fi
+          BODY=$(printf 'Screenshot render produced no frames on `%s`\n\n```\n%s\n```\n' "${GITHUB_SHA::7}" "$(tail -c 12000 render.log)")
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" -f body="$BODY" || true
 
       - name: Commit screenshots
         run: |
