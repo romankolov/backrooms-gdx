@@ -1,0 +1,31 @@
+apply plugin: "java"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+sourceSets.main.java.srcDirs = ["src/main/java"]
+sourceSets.main.resources.srcDirs = []
+
+dependencies {
+    implementation project(":core")
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+}
+
+// Run the game on a desktop JVM (handy for iterating on the look without a phone).
+// The working directory is the shared assets folder, exactly like the APK.
+tasks.register("run", JavaExec) {
+    dependsOn classes
+    mainClass = "com.backrooms.gdx.desktop.DesktopLauncher"
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = rootProject.file("assets")
+    ["backrooms.capture", "backrooms.frames", "backrooms.autostart", "backrooms.seed",
+     "backrooms.spin", "backrooms.yaw"].each { key ->
+        def value = System.getProperty(key)
+        if (value != null) {
+            systemProperty key, value
+        }
+    }
+}

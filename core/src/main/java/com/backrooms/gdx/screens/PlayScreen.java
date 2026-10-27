@@ -49,6 +49,7 @@ public final class PlayScreen extends ScreenAdapter {
     private float fogDensity;
     private float exposure = 1.35f;
     private int seed;
+    private final boolean spin;
 
     public PlayScreen(BackroomsGame game, int seed) {
         this.game = game;
@@ -66,6 +67,15 @@ public final class PlayScreen extends ScreenAdapter {
         world.gen().findSpawn(spawn);
         player.spawn(spawn[0], spawn[1], spawn[2]);
         player.torchOn = settings.torch;
+        String yaw = System.getProperty("backrooms.yaw");
+        if (yaw != null) {
+            try {
+                player.yaw = (float) Math.toRadians(Double.parseDouble(yaw.trim()));
+            } catch (NumberFormatException ignored) {
+                // keep the default heading
+            }
+        }
+        spin = System.getProperty("backrooms.spin") != null;
 
         camera.near = 0.05f;
         updateCameraRange();
@@ -135,6 +145,9 @@ public final class PlayScreen extends ScreenAdapter {
 
         if (!paused) {
             controls.update(delta);
+            if (spin) {
+                player.yaw += delta * 0.35f;
+            }
             player.addLook(controls.lookDeltaX, controls.lookDeltaY);
             player.update(delta, controls.moveForward, controls.moveSide, controls.sprint,
                     controls.jumpRequested);

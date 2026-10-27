@@ -28,8 +28,12 @@ public final class BackroomsGame extends Game {
         settings = new GameSettings();
         settings.load();
         assets = new Assets();
-        titleScreen = new TitleScreen(this);
-        setScreen(titleScreen);
+        if (System.getProperty("backrooms.autostart") != null) {
+            startGame();
+        } else {
+            titleScreen = new TitleScreen(this);
+            setScreen(titleScreen);
+        }
     }
 
     public WorldRenderer renderer() {
@@ -41,6 +45,14 @@ public final class BackroomsGame extends Game {
 
     public void startGame() {
         int seed = new Random().nextInt();
+        String forcedSeed = System.getProperty("backrooms.seed");
+        if (forcedSeed != null) {
+            try {
+                seed = Integer.parseInt(forcedSeed.trim());
+            } catch (NumberFormatException ignored) {
+                // keep the random seed
+            }
+        }
         if (playScreen != null) {
             playScreen.dispose();
         }

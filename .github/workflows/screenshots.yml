@@ -1,0 +1,75 @@
+name: Screenshots
+
+# Boots the desktop build on software OpenGL (llvmpipe) inside Xvfb, renders the game, and commits
+# the resulting PNGs so the look of the level can be reviewed from the repository.
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    name: Render frames
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-shots-${{ runner.os }}-${{ hashFiles('**/*.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-shots-${{ runner.os }}-
+
+      - name: Install software GL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb libgl1-mesa-dri libglu1-mesa libgl1 mesa-utils
+
+      - name: Render screenshots
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          GALLIUM_DRIVER: llvmpipe
+          MESA_GL_VERSION_OVERRIDE: '4.5'
+        run: |
+          chmod +x gradlew
+          mkdir -p screenshots
+          xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
+            -Dbackrooms.autostart=1 -Dbackrooms.spin=1 -Dbackrooms.seed=20241027 \
+            -Dbackrooms.frames=270 -Dbackrooms.capture=screenshots || true
+          ls -la screenshots
+
+      - name: Failures
+        if: failure()
+        run: echo "screenshot render failed, see log"
+
+      - name: Commit screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f screenshots/*.png 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "screenshots unchanged"
+          else
+            git commit -m "docs: update rendered screenshots [skip ci]"
+            git push
+          fi
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v5
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: warn
