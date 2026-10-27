@@ -82,6 +82,7 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         if (mipmaps) {
             texture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
             texture.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+            texture.setAnisotropicFilter(4f);
         } else {
             texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
             texture.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);

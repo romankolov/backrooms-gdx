@@ -81,22 +81,22 @@ public final class ChunkMesher {
                 nf = d.floor[lj * size + li + 1];
                 if (nf < f - EPS && !d.vWallAt(li + 1, lj)) {
                     mb.rect(x + 1f, nf, z, 0f, 0f, 1f, 0f, f - nf, 0f, 1f, 0f, 0f,
-                            MeshBuilder.MAT_WALL, 0f);
+                            MeshBuilder.MAT_FLOOR, 0f);
                 }
                 nf = d.floor[lj * size + li - 1];
                 if (nf < f - EPS && !d.vWallAt(li, lj)) {
                     mb.rect(x, nf, z, 0f, 0f, 1f, 0f, f - nf, 0f, -1f, 0f, 0f,
-                            MeshBuilder.MAT_WALL, 0f);
+                            MeshBuilder.MAT_FLOOR, 0f);
                 }
                 nf = d.floor[(lj + 1) * size + li];
                 if (nf < f - EPS && !d.hWallAt(li, lj + 1)) {
                     mb.rect(x, nf, z + 1f, 1f, 0f, 0f, 0f, f - nf, 0f, 0f, 0f, 1f,
-                            MeshBuilder.MAT_WALL, 0f);
+                            MeshBuilder.MAT_FLOOR, 0f);
                 }
                 nf = d.floor[(lj - 1) * size + li];
                 if (nf < f - EPS && !d.hWallAt(li, lj)) {
                     mb.rect(x, nf, z, 1f, 0f, 0f, 0f, f - nf, 0f, 0f, 0f, -1f,
-                            MeshBuilder.MAT_WALL, 0f);
+                            MeshBuilder.MAT_FLOOR, 0f);
                 }
 
                 // Ceiling steps, also owned by the higher cell.

@@ -51,25 +51,30 @@ void main() {
     vec3 irr;
     vec3 emission = vec3(0.0);
 
+    // Vertical faces (stair risers, the sides of holes, ceiling steps) are lit by the wall
+    // channel of the lightmap even when they use the carpet or ceiling material.
+    float vert = 1.0 - abs(normalize(v_normal).y);
+    vec3 wallLight = vec3(1.0, 0.985, 0.90) * side * u_lightRange;
+
     if (v_mat < 0.5) {
         // ---- wallpaper ----
         vec2 uv = v_uv * 0.4166;             // one tile every 2.4m
         albedo = texture2D(u_wallTex, uv).rgb;
         nmap = texture2D(u_wallNormal, uv).rgb;
-        float g = mix(0.26, 1.18, v_aux * v_aux);
-        irr = vec3(1.0, 0.985, 0.90) * side * u_lightRange * g;
+        float g = mix(0.40, 1.30, pow(v_aux, 0.7));
+        irr = wallLight * g;
     } else if (v_mat < 1.5) {
         // ---- carpet ----
         vec2 uv = v_uv * 0.5;                // one tile every 2m
         albedo = texture2D(u_floorTex, uv).rgb;
         nmap = texture2D(u_floorNormal, uv).rgb;
-        irr = lm.rgb * u_lightRange;
+        irr = mix(lm.rgb * u_lightRange * 0.82, wallLight * 0.62, vert);
     } else if (v_mat < 2.5) {
         // ---- ceiling tiles ----
         vec2 uv = v_uv * 0.5;
         albedo = texture2D(u_ceilTex, uv).rgb;
         nmap = texture2D(u_ceilNormal, uv).rgb;
-        irr = lm.rgb * u_lightRange * 0.60;
+        irr = mix(lm.rgb * u_lightRange * 0.55, wallLight * 0.35, vert);
     } else {
         // ---- fluorescent panel ----
         vec2 p = fract(v_pos.xz + 0.5) * 2.0;
@@ -119,7 +124,7 @@ void main() {
     vec2 q = gl_FragCoord.xy / u_resolution;
     float vig = pow(16.0 * q.x * q.y * (1.0 - q.x) * (1.0 - q.y), 0.22);
     color *= mix(0.74, 1.0, vig);
-    color += (hash12(gl_FragCoord.xy + fract(u_time) * 97.3) - 0.5) * 0.03;
+    color += (hash12(gl_FragCoord.xy + fract(u_time) * 97.3) - 0.5) * 0.018;
 
     gl_FragColor = vec4(pow(max(color, vec3(0.0)), vec3(0.4545)), 1.0);
 }
