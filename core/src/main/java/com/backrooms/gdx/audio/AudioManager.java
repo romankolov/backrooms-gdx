@@ -51,7 +51,7 @@ public final class AudioManager implements Disposable {
 
         if (assets.buzz != null) {
             if (buzzId == -1 && buzzVolume > 0.01f) {
-                buzzId = assets.buzz.loop(Math.min(1f, buzzVolume), 0.97f + random.nextFloat() * 0.06f);
+                buzzId = assets.buzz.loop(Math.min(1f, buzzVolume), 0.97f + random.nextFloat() * 0.06f, 0f);
             }
             if (buzzId != -1) {
                 assets.buzz.setVolume(buzzId, Math.min(1f, buzzVolume));
