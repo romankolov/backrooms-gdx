@@ -37,23 +37,6 @@ public final class LightBaker {
     private LightBaker() {
     }
 
-    /** Direction table for the short ambient-occlusion rays. */
-    private static final float[] AO_DIRS = buildAoDirs();
-
-    private static float[] buildAoDirs() {
-        float[] d = new float[4 * 4];
-        int n = 0;
-        for (int k = 0; k < 4; k++) {
-            double a = (k / 4.0) * Math.PI * 2.0 + 0.4;
-            // horizontal probe (used for wall occlusion)
-            d[n++] = (float) Math.cos(a);
-            d[n++] = 0f;
-            d[n++] = (float) Math.sin(a);
-            d[n++] = 1f;
-        }
-        return d;
-    }
-
     public static void bake(WorldGen gen, ChunkData data, int[] rgba) {
         float x0 = data.chunkX * WorldGen.CHUNK_SIZE - PAD;
         float z0 = data.chunkZ * WorldGen.CHUNK_SIZE - PAD;
@@ -168,27 +151,29 @@ public final class LightBaker {
                 + 0.0722f * (sb * sideScale + ambient * 0.9f);
     }
 
-    /** Fraction of short probe rays that escape, in [0,1]. */
-    private static float ambientOcclusion(WorldGen gen, float x, float y, float z, boolean upFacing) {
+    private static final int AO_PROBES = 8;
+    private static final float AO_LENGTH = 2.1f;
+
+    /**
+     * Fraction of short probe rays that escape, in [0,1]. Eight probes around the point: for a
+     * floor the rays also climb, for a wall they stay horizontal at chest height.
+     */
+    public static float ambientOcclusion(WorldGen gen, float x, float y, float z, boolean upFacing) {
         int open = 0;
-        int total = 0;
-        for (int k = 0; k < 4; k++) {
-            float dx = AO_DIRS[k * 4];
-            float dz = AO_DIRS[k * 4 + 2];
-            float dy = upFacing ? 0.75f : 0f;
-            if (upFacing && (k & 1) == 1) {
-                dy = 0.35f;
-            }
-            float len = 1.9f;
-            float tx = x + dx * len;
-            float ty = y + dy * len;
-            float tz = z + dz * len;
-            total++;
+        for (int k = 0; k < AO_PROBES; k++) {
+            double angle = k * (Math.PI * 2.0 / AO_PROBES) + 0.21;
+            float dx = (float) Math.cos(angle);
+            float dz = (float) Math.sin(angle);
+            float dy = upFacing ? ((k & 1) == 0 ? 0.85f : 0.45f) : 0f;
+            float norm = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+            float tx = x + dx / norm * AO_LENGTH;
+            float ty = y + dy / norm * AO_LENGTH;
+            float tz = z + dz / norm * AO_LENGTH;
             if (!blocked(gen, x, y, z, tx, ty, tz)) {
                 open++;
             }
         }
-        return total == 0 ? 1f : (float) open / total;
+        return open / (float) AO_PROBES;
     }
 
     /**

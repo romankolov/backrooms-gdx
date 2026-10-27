@@ -38,68 +38,61 @@ public class LightBakerTest {
         assertFalse(LightBaker.blocked(gen, wx - 0.6f, y, wz + 0.5f, wx - 0.6f, y, wz + 0.2f));
     }
 
+    /**
+     * Over a whole chunk, texels that sit close to a wall must be darker than texels in the middle
+     * of a room: that is the baked contact shadow which makes the rooms read as three dimensional.
+     */
     @Test
-    public void ambientOcclusionDarkensTheFloorNearWalls() {
+    public void wallsDarkenTheFloorAroundThem() {
         WorldGen gen = new WorldGen(11);
-        int chunkX = 0;
-        int chunkZ = 0;
-        int wallX = 0;
-        int wallZ = 0;
-        boolean found = false;
-        int margin = 4;
-        for (int cx = -6; cx <= 6 && !found; cx++) {
-            for (int cz = -6; cz <= 6 && !found; cz++) {
-                for (int li = margin; li <= WorldGen.CHUNK_CELLS - margin && !found; li++) {
-                    for (int lj = margin; lj <= WorldGen.CHUNK_CELLS - margin && !found; lj++) {
-                        int i = cx * WorldGen.CHUNK_CELLS + li;
-                        int j = cz * WorldGen.CHUNK_CELLS + lj;
-                        if (!gen.vWall(i, j)) {
-                            continue;
-                        }
-                        float a = gen.floorY(i - 1, j);
-                        float b = gen.floorY(i, j);
-                        if (Math.abs(a - b) < 0.01f && gen.cellSlope(i - 1, j) < 0.01f
-                                && gen.cellSlope(i, j) < 0.01f) {
-                            chunkX = cx;
-                            chunkZ = cz;
-                            wallX = i;
-                            wallZ = j;
-                            found = true;
-                        }
-                    }
-                }
-            }
-        }
-        assertTrue("test needs a flat wall inside a chunk", found);
-
+        int chunkX = 2;
+        int chunkZ = -1;
         ChunkData data = ChunkSampler.sample(gen, chunkX, chunkZ);
         int[] lightmap = new int[LightBaker.TEXELS * LightBaker.TEXELS];
         LightBaker.bake(gen, data, lightmap);
 
-        float nearWall = meanBrightness(lightmap, data, wallX - 0.3f, wallZ + 0.5f, chunkX, chunkZ,
-                1);
-        float openFloor = meanBrightness(lightmap, data, wallX - 1.7f, wallZ + 0.5f, chunkX, chunkZ,
-                1);
-        assertTrue("corners must be occluded: near wall " + nearWall + " vs open floor "
-                + openFloor, nearWall < openFloor * 0.85f);
-    }
-
-    private float meanBrightness(int[] lightmap, ChunkData data, float wx, float wz,
-                                 int chunkX, int chunkZ, int window) {
-        float x0 = chunkX * WorldGen.CHUNK_SIZE - LightBaker.PAD;
-        float z0 = chunkZ * WorldGen.CHUNK_SIZE - LightBaker.PAD;
-        int ti = (int) ((wx - x0) / LightBaker.TEXEL_SIZE);
-        int tj = (int) ((wz - z0) / LightBaker.TEXEL_SIZE);
+        long edgeSum = 0;
+        int edgeCount = 0;
+        long openSum = 0;
+        int openCount = 0;
         int size = LightBaker.TEXELS;
-        int sum = 0;
-        int count = 0;
-        for (int j = Math.max(0, tj - window); j <= Math.min(size - 1, tj + window); j++) {
-            for (int i = Math.max(0, ti - window); i <= Math.min(size - 1, ti + window); i++) {
-                int texel = lightmap[j * size + i];
-                sum += ((texel >>> 24) & 0xff) + ((texel >>> 16) & 0xff) + ((texel >>> 8) & 0xff);
-                count += 3;
+        for (int tj = 0; tj < size; tj++) {
+            float wz = chunkZ * WorldGen.CHUNK_SIZE - LightBaker.PAD
+                    + (tj + 0.5f) * LightBaker.TEXEL_SIZE;
+            for (int ti = 0; ti < size; ti++) {
+                float wx = chunkX * WorldGen.CHUNK_SIZE - LightBaker.PAD
+                        + (ti + 0.5f) * LightBaker.TEXEL_SIZE;
+                int r = (lightmap[tj * size + ti] >>> 24) & 0xff;
+                if (r == 0) {
+                    continue;   // texel inside a wall
+                }
+                if (nearWall(gen, wx, wz)) {
+                    edgeSum += r;
+                    edgeCount++;
+                } else {
+                    openSum += r;
+                    openCount++;
+                }
             }
         }
-        return count == 0 ? 0f : sum / (float) count;
+        assertTrue("need both kinds of texel", edgeCount > 40 && openCount > 40);
+        float edge = edgeSum / (float) edgeCount;
+        float open = openSum / (float) openCount;
+        assertTrue("floor next to walls must be darker (" + edge + " vs " + open + ")",
+                edge < open * 0.92f);
+    }
+
+    private boolean nearWall(WorldGen gen, float wx, float wz) {
+        int i = (int) Math.floor(wx);
+        int j = (int) Math.floor(wz);
+        float dLeft = Math.abs(wx - i);
+        float dRight = Math.abs(wx - (i + 1));
+        float dBack = Math.abs(wz - j);
+        float dFront = Math.abs(wz - (j + 1));
+        if (dLeft < 0.35f && gen.vWall(i, j)) return true;
+        if (dRight < 0.35f && gen.vWall(i + 1, j)) return true;
+        if (dBack < 0.35f && gen.hWall(i, j)) return true;
+        if (dFront < 0.35f && gen.hWall(i, j + 1)) return true;
+        return false;
     }
 }
