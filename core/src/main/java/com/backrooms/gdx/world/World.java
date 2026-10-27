@@ -213,6 +213,8 @@ public final class World {
     public void dispose() {
         disposed = true;
         pool.shutdownNow();
+        // Queued builds are dropped by shutdownNow() and will never reach their finally block.
+        inFlight.set(0);
         for (ObjectMap.Entry<Long, Chunk> e : chunks) {
             e.value.dispose();
         }

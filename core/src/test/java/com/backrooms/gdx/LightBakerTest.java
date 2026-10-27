@@ -39,39 +39,49 @@ public class LightBakerTest {
     }
 
     @Test
-    public void fixturesLightTheFloorAroundThem() {
+    public void ambientOcclusionDarkensTheFloorNearWalls() {
         WorldGen gen = new WorldGen(11);
-        // Pick a fixture that sits well inside its chunk so both the "under the tube" window
-        // and the overall average can be measured on one lightmap.
-        int fx = 0;
-        int fz = 0;
+        int chunkX = 0;
+        int chunkZ = 0;
+        int wallX = 0;
+        int wallZ = 0;
         boolean found = false;
-        for (int i = -80; i < 80 && !found; i += WorldGen.LIGHT_SPACING) {
-            for (int j = -80; j < 80 && !found; j += WorldGen.LIGHT_SPACING) {
-                int lx = Hash.floorMod(i, WorldGen.CHUNK_CELLS);
-                int lz = Hash.floorMod(j, WorldGen.CHUNK_CELLS);
-                if (lx < 4 || lx > 11 || lz < 4 || lz > 11) {
-                    continue;
-                }
-                if (gen.fixtureAt(i, j) && gen.fixtureAlive(i, j) && gen.cellSlope(i, j) < 0.3f) {
-                    fx = i;
-                    fz = j;
-                    found = true;
+        int margin = 4;
+        for (int cx = -6; cx <= 6 && !found; cx++) {
+            for (int cz = -6; cz <= 6 && !found; cz++) {
+                for (int li = margin; li <= WorldGen.CHUNK_CELLS - margin && !found; li++) {
+                    for (int lj = margin; lj <= WorldGen.CHUNK_CELLS - margin && !found; lj++) {
+                        int i = cx * WorldGen.CHUNK_CELLS + li;
+                        int j = cz * WorldGen.CHUNK_CELLS + lj;
+                        if (!gen.vWall(i, j)) {
+                            continue;
+                        }
+                        float a = gen.floorY(i - 1, j);
+                        float b = gen.floorY(i, j);
+                        if (Math.abs(a - b) < 0.01f && gen.cellSlope(i - 1, j) < 0.01f
+                                && gen.cellSlope(i, j) < 0.01f) {
+                            chunkX = cx;
+                            chunkZ = cz;
+                            wallX = i;
+                            wallZ = j;
+                            found = true;
+                        }
+                    }
                 }
             }
         }
-        assertTrue("test needs a fixture in the middle of a chunk", found);
+        assertTrue("test needs a flat wall inside a chunk", found);
 
-        int cx = Hash.floorDiv(fx, WorldGen.CHUNK_CELLS);
-        int cz = Hash.floorDiv(fz, WorldGen.CHUNK_CELLS);
-        ChunkData data = ChunkSampler.sample(gen, cx, cz);
+        ChunkData data = ChunkSampler.sample(gen, chunkX, chunkZ);
         int[] lightmap = new int[LightBaker.TEXELS * LightBaker.TEXELS];
         LightBaker.bake(gen, data, lightmap);
 
-        float near = meanBrightness(lightmap, data, fx + 0.5f, fz + 0.5f, cx, cz, 3);
-        float all = meanBrightness(lightmap, data, fx + 0.5f, fz + 0.5f, cx, cz, 1000);
-        assertTrue("the carpet under a tube must be brighter than the chunk average ("
-                + near + " vs " + all + ")", near > all * 1.2f);
+        float nearWall = meanBrightness(lightmap, data, wallX - 0.3f, wallZ + 0.5f, chunkX, chunkZ,
+                1);
+        float openFloor = meanBrightness(lightmap, data, wallX - 1.7f, wallZ + 0.5f, chunkX, chunkZ,
+                1);
+        assertTrue("corners must be occluded: near wall " + nearWall + " vs open floor "
+                + openFloor, nearWall < openFloor * 0.85f);
     }
 
     private float meanBrightness(int[] lightmap, ChunkData data, float wx, float wz,
@@ -83,15 +93,11 @@ public class LightBakerTest {
         int size = LightBaker.TEXELS;
         int sum = 0;
         int count = 0;
-        for (int j = 0; j < size; j++) {
-            for (int i = 0; i < size; i++) {
-                if (window < 100 && (Math.abs(i - ti) > window || Math.abs(j - tj) > window)) {
-                    continue;
-                }
-                int r = (lightmap[j * size + i] >>> 24) & 0xff;
-                int b = lightmap[j * size + i] & 0xff;
-                sum += r + b;
-                count += 2;
+        for (int j = Math.max(0, tj - window); j <= Math.min(size - 1, tj + window); j++) {
+            for (int i = Math.max(0, ti - window); i <= Math.min(size - 1, ti + window); i++) {
+                int texel = lightmap[j * size + i];
+                sum += ((texel >>> 24) & 0xff) + ((texel >>> 16) & 0xff) + ((texel >>> 8) & 0xff);
+                count += 3;
             }
         }
         return count == 0 ? 0f : sum / (float) count;

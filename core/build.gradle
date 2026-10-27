@@ -23,6 +23,15 @@ dependencies {
     testImplementation "com.badlogicgames.gdx:gdx:$gdxVersion"
 }
 
+tasks.named('test') {
+    testLogging {
+        events "failed", "skipped"
+        exceptionFormat "full"
+        showCauses = true
+        showStackTraces = true
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
     options.compilerArgs << "-Xlint:-options"
