@@ -195,8 +195,13 @@ public final class PlayScreen extends ScreenAdapter {
         torchPos.set(camera.position).mulAdd(torchDir, 0.15f);
 
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        Gdx.gl.glClearColor(WorldRenderer.FOG_COLOR_R, WorldRenderer.FOG_COLOR_G,
-                WorldRenderer.FOG_COLOR_B, 1f);
+        if (debugView) {
+            // Anything magenta on screen is a hole: there is no geometry there.
+            Gdx.gl.glClearColor(1f, 0f, 1f, 1f);
+        } else {
+            Gdx.gl.glClearColor(WorldRenderer.FOG_COLOR_R, WorldRenderer.FOG_COLOR_G,
+                    WorldRenderer.FOG_COLOR_B, 1f);
+        }
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glEnable(GL20.GL_CULL_FACE);
