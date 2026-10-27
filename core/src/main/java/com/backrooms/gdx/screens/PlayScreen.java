@@ -213,9 +213,11 @@ public final class PlayScreen extends ScreenAdapter {
         }
         if (statTimer >= 2f) {
             Gdx.app.log("Perf", String.format(java.util.Locale.US,
-                    "fps=%.1f worst=%d drawn=%d/%d queue=%d build=%dms verts=%dk",
+                    "fps=%.1f worst=%d drawn=%d/%d queue=%d build=%dms verts=%dk "
+                            + "cam=%.1f,%.1f,%.1f %s",
                     statFrames / statTimer, statWorst, renderer.drawnChunks(), world.loadedCount(),
-                    world.pendingCount(), world.lastBuildMillis(), renderer.drawnVertices() / 1000));
+                    world.pendingCount(), world.lastBuildMillis(), renderer.drawnVertices() / 1000,
+                    camera.position.x, camera.position.y, camera.position.z, renderer.statusLine()));
             statTimer = 0f;
             statFrames = 0;
             statWorst = 0;

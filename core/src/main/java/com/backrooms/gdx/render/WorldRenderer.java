@@ -58,7 +58,10 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
 
     private int drawnChunks;
     private int drawnVertices;
+    private int skippedNoMesh;
+    private int skippedCulled;
     private boolean ready;
+    private String shaderLog = "";
 
     public WorldRenderer() {
         floorTex = load("textures/carpet_diffuse.jpg", true);
@@ -71,9 +74,13 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         shader = new ShaderProgram(Gdx.files.internal("shaders/world.vert"),
                 Gdx.files.internal("shaders/world.frag"));
         if (!shader.isCompiled()) {
-            Gdx.app.error("WorldRenderer", "Shader failed: " + shader.getLog());
+            shaderLog = shader.getLog().replace('\n', '|');
+            Gdx.app.error("BackroomsGL", "SHADER FAILED: " + shaderLog);
         } else {
             ready = true;
+            Gdx.app.log("BackroomsGL", "shader compiled, variety="
+                    + shader.getVertexShaderSource().length() + "/"
+                    + shader.getFragmentShaderSource().length());
         }
     }
 
@@ -102,12 +109,20 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         return drawnVertices;
     }
 
+    /** One-line summary used by the perf log so a device-only render failure is visible in logcat. */
+    public String statusLine() {
+        return "ready=" + ready + " drawn=" + drawnChunks + " noMesh=" + skippedNoMesh
+                + " culled=" + skippedCulled + (shaderLog.isEmpty() ? "" : " shaderLog=" + shaderLog);
+    }
+
     /** Binds the shader and the shared textures. */
     public void begin(Camera camera, float time, Vector3 cameraPos, Vector3 torchPos,
                       Vector3 torchDir, float torchOn, float fogDensity, float exposure,
                       float normalStrength, float lightRange, float debug) {
         drawnChunks = 0;
         drawnVertices = 0;
+        skippedNoMesh = 0;
+        skippedCulled = 0;
         if (!ready) {
             return;
         }
@@ -152,6 +167,7 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         for (int i = 0; i < chunks.size; i++) {
             Chunk chunk = chunks.get(i);
             if (chunk.mesh == null || chunk.lightmap == null) {
+                skippedNoMesh++;
                 continue;
             }
             float hw = (chunk.maxX - chunk.minX) * 0.5f;
@@ -159,6 +175,7 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
             float hd = (chunk.maxZ - chunk.minZ) * 0.5f;
             if (!camera.frustum.boundsInFrustum(chunk.minX + hw, chunk.minY + hh,
                     chunk.minZ + hd, hw, hh, hd)) {
+                skippedCulled++;
                 continue;
             }
             Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0 + UNIT_LIGHTMAP);

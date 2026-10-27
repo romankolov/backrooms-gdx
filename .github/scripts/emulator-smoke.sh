@@ -140,8 +140,9 @@ PID=$(adb shell pidof "$PKG" | tr -d '\r')
 echo "pid=[$PID]"
 adb shell dumpsys activity activities 2>/dev/null | grep -E "mResumedActivity|topResumedActivity" | head -3 || true
 adb logcat -d > "$SHOTS/logcat.txt" || true
-grep -aE "AndroidRuntime|FATAL|UnsatisfiedLink|GLSL|libGDX|Backrooms|Perf|GL_" \
-  "$SHOTS/logcat.txt" | tail -60 || true
+# Keep the app's own diagnostics (GL shader compile log, perf counters) and any crash.
+grep -aE "AndroidRuntime|FATAL|UnsatisfiedLink|GLSL|libGDX|Backrooms|BackroomsGL|WorldRenderer|Shader|Perf|GL_" \
+  "$SHOTS/logcat.txt" | tail -80 || true
 
 if [ -z "$PID" ]; then
   echo "FATAL: the app is not running any more"
