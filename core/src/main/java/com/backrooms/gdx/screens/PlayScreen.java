@@ -156,6 +156,9 @@ public final class PlayScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
+        // Simulation uses a clamped step so a hitch cannot teleport the player, but the perf
+        // counter has to see the real frame time or a slow device looks like a fast one.
+        float rawDelta = delta;
         delta = Math.min(delta, 0.06f);
         time += delta;
 
@@ -206,10 +209,10 @@ public final class PlayScreen extends ScreenAdapter {
             }
         }
 
-        statTimer += delta;
+        statTimer += rawDelta;
         statFrames++;
-        if (delta > 0.0001f) {
-            statWorst = Math.max(statWorst, (int) (1f / delta));
+        if (rawDelta > 0.0001f) {
+            statWorst = Math.max(statWorst, (int) (1f / rawDelta));
         }
         if (statTimer >= 2f) {
             Gdx.app.log("Perf", String.format(java.util.Locale.US,

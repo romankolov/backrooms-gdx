@@ -62,6 +62,26 @@ jobs:
             -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/title" >> render.log 2>&1 || true
           ls -la screenshots screenshots/title 2>/dev/null
 
+      - name: Verify the render is not blank
+        run: |
+          # A failed shader link leaves a frame of pure clear colour: no geometry, and a PNG that
+          # compresses to a few KB. Never publish (or commit) that.
+          fail=0
+          if grep -qa "SHADER FAILED" render.log; then
+            echo "the world shader did not compile:"; grep -a "SHADER FAILED" render.log
+            fail=1
+          fi
+          for f in screenshots/shot*.png screenshots/title/shot*.png; do
+            [ -f "$f" ] || { echo "missing $f"; fail=1; continue; }
+            size=$(stat -c %s "$f")
+            echo "$f $size bytes"
+            if [ "$size" -lt 30000 ]; then
+              echo "  ^ looks blank (uniform frame)"
+              fail=1
+            fi
+          done
+          exit $fail
+
       - name: Report render log
         if: always()
         env:

@@ -53,6 +53,30 @@ public class ShaderPrecisionTest {
         }
     }
 
+    /**
+     * A precision statement is GLSL ES only. Desktop GL 1.20 rejects {@code precision highp float;}
+     * outright, so anything that is not inside an {@code #ifdef GL_ES} block silently kills the
+     * world on the desktop build (that broke the screenshot job for one commit).
+     */
+    @Test
+    public void precisionStatementsAreGuardedForDesktopGl() throws IOException {
+        for (String name : new String[] {"world.vert", "world.frag"}) {
+            String[] lines = read(name).split("\n");
+            int guard = 0;
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i].trim();
+                if (line.equals("#ifdef GL_ES") || line.equals("#if defined(GL_ES)")) {
+                    guard++;
+                } else if (line.startsWith("#endif") && guard > 0) {
+                    guard--;
+                } else if (line.matches("^precision\\s+(lowp|mediump|highp)\\s+float\\s*;")) {
+                    assertTrue(name + ":" + (i + 1) + " has an unguarded precision statement -"
+                            + " desktop GL 1.20 cannot compile it", guard > 0);
+                }
+            }
+        }
+    }
+
     /** Returns uniform name -> "precision type", using the file's default float precision. */
     private static Map<String, String> uniforms(String source) {
         String defaultPrecision = "highp"; // GLES2 default for vertex shaders
