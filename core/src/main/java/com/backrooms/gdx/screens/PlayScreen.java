@@ -75,6 +75,14 @@ public final class PlayScreen extends ScreenAdapter {
                 // keep the default heading
             }
         }
+        String pitch = System.getProperty("backrooms.pitch");
+        if (pitch != null) {
+            try {
+                player.pitch = (float) Math.toRadians(Double.parseDouble(pitch.trim()));
+            } catch (NumberFormatException ignored) {
+                // keep the default
+            }
+        }
         spin = System.getProperty("backrooms.spin") != null;
 
         camera.near = 0.05f;

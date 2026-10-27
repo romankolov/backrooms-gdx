@@ -58,11 +58,11 @@ void main() {
 
     if (v_mat < 0.5) {
         // ---- wallpaper ----
-        vec2 uv = v_uv * 0.4166;             // one tile every 2.4m
+        vec2 uv = v_uv * 0.8;                // one tile every 1.25m
         albedo = texture2D(u_wallTex, uv).rgb;
         nmap = texture2D(u_wallNormal, uv).rgb;
-        float g = mix(0.40, 1.30, pow(v_aux, 0.7));
-        irr = wallLight * g;
+        float g = mix(0.55, 1.12, pow(v_aux, 0.8));
+        irr = wallLight * g * 0.85;
     } else if (v_mat < 1.5) {
         // ---- carpet ----
         vec2 uv = v_uv * 0.5;                // one tile every 2m
@@ -74,13 +74,13 @@ void main() {
         vec2 uv = v_uv * 0.5;
         albedo = texture2D(u_ceilTex, uv).rgb;
         nmap = texture2D(u_ceilNormal, uv).rgb;
-        irr = mix(lm.rgb * u_lightRange * 0.55, wallLight * 0.35, vert);
+        irr = mix(lm.rgb * u_lightRange * 0.42, wallLight * 0.30, vert);
     } else {
         // ---- fluorescent panel ----
         vec2 p = fract(v_pos.xz + 0.5) * 2.0;
         float frame = step(0.10, p.x) * step(0.10, p.y) * step(p.x, 1.90) * step(p.y, 1.90);
         float tubes = 0.72 + 0.28 * sin(p.y * 26.0);
-        albedo = mix(vec3(0.30, 0.30, 0.29), vec3(0.94, 0.93, 0.86), frame);
+        albedo = mix(vec3(0.62, 0.62, 0.60), vec3(0.94, 0.93, 0.86), frame);
         nmap = vec3(0.5, 0.5, 1.0);
         irr = lm.rgb * u_lightRange * 0.30;
         emission = vec3(1.0, 0.985, 0.90) * (0.35 + 0.65 * frame) * tubes * v_emit * 3.2;
