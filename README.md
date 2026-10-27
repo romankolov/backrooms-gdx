@@ -1,1 +1,182 @@
-# backrooms-gdx
+# The Backrooms — an infinite libGDX world for Android
+
+An endless, procedurally generated Backrooms walker written in Java with [libGDX](https://libgdx.com).
+You can walk (or run, or fall) in any direction forever: the level streams in around you and is
+thrown away behind you, so the map never ends and memory never grows.
+
+![A room in Level 0](screenshots/shot0.png)
+![Looking down a corridor](screenshots/shot2.png)
+
+---
+
+## What is in the box
+
+| | |
+| --- | --- |
+| **Infinite map** | Height field of drooping floors, 25 cm stair treads, ledges and holes, cut by 7 m rooms with doorways, dividers and open halls. Every wall, height, light and hole is a pure hash of its integer coordinates and the world seed, so any chunk can be generated on its own and always comes out the same. |
+| **Streaming** | Chunks (16 × 16 m) are sampled, meshed and light-baked on background threads, uploaded at most two per frame, and released again behind you. Draw distance adjustable in game (2–6 chunks). |
+| **Baked lighting** | Soft fluorescent pools, contact shadows in corners and a bounce pass, all baked per chunk at 2 texels/m into an 8 KB lightmap (irradiance on floors in RGB, on walls in alpha). Zero dynamic lights at runtime. |
+| **Materials** | The CC0 wallpaper, carpet and ceiling tile sets with their normal maps (normal-mapped, specular, parallax-free), plus procedural fluorescent panels that flicker. |
+| **Lighting model** | Warm fluorescent tubes, a handheld torch cone, distance haze, ACES tone mapping, vignette and a touch of sensor grain. |
+| **Audio** | Procedural carpet footsteps (4 variations, randomised pitch/pan), a 50/100 Hz fluorescent buzz loop that fades in as you approach a working tube, and a low room tone. No third-party samples. |
+| **Controls** | Touch: floating stick on the left, drag-to-look on the right, run/jump/torch/pause buttons. Keyboard and mouse also work (desktop build). |
+| **Platforms** | Android (`minSdk 24`, arm64 + armv7 + x86_64) and a desktop launcher used for development and screenshots. |
+
+## Screenshots
+
+Rendered by CI on software OpenGL (llvmpipe), 1280×720:
+
+`python3 tools/map_preview.py out.png 20241027 168` also draws a top-down plan of any seed:
+
+![Floor plan](docs/floorplan.png)
+
+---
+
+## Building
+
+### Requirements
+
+* JDK 17
+* Android SDK with platform 35 and build-tools (only needed for the APK)
+* Nothing else — the Gradle wrapper is checked in
+
+### APK
+
+```sh
+./gradlew :android:assembleDebug        # android/build/outputs/apk/debug/*.apk
+./gradlew :android:assembleRelease      # unsigned release build
+```
+
+Install on a connected device:
+
+```sh
+adb install -r android/build/outputs/apk/debug/android-debug.apk
+```
+
+### Desktop (development)
+
+```sh
+./gradlew :desktop:run
+```
+
+Handy system properties for the desktop run:
+
+| Property | Effect |
+| --- | --- |
+| `-Dbackrooms.autostart=1` | skip the title screen |
+| `-Dbackrooms.seed=1234` | force a world seed |
+| `-Dbackrooms.spin=1` | slowly rotate the view (used by the screenshot job) |
+| `-Dbackrooms.yaw=45 -Dbackrooms.pitch=-7` | starting heading / pitch in degrees |
+| `-Dbackrooms.debug=1` | material colour view, magenta = hole in the geometry |
+| `-Dbackrooms.hud=1` | show the performance readout |
+| `-Dbackrooms.capture=dir -Dbackrooms.frames=270` | render `frames` frames, dump PNGs into `dir`, quit |
+
+### Tests
+
+```sh
+./gradlew :core:test
+```
+
+17 unit tests cover the generator (determinism, seeds, wall density, stair grid, chunk seams),
+the mesher (winding, index bounds, bounds, lightmap), the light baker (occlusion, blockages) and the
+player physics (landing, thin-wall collision, 1200 steps of random walking without ever clipping
+through a wall or sinking through the floor), plus a streaming test that builds and releases chunks.
+
+### CI
+
+`.github/workflows/android.yml` runs the tests, builds debug and release APKs on every push and
+uploads them as artifacts; pushing a tag such as `v1.0.0` publishes both APKs to a GitHub release.
+`.github/workflows/screenshots.yml` boots the desktop build under Xvfb with software GL, renders the
+level and commits the PNGs in `screenshots/` (visual regression by eyeball).
+
+To sign a release build, put these in the environment before running Gradle:
+`BACKROOMS_KEYSTORE`, `BACKROOMS_KEYSTORE_PASSWORD`, `BACKROOMS_KEY_ALIAS`,
+`BACKROOMS_KEY_PASSWORD`.
+
+---
+
+## How it works
+
+```
+core/src/main/java/com/backrooms/gdx
+├── world/WorldGen.java        pure, stateless description of the level (no allocation)
+├── world/ChunkSampler.java    fills a ChunkData (+1 cell border) from the generator   [worker]
+├── chunk/ChunkMesher.java     visible faces only, one mesh per chunk                  [worker]
+├── light/LightBaker.java      irradiance bake: fixtures, soft shadows, AO, bounce     [worker]
+├── world/World.java           streaming, priority, upload budget, unloading           [render]
+├── render/WorldRenderer.java  one shader, 6 tiled textures, one draw call per chunk
+├── player/Player.java         first person movement, thin-wall capsule collision
+├── input/TouchControls.java   floating stick, drag look, buttons, keyboard
+├── audio/AudioManager.java    footsteps, buzz that follows the nearest tube, room tone
+└── ui/Hud.java, screens/…     title screen, HUD, pause menu
+```
+
+### The level
+
+* **Floor** comes from two octaves of value noise; the upper tail becomes stair terraces, the lower
+  tail becomes dips, and a second noise field punches the occasional deep hole. Heights are
+  quantised to 25 cm so slopes turn into stair treads you can walk up.
+* **Walls** live on the integer grid lines and are 16 cm thick. Room borders are walls with two-cell
+  doorways; roughly one in six borders is missing entirely, which produces the big open halls of
+  Level 0. About half of the rooms get a single internal divider with a gap.
+* **Ceilings** follow the floor plus a room height that varies a little between 5-cell blocks; the
+  differences are closed with vertical drop faces so you never see through a wall top.
+* **Fluorescent fixtures** sit on one lattice point per room, a few sockets are empty and a few
+  tubes are burned out or flicker.
+
+Because everything is a function of the seed and the coordinates, chunks can be built in any order,
+from any thread, and the world is infinite in every direction with no seams.
+
+### The lighting
+
+Per chunk the baker writes a 34 × 34 lightmap (2 texels per metre plus a border so neighbouring
+chunks filter seamlessly):
+
+1. for every texel, the nearby fixtures are attenuated by distance and visibility (a grid DDA that
+   stops at walls, floors and ceilings);
+2. an ambient occlusion term from five short probe rays;
+3. a cheap one-bounce blur added back (light from the carpet filling the room);
+4. sqrt encoding for gradient precision in the dark end.
+
+The shader decodes it, applies normal mapping and specular from the diffuse/normal maps, adds the
+torch cone, the panel emission with flicker, exponential haze, ACES tone mapping and a vignette.
+
+### Optimisation notes
+
+* one draw call per chunk, all six textures bound once per frame;
+* faces between walls, risers under walls and geometry outside the chunk are never emitted;
+* CPU frustum culling per chunk (13–18 of 37 loaded chunks drawn in the CI render);
+* no dynamic lights, no shadow maps, no lighting recomputation at runtime;
+* chunk build ≈ 27–51 ms on the CI runner's CPU, spread over up to two worker threads, two uploads
+  per frame maximum;
+* per-frame allocations in the hot path are avoided; bitmaps are uploaded once.
+
+On a mid-range phone the target is 60 fps with a 3 chunk radius; drop the radius in the pause menu
+if your device needs it.
+
+### Tuning knobs
+
+| Constant | Where | Meaning |
+| --- | --- | --- |
+| `CHUNK_CELLS` | `WorldGen` | chunk edge in metres (16) |
+| `MACRO` | `WorldGen` | room size (7 m) |
+| `LIGHT_SPACING` / `LIGHT_PHASE` | `WorldGen` | fixture lattice |
+| `HEIGHT_STEP` | `WorldGen` | stair tread height (0.25 m) |
+| `LIGHT_INTENSITY`, `FALLOFF`, `RANGE` | `LightBaker` | brightness, falloff and lightmap encoding |
+| `TEXELS_PER_METER` | `LightBaker` | lightmap resolution (2) |
+| `WALK_SPEED`, `SPRINT_SPEED`, `GRAVITY`, `JUMP_SPEED` | `Player` | movement feel |
+| `fogDensity`, `exposure` | `PlayScreen` | haze and exposure |
+
+## Assets
+
+* Textures: [amini-allight/backrooms-textures](https://github.com/amini-allight/backrooms-textures),
+  CC0 1.0 — created and/or modified by Amini Allight.
+* Everything else (audio, icons, font atlas) is generated by `tools/make_assets.py`.
+* See `assets/CREDITS.md`.
+
+## Known limitations / next steps
+
+* No device-side profiling yet; the render distance menu item is the only quality switch.
+* Entities (the occasional something in the corridors) are not implemented.
+* The desktop build is a development tool, not a shipped target.
+* Multi-threaded chunk building uses up to 2 workers; a job system would scale to more cores.
