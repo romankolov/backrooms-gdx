@@ -151,8 +151,10 @@ jobs:
               emulator-shots/logcat.txt 2>/dev/null | tail -40 || echo "(no logcat)"
             echo '```'
           } > report.txt
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" \
-            -f body="$(cat report.txt)" || true
+          echo "----- report -----"
+          cat report.txt
+          gh issue comment 1 --body-file report.txt || gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/1/comments" -F body=@report.txt || true
 
       - name: Commit emulator screenshots
         if: steps.smoke.outcome == 'success'
@@ -175,4 +177,7 @@ jobs:
         if: steps.smoke.outcome != 'success'
         run: |
           echo "The app did not start or did not stay alive on the emulator."
+          echo "--- filtered logcat ---"
+          grep -aE "AndroidRuntime|FATAL|UnsatisfiedLink|GLSL|libGDX|Backrooms|Perf|ActivityManager|am_proc" \
+            emulator-shots/logcat.txt 2>/dev/null | tail -60 || true
           exit 1

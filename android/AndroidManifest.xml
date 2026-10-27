@@ -13,8 +13,10 @@
         android:label="@string/app_name"
         android:theme="@style/GdxTheme">
 
+        <!-- Fully qualified: the launcher lives in com.backrooms.gdx.android, which is not the
+             namespace, so a relative name would resolve to a class that does not exist. -->
         <activity
-            android:name=".AndroidLauncher"
+            android:name="com.backrooms.gdx.android.AndroidLauncher"
             android:exported="true"
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density"
