@@ -43,6 +43,9 @@ public final class PlayScreen extends ScreenAdapter {
     private final float[] landing = new float[3];
 
     private float time;
+    private float statTimer;
+    private long statFrames;
+    private int statWorst;
     private boolean paused;
     private float fade = 1f;
     private boolean teleporting;
@@ -189,6 +192,21 @@ public final class PlayScreen extends ScreenAdapter {
             } else if (fade > 0f) {
                 fade = Math.max(0f, fade - delta * 1.1f);
             }
+        }
+
+        statTimer += delta;
+        statFrames++;
+        if (delta > 0.0001f) {
+            statWorst = Math.max(statWorst, (int) (1f / delta));
+        }
+        if (statTimer >= 2f) {
+            Gdx.app.log("Perf", String.format(java.util.Locale.US,
+                    "fps=%.1f worst=%d drawn=%d/%d queue=%d build=%dms verts=%dk",
+                    statFrames / statTimer, statWorst, renderer.drawnChunks(), world.loadedCount(),
+                    world.pendingCount(), world.lastBuildMillis(), renderer.drawnVertices() / 1000));
+            statTimer = 0f;
+            statFrames = 0;
+            statWorst = 0;
         }
 
         player.applyTo(camera);

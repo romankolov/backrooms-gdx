@@ -141,9 +141,10 @@ public final class Hud {
         if (debug) {
             BitmapFont font = assets.font;
             font.setColor(TEXT_DIM);
-            font.draw(batch, debugLine1, 18f * s, height - 18f * s);
+            float line = font.getLineHeight() * 1.15f;
+            font.draw(batch, debugLine1, 18f * s, height - 14f * s);
             if (debugLine2 != null) {
-                font.draw(batch, debugLine2, 18f * s, height - 40f * s);
+                font.draw(batch, debugLine2, 18f * s, height - 14f * s - line);
             }
         }
         batch.end();

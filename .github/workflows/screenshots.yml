@@ -67,8 +67,11 @@ jobs:
             echo "files:"
             ls -la screenshots || true
             echo
+            echo "performance:"
+            grep -a "Perf\|Capture\|Exception\|error" render.log 2>/dev/null | tail -20 || true
+            echo
             echo "render log tail:"
-            tail -c 9000 render.log 2>/dev/null || echo "(no render.log)"
+            tail -c 4000 render.log 2>/dev/null || echo "(no render.log)"
           } > report.txt
           BODY=$(printf 'Screenshot run `%s`\n\n```\n%s\n```\n' "${GITHUB_SHA::7}" "$(cat report.txt)")
           gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" -f body="$BODY" || true

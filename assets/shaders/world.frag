@@ -99,10 +99,10 @@ void main() {
     vec3 toFrag = v_pos - u_flashPos;
     float torchDist = length(toFrag);
     vec3 L = toFrag / max(torchDist, 0.001);
-    float cone = smoothstep(0.70, 0.93, dot(L, u_flashDir));
+    float cone = smoothstep(0.55, 0.96, dot(L, u_flashDir));
     float atten = 1.0 / (1.0 + torchDist * torchDist * 0.10);
     float ndl = max(dot(nb, -L), 0.0);
-    irr += vec3(1.0, 0.94, 0.80) * cone * atten * ndl * u_flashOn * 2.6;
+    irr += vec3(1.0, 0.94, 0.80) * cone * atten * ndl * u_flashOn * 1.5;
 
     vec3 V = normalize(u_camPos - v_pos);
     vec3 H = normalize(V + vec3(0.0, 1.0, 0.0));
