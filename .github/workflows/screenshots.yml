@@ -5,6 +5,12 @@ name: Screenshots
 on:
   push:
     branches: ['**']
+    paths:
+      - 'assets/shaders/**'
+      - 'core/src/main/java/com/backrooms/gdx/render/**'
+      - 'core/src/main/java/com/backrooms/gdx/light/**'
+      - 'desktop/**'
+      - '.github/workflows/screenshots.yml'
   workflow_dispatch:
 
 permissions:

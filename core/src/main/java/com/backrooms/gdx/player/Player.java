@@ -21,7 +21,7 @@ public final class Player {
     public static final float SPRINT_SPEED = 5.4f;
     public static final float GRAVITY = 24f;
     public static final float JUMP_SPEED = 6.3f;
-    public static final float STEP_HEIGHT = WorldGen.STEP_HEIGHT;
+    public static final float STEP_HEIGHT = 0.55f;   // stairs climb 0.25m per tread
     private static final float TH = WorldGen.WALL_HALF_THICKNESS;
 
     public final Vector3 position = new Vector3();

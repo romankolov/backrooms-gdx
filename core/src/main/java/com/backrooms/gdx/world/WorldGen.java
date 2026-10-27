@@ -22,7 +22,7 @@ public final class WorldGen {
     /** Height of a room from floor to ceiling. */
     public static final float ROOM_HEIGHT = 2.9f;
     /** Room grid period, in cells. */
-    public static final int MACRO = 6;
+    public static final int MACRO = 7;
     /** Light fixtures sit on this lattice (in cells), one per room. */
     public static final int LIGHT_SPACING = MACRO;
     /** Fixtures are placed on cells with this phase inside the room lattice. */
@@ -48,18 +48,18 @@ public final class WorldGen {
 
     /** Smooth, unquantised floor height at a world position (metres). */
     public float rawHeight(float x, float z) {
-        float t = Hash.fbm2(seed ^ 0x1b873593, x * 0.030f, z * 0.030f);
+        float t = Hash.fbm2(seed ^ 0x1b873593, x * 0.022f, z * 0.022f);
         float h = 0f;
-        if (t > 0.12f) {
-            h = (t - 0.12f) * 2.6f;              // terraces and stair cases climbing up
-        } else if (t < -0.15f) {
-            h = (t + 0.15f) * 3.0f;              // shallow dips
+        if (t > 0.26f) {
+            h = (t - 0.26f) * 2.2f;              // terraces and stair cases climbing up
+        } else if (t < -0.30f) {
+            h = (t + 0.30f) * 2.4f;              // shallow dips
         }
-        float pit = Hash.fbm3(seed ^ 0x2545f491, x * 0.019f + 11f, z * 0.019f - 7f);
-        if (pit > 0.40f) {
-            h -= (pit - 0.40f) * 13f;            // the occasional hole in the floor
+        float pit = Hash.fbm3(seed ^ 0x2545f491, x * 0.016f + 11f, z * 0.016f - 7f);
+        if (pit > 0.47f) {
+            h -= (pit - 0.47f) * 14f;            // the occasional hole in the floor
         }
-        return Hash.clamp(h, -7.5f, 3.2f);
+        return Hash.clamp(h, -5f, 2.25f);
     }
 
     /** Quantised floor height of a cell; the visible stair treads. */
@@ -88,7 +88,7 @@ public final class WorldGen {
     /** Wall on the vertical line {@code x = cellX}, spanning {@code z in [cellZ, cellZ+1)}. */
     public boolean vWall(int cellX, int cellZ) {
         if (vMacroWall(cellX)) {
-            return !vDoorway(cellX, cellZ);
+            return !vDoorway(cellX, cellZ) && !vOpenBorder(cellX, cellZ);
         }
         return vClutter(cellX, cellZ);
     }
@@ -96,9 +96,20 @@ public final class WorldGen {
     /** Wall on the horizontal line {@code z = cellZ}, spanning {@code x in [cellX, cellX+1)}. */
     public boolean hWall(int cellX, int cellZ) {
         if (hMacroWall(cellZ)) {
-            return !hDoorway(cellX, cellZ);
+            return !hDoorway(cellX, cellZ) && !hOpenBorder(cellX, cellZ);
         }
         return hClutter(cellX, cellZ);
+    }
+
+    /** Some room borders are missing entirely, which opens up the big halls of Level 0. */
+    private boolean vOpenBorder(int cellX, int cellZ) {
+        int line = Hash.floorDiv(cellX, MACRO);
+        return (Hash.hash2(seed ^ 0x3c6ef372, line, Hash.floorDiv(cellZ, MACRO)) & 255) < 34;
+    }
+
+    private boolean hOpenBorder(int cellX, int cellZ) {
+        int line = Hash.floorDiv(cellZ, MACRO);
+        return (Hash.hash2(seed ^ 0x3c6ef373, line, Hash.floorDiv(cellX, MACRO)) & 255) < 34;
     }
 
     private boolean vMacroWall(int cellX) {
@@ -133,31 +144,41 @@ public final class WorldGen {
         return lx == door || lx == door + 1;
     }
 
-    /** Short random wall stubs inside a room: the source of the maze-like dead ends. */
-    private boolean vClutter(int cellX, int cellZ) {
-        if (!inRoomInterior(cellX, cellZ)) return false;
-        for (int k = 0; k < 5; k++) {
-            int z = cellZ - k;
-            int h = Hash.hash2(seed ^ 0x7feb352d, cellX, z);
-            if ((h & 0x3f) == 0) {
-                int len = 2 + ((h >>> 8) & 3);
-                if (k < len) return true;
-            }
+    /**
+     * One internal wall per room, in about half of the rooms, with a gap in it. This gives rooms an
+     * interior without filling the level with noise.
+     */
+    private boolean divider(int cellX, int cellZ, boolean vertical) {
+        int local = Hash.floorMod(vertical ? cellX : cellZ, MACRO);
+        if (local == 0) {
+            return false;
         }
-        return false;
+        int other = Hash.floorMod(vertical ? cellZ : cellX, MACRO);
+        if (other == 0) {
+            return false;                       // keep the doorway zone of the room border clear
+        }
+        int rx = Hash.floorDiv(vertical ? cellX : cellZ, MACRO);
+        int rz = Hash.floorDiv(vertical ? cellZ : cellX, MACRO);
+        int h = Hash.hash2(seed ^ 0x7feb352d, rx, rz);
+        if ((h & 255) >= 236) {
+            return false;                       // this room is undivided
+        }
+        if ((((h >> 8) & 1) == 1) != vertical) {
+            return false;                       // divided along the other axis
+        }
+        if (1 + ((h >> 9) % (MACRO - 2)) != local) {
+            return false;
+        }
+        int gap = 1 + ((h >> 15) % (MACRO - 2));
+        return !(other == gap || other == (gap + 1) % MACRO);
+    }
+
+    private boolean vClutter(int cellX, int cellZ) {
+        return divider(cellX, cellZ, true);
     }
 
     private boolean hClutter(int cellX, int cellZ) {
-        if (!inRoomInterior(cellX, cellZ)) return false;
-        for (int k = 0; k < 5; k++) {
-            int x = cellX - k;
-            int h = Hash.hash2(seed ^ 0x7feb352e, x, cellZ);
-            if ((h & 0x3f) == 0) {
-                int len = 2 + ((h >>> 8) & 3);
-                if (k < len) return true;
-            }
-        }
-        return false;
+        return divider(cellX, cellZ, false);
     }
 
     /** True when the cell is at least one cell away from every room border, i.e. doors stay clear. */
