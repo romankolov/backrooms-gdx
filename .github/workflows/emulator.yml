@@ -1,0 +1,123 @@
+name: Android emulator smoke test
+
+# Installs the debug APK on a real Android image and checks that it starts, renders and keeps
+# running. This is the only way to catch launch-time crashes (missing natives, bad manifest,
+# shader compile failures) before shipping.
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  emulator:
+    name: Launch on emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Cache Gradle
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-emu-${{ runner.os }}-${{ hashFiles('**/*.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-emu-${{ runner.os }}-
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :android:assembleDebug --no-daemon --console=plain
+
+      - name: Enable KVM
+        run: |
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+            echo "KVM available"
+          else
+            echo "No KVM: the emulator will run unaccelerated (slower)"
+          fi
+
+      - name: Run on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: default
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -accel auto -memory 3072
+          script: |
+            set -x
+            APK=$(find android/build/outputs/apk/debug -name '*.apk' | head -1)
+            echo "installing $APK"
+            adb install -r "$APK" || exit 1
+            adb logcat -c
+            adb shell am start -n com.backrooms.gdx.debug/com.backrooms.gdx.android.AndroidLauncher
+            sleep 25
+            PID=$(adb shell pidof com.backrooms.gdx.debug | tr -d '\r')
+            echo "pid=[$PID]"
+            mkdir -p emulator-shots
+            adb exec-out screencap -p > emulator-shots/title.png || true
+            # Let the title screen fade through into the level, then look at it again.
+            adb shell input tap 640 360
+            sleep 25
+            adb exec-out screencap -p > emulator-shots/ingame.png || true
+            adb logcat -d > emulator-shots/logcat.txt
+            grep -E "AndroidRuntime|FATAL|UnsatisfiedLink|GLSL|libgdx|Perf" emulator-shots/logcat.txt | tail -40
+            test -n "$PID" || { echo "FATAL: the app is no longer running"; exit 1; }
+            if grep -q "FATAL EXCEPTION" emulator-shots/logcat.txt; then
+              echo "FATAL: the app crashed"; exit 1
+            fi
+            echo "app is alive after 50s"
+
+      - name: Upload emulator artifacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: emulator-shots
+          path: emulator-shots
+          if-no-files-found: warn
+
+      - name: Commit emulator screenshots
+        if: success()
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p screenshots/android
+          cp emulator-shots/*.png screenshots/android/ 2>/dev/null || true
+          git add -f screenshots/android/*.png 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "no new screenshots"
+          else
+            git commit -m "docs: emulator screenshots [skip ci]"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: Report result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Emulator run for \`${GITHUB_SHA::7}\`"
+            echo '```'
+            tail -c 6000 emulator-shots/logcat.txt 2>/dev/null | grep -E "AndroidRuntime|FATAL|UnsatisfiedLink|GLSL|Error|error|Perf|libGDX|Backrooms" | tail -40 || echo "(no logcat)"
+            echo '```'
+          } > report.txt
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" -f body="$(cat report.txt)" || true

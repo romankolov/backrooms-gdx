@@ -118,6 +118,7 @@ public final class PlayScreen extends ScreenAdapter {
             public boolean keyDown(int keycode) {
                 if (keycode == com.badlogic.gdx.Input.Keys.ESCAPE
                         || keycode == com.badlogic.gdx.Input.Keys.BACK) {
+                    // Android back / desktop escape: pause instead of killing the activity.
                     setPaused(!paused);
                     return true;
                 }
