@@ -39,37 +39,28 @@ public class LightBakerTest {
     }
 
     @Test
-    public void brightnessPeaksUnderAFixture() {
+    public void fixturesLightTheFloorAroundThem() {
         WorldGen gen = new WorldGen(11);
+        // Pick a fixture that sits well inside its chunk so both the "under the tube" window
+        // and the overall average can be measured on one lightmap.
         int fx = 0;
         int fz = 0;
         boolean found = false;
         for (int i = -80; i < 80 && !found; i += WorldGen.LIGHT_SPACING) {
             for (int j = -80; j < 80 && !found; j += WorldGen.LIGHT_SPACING) {
-                if (!gen.fixtureAt(i, j) || !gen.fixtureAlive(i, j)) {
+                int lx = Hash.floorMod(i, WorldGen.CHUNK_CELLS);
+                int lz = Hash.floorMod(j, WorldGen.CHUNK_CELLS);
+                if (lx < 4 || lx > 11 || lz < 4 || lz > 11) {
                     continue;
                 }
-                // Require some elbow room so the measurement is not confused by other tubes.
-                boolean isolated = true;
-                for (int di = -3; di <= 3 && isolated; di++) {
-                    for (int dj = -3; dj <= 3; dj++) {
-                        if (di == 0 && dj == 0) continue;
-                        int oi = i + di * WorldGen.LIGHT_SPACING;
-                        int oj = j + dj * WorldGen.LIGHT_SPACING;
-                        if (Math.abs(di) + Math.abs(dj) < 3 && gen.fixtureAt(oi, oj)) {
-                            isolated = false;
-                            break;
-                        }
-                    }
-                }
-                if (isolated) {
+                if (gen.fixtureAt(i, j) && gen.fixtureAlive(i, j) && gen.cellSlope(i, j) < 0.3f) {
                     fx = i;
                     fz = j;
                     found = true;
                 }
             }
         }
-        assertTrue("test needs an isolated fixture", found);
+        assertTrue("test needs a fixture in the middle of a chunk", found);
 
         int cx = Hash.floorDiv(fx, WorldGen.CHUNK_CELLS);
         int cz = Hash.floorDiv(fz, WorldGen.CHUNK_CELLS);
@@ -77,25 +68,32 @@ public class LightBakerTest {
         int[] lightmap = new int[LightBaker.TEXELS * LightBaker.TEXELS];
         LightBaker.bake(gen, data, lightmap);
 
-        int near = sampleBrightness(lightmap, data, fx + 0.5f, fz + 0.5f, cx, cz);
-        int far = sampleBrightness(lightmap, data, fx + 0.5f + 5f, fz + 0.5f, cx, cz);
-        assertTrue("the floor under a tube must be the brightest part (" + near + " vs " + far + ")",
-                near > far);
+        float near = meanBrightness(lightmap, data, fx + 0.5f, fz + 0.5f, cx, cz, 3);
+        float all = meanBrightness(lightmap, data, fx + 0.5f, fz + 0.5f, cx, cz, 1000);
+        assertTrue("the carpet under a tube must be brighter than the chunk average ("
+                + near + " vs " + all + ")", near > all * 1.2f);
     }
 
-    private int sampleBrightness(int[] lightmap, ChunkData data, float wx, float wz,
-                                 int chunkX, int chunkZ) {
+    private float meanBrightness(int[] lightmap, ChunkData data, float wx, float wz,
+                                 int chunkX, int chunkZ, int window) {
         float x0 = chunkX * WorldGen.CHUNK_SIZE - LightBaker.PAD;
         float z0 = chunkZ * WorldGen.CHUNK_SIZE - LightBaker.PAD;
         int ti = (int) ((wx - x0) / LightBaker.TEXEL_SIZE);
         int tj = (int) ((wz - z0) / LightBaker.TEXEL_SIZE);
         int size = LightBaker.TEXELS;
-        int best = 0;
-        for (int j = Math.max(0, tj - 2); j <= Math.min(size - 1, tj + 2); j++) {
-            for (int i = Math.max(0, ti - 2); i <= Math.min(size - 1, ti + 2); i++) {
-                best = Math.max(best, (lightmap[j * size + i] >>> 24) & 0xff);
+        int sum = 0;
+        int count = 0;
+        for (int j = 0; j < size; j++) {
+            for (int i = 0; i < size; i++) {
+                if (window < 100 && (Math.abs(i - ti) > window || Math.abs(j - tj) > window)) {
+                    continue;
+                }
+                int r = (lightmap[j * size + i] >>> 24) & 0xff;
+                int b = lightmap[j * size + i] & 0xff;
+                sum += r + b;
+                count += 2;
             }
         }
-        return best;
+        return count == 0 ? 0f : sum / (float) count;
     }
 }

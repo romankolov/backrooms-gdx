@@ -62,8 +62,11 @@ public class ChunkMesherTest {
         assertTrue(build.minX <= 0f && build.maxX >= WorldGen.CHUNK_SIZE);
         assertTrue(build.minZ <= 0f && build.maxZ >= WorldGen.CHUNK_SIZE);
         assertTrue(build.minY < build.maxY);
-        assertEquals(-0.5f, build.minX, 0.001f);
-        assertEquals(WorldGen.CHUNK_SIZE + 0.5f, build.maxX, 0.001f);
+        float pad = WorldGen.WALL_HALF_THICKNESS + 0.05f;
+        assertEquals(-pad, build.minX, 0.001f);
+        assertEquals(WorldGen.CHUNK_SIZE + pad, build.maxX, 0.001f);
+        assertEquals(-pad, build.minZ, 0.001f);
+        assertEquals(WorldGen.CHUNK_SIZE + pad, build.maxZ, 0.001f);
     }
 
     @Test
