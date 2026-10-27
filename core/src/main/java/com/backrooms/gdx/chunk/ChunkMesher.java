@@ -14,6 +14,7 @@ import com.backrooms.gdx.world.WorldGen;
 public final class ChunkMesher {
 
     private static final float EPS = 0.0005f;
+    private static final float THICK = WorldGen.WALL_HALF_THICKNESS;
 
     private ChunkMesher() {
     }
@@ -70,9 +71,18 @@ public final class ChunkMesher {
                 float x = d.cellX0 + li;
                 float z = d.cellZ0 + lj;
 
+                // Floors and ceilings reach the centre line of any adjoining wall. Without this
+                // the 16 cm thick wall would leave a sliver of void between its face and the
+                // edge of the ceiling plane.
+                float x0 = x - (d.vWallAt(li, lj) ? THICK : 0f);
+                float x1 = x + 1f + (d.vWallAt(li + 1, lj) ? THICK : 0f);
+                float z0 = z - (d.hWallAt(li, lj) ? THICK : 0f);
+                float z1 = z + 1f + (d.hWallAt(li, lj + 1) ? THICK : 0f);
                 mb.setLightmapOffset(0f, 0f);
-                mb.rect(x, f, z, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 1f, 0f, MeshBuilder.MAT_FLOOR, 0f);
-                mb.rect(x, c, z, 1f, 0f, 0f, 0f, 0f, 1f, 0f, -1f, 0f, MeshBuilder.MAT_CEILING, 0f);
+                mb.rect(x0, f, z0, x1 - x0, 0f, 0f, 0f, 0f, z1 - z0, 0f, 1f, 0f,
+                        MeshBuilder.MAT_FLOOR, 0f);
+                mb.rect(x0, c, z0, x1 - x0, 0f, 0f, 0f, 0f, z1 - z0, 0f, -1f, 0f,
+                        MeshBuilder.MAT_CEILING, 0f);
 
                 // Stair risers and the walls of holes, emitted by the higher cell only.
                 float nf;

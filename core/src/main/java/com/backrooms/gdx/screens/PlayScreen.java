@@ -50,7 +50,8 @@ public final class PlayScreen extends ScreenAdapter {
     private float exposure = 1.05f;
     private int seed;
     private final boolean spin;
-    private final boolean debugView = System.getProperty("backrooms.debug") != null;
+    private final boolean debugView = System.getProperty("backrooms.debug", "0").trim()
+            .matches("1|true|yes");
 
     public PlayScreen(BackroomsGame game, int seed) {
         this.game = game;
@@ -218,7 +219,8 @@ public final class PlayScreen extends ScreenAdapter {
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDisable(GL20.GL_CULL_FACE);
 
-        boolean hudDebug = settings.showDebug || System.getProperty("backrooms.hud") != null;
+        boolean hudDebug = settings.showDebug || System.getProperty("backrooms.hud", "0")
+                .trim().matches("1|true|yes");
         if (hudDebug) {
             hud.drawGameplay(controls, player.torchOn, true, debugLine1(), debugLine2());
         } else {
