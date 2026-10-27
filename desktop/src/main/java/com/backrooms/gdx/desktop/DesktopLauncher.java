@@ -40,7 +40,7 @@ public final class DesktopLauncher {
 
     /** Renders normally and dumps a few PNGs, then quits. Used to eyeball the renderer in CI. */
     private static final class CaptureWrapper implements ApplicationListener {
-        private static final int[] SHOTS = {60, 160, 260};
+        private static final int[] SHOTS = {90, 180, 270};
 
         private final ApplicationListener delegate;
         private final String directory;

@@ -49,6 +49,8 @@ public final class PlayScreen extends ScreenAdapter {
     private boolean paused;
     private float fade = 1f;
     private boolean teleporting;
+    private boolean waitingForWorld = true;
+    private float waited;
     private float fogDensity;
     private float exposure = 1.05f;
     private int seed;
@@ -188,7 +190,16 @@ public final class PlayScreen extends ScreenAdapter {
                 fade = Math.min(1f, fade + delta * 3.2f);
                 if (fade >= 0.999f) {
                     relocate();
+                    waitingForWorld = true;
                 }
+            } else if (waitingForWorld) {
+                // Hold the fade until the chunks around the player are on the GPU, so the level
+                // never opens on an empty void.
+                waited += delta;
+                if (world.isAreaReady(player.position.x, player.position.z) || waited > 6f) {
+                    waitingForWorld = false;
+                }
+                fade = 1f;
             } else if (fade > 0f) {
                 fade = Math.max(0f, fade - delta * 1.1f);
             }
@@ -328,6 +339,7 @@ public final class PlayScreen extends ScreenAdapter {
     }
 
     private void relocate() {
+        waited = 0f;
         float[] out = new float[3];
         for (int attempt = 0; attempt < 24; attempt++) {
             float x = player.position.x + (random.nextFloat() - 0.5f) * 600f;
