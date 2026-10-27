@@ -54,6 +54,23 @@ jobs:
           find android/build/outputs/apk -name '*.apk' -exec cp {} artifacts/ \;
           ls -la artifacts
 
+      - name: Report APK
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "APK report for \`${GITHUB_SHA::7}\`"
+            echo '```'
+            ls -la artifacts
+            for f in artifacts/*.apk; do
+              echo "--- $f"
+              unzip -l "$f" | grep -E "assets/|\.so$|classes.dex" | head -40
+            done
+            echo '```'
+          } > report.txt
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" -f body="$(cat report.txt)" || true
+
       - name: Upload debug APK
         if: success()
         uses: actions/upload-artifact@v5

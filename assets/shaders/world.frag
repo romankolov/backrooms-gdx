@@ -55,7 +55,7 @@ void main() {
     // Vertical faces (stair risers, the sides of holes, ceiling steps) are lit by the wall
     // channel of the lightmap even when they use the carpet or ceiling material.
     float vert = 1.0 - abs(normalize(v_normal).y);
-    vec3 wallLight = vec3(1.0, 0.985, 0.90) * side * u_lightRange;
+    vec3 wallLight = vec3(1.0, 0.955, 0.80) * side * u_lightRange;
 
     if (v_mat < 0.5) {
         // ---- wallpaper ----
@@ -63,7 +63,7 @@ void main() {
         albedo = texture2D(u_wallTex, uv).rgb;
         nmap = texture2D(u_wallNormal, uv).rgb;
         float g = mix(0.55, 1.12, pow(v_aux, 0.8));
-        irr = wallLight * g * 0.85;
+        irr = wallLight * g * 0.72;
     } else if (v_mat < 1.5) {
         // ---- carpet ----
         vec2 uv = v_uv * 0.5;                // one tile every 2m

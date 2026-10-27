@@ -131,6 +131,15 @@ public final class Hud {
         shapes.rect(cx - 1f * s, cy - 6f * s, 2f * s, 12f * s);
         shapes.end();
 
+        if (debug) {
+            // A dark strip keeps the readout legible over bright wallpaper.
+            float lh = assets.font.getLineHeight() * s;
+            shapes.begin(ShapeRenderer.ShapeType.Filled);
+            shapes.setColor(0f, 0f, 0f, 0.35f);
+            shapes.rect(0f, height - lh * 2.6f - 10f * s, width, lh * 2.6f + 10f * s);
+            shapes.end();
+        }
+
         batch.begin();
         if (!controls.isDesktop()) {
             drawButtonLabel(batch, controls.button(TouchControls.BTN_PAUSE), "II");
@@ -141,10 +150,10 @@ public final class Hud {
         if (debug) {
             BitmapFont font = assets.font;
             font.setColor(TEXT_DIM);
-            float line = font.getLineHeight() * 1.15f;
-            font.draw(batch, debugLine1, 18f * s, height - 14f * s);
+            float line = font.getLineHeight() * s * 1.2f;
+            font.draw(batch, debugLine1, 18f * s, height - 12f * s);
             if (debugLine2 != null) {
-                font.draw(batch, debugLine2, 18f * s, height - 14f * s - line);
+                font.draw(batch, debugLine2, 18f * s, height - 12f * s - line);
             }
         }
         batch.end();
