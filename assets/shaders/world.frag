@@ -68,13 +68,13 @@ void main() {
         vec2 uv = v_uv * 0.5;                // one tile every 2m
         albedo = texture2D(u_floorTex, uv).rgb;
         nmap = texture2D(u_floorNormal, uv).rgb;
-        irr = mix(lm.rgb * u_lightRange * 0.82, wallLight * 0.62, vert);
+        irr = mix(lm.rgb * u_lightRange * 0.82, wallLight * 0.55, vert);
     } else if (v_mat < 2.5) {
         // ---- ceiling tiles ----
         vec2 uv = v_uv * 0.5;
         albedo = texture2D(u_ceilTex, uv).rgb;
         nmap = texture2D(u_ceilNormal, uv).rgb;
-        irr = mix(lm.rgb * u_lightRange * 0.42, wallLight * 0.30, vert);
+        irr = mix(lm.rgb * u_lightRange * 0.42, wallLight * 0.62, vert);
     } else {
         // ---- fluorescent panel ----
         vec2 p = fract(v_pos.xz + 0.5) * 2.0;

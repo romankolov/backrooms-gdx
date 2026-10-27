@@ -148,7 +148,7 @@ public final class LightBaker {
 
         float upScale = 0.10f + 0.90f * aoUp;
         float sideScale = 0.08f + 0.92f * aoSide;
-        float ambient = 0.012f * aoUp;
+        float ambient = 0.020f * aoUp;
 
         up[index * 3] = er * upScale + ambient;
         up[index * 3 + 1] = eg * upScale + ambient * 1.02f;

@@ -100,23 +100,25 @@ public final class ChunkMesher {
                 }
 
                 // Ceiling steps, also owned by the higher cell.
+                // Ceiling steps are emitted even where a wall stands between the two cells:
+                // the wall stops at the highest ceiling, so the step below it must be filled.
                 nc = d.ceil[lj * size + li + 1];
-                if (nc < c - EPS && !d.vWallAt(li + 1, lj)) {
+                if (nc < c - EPS) {
                     mb.rect(x + 1f, nc, z, 0f, 0f, 1f, 0f, c - nc, 0f, 1f, 0f, 0f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
                 nc = d.ceil[lj * size + li - 1];
-                if (nc < c - EPS && !d.vWallAt(li, lj)) {
+                if (nc < c - EPS) {
                     mb.rect(x, nc, z, 0f, 0f, 1f, 0f, c - nc, 0f, -1f, 0f, 0f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
                 nc = d.ceil[(lj + 1) * size + li];
-                if (nc < c - EPS && !d.hWallAt(li, lj + 1)) {
+                if (nc < c - EPS) {
                     mb.rect(x, nc, z + 1f, 1f, 0f, 0f, 0f, c - nc, 0f, 0f, 0f, 1f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
                 nc = d.ceil[(lj - 1) * size + li];
-                if (nc < c - EPS && !d.hWallAt(li, lj)) {
+                if (nc < c - EPS) {
                     mb.rect(x, nc, z, 1f, 0f, 0f, 0f, c - nc, 0f, 0f, 0f, -1f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }

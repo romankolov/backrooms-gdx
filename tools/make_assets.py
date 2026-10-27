@@ -103,10 +103,17 @@ def build_textures(src_dir):
     convert(os.path.join(img, "backrooms-ceiling-tile-diffuse.png"),
             os.path.join(TEX_OUT, "ceiling_diffuse.jpg"), 512, 90)
 
-    for name, out, size in (("backrooms-carpet-normal.png", "carpet_normal.jpg", 512),
-                            ("backrooms-wall-normal.png", "wall_normal.jpg", 512),
-                            ("backrooms-ceiling-tile-normal.png", "ceiling_normal.jpg", 512)):
+    for name, out, size, crop in (("backrooms-carpet-normal.png", "carpet_normal.jpg", 512, 0.0),
+                                  ("backrooms-wall-normal.png", "wall_normal.jpg", 512, 0.0),
+                                  ("backrooms-ceiling-tile-normal.png", "ceiling_normal.jpg", 512,
+                                   0.045)):
         im = Image.open(os.path.join(img, name)).convert("RGB")
+        if crop > 0:
+            # The ceiling normal map carries a coloured border that reads as a bright grid on
+            # the ceiling; trim it before scaling.
+            w, h = im.size
+            dx, dy = int(w * crop), int(h * crop)
+            im = im.crop((dx, dy, w - dx, h - dy))
         im = sharpen_normal(im)
         convert_from_image(im, os.path.join(TEX_OUT, out), size, 90)
 
