@@ -218,7 +218,8 @@ public final class PlayScreen extends ScreenAdapter {
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDisable(GL20.GL_CULL_FACE);
 
-        if (settings.showDebug) {
+        boolean hudDebug = settings.showDebug || System.getProperty("backrooms.hud") != null;
+        if (hudDebug) {
             hud.drawGameplay(controls, player.torchOn, true, debugLine1(), debugLine2());
         } else {
             hud.drawGameplay(controls, player.torchOn, false, null, null);

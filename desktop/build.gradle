@@ -22,7 +22,7 @@ tasks.register("run", JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     workingDir = rootProject.file("assets")
     ["backrooms.capture", "backrooms.frames", "backrooms.autostart", "backrooms.seed",
-     "backrooms.spin", "backrooms.yaw", "backrooms.pitch", "backrooms.debug"].each { key ->
+     "backrooms.spin", "backrooms.yaw", "backrooms.pitch", "backrooms.debug", "backrooms.hud"].each { key ->
         def value = System.getProperty(key)
         if (value != null) {
             systemProperty key, value

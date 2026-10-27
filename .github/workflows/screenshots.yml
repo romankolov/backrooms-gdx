@@ -53,7 +53,7 @@ jobs:
           chmod +x gradlew
           mkdir -p screenshots
           xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
-            -Dbackrooms.autostart=1 -Dbackrooms.spin=1 -Dbackrooms.seed=20241027 -Dbackrooms.pitch=-7 -Dbackrooms.debug=1 \
+            -Dbackrooms.autostart=1 -Dbackrooms.spin=1 -Dbackrooms.seed=20241027 -Dbackrooms.pitch=-7 -Dbackrooms.debug=0 -Dbackrooms.hud=1 \
             -Dbackrooms.frames=270 -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots" > render.log 2>&1 || true
           tail -c 4000 render.log
           ls -la screenshots
