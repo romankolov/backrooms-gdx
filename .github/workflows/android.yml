@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   build:
@@ -38,22 +39,23 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Unit tests (world gen / mesher / physics)
-        run: ./gradlew :core:test --no-daemon --stacktrace
-
-      - name: Assemble debug APK
-        run: ./gradlew :android:assembleDebug --no-daemon --stacktrace
-
-      - name: Assemble release APK
-        run: ./gradlew :android:assembleRelease --no-daemon --stacktrace
+      - name: Build (unit tests + debug APK + release APK)
+        id: build
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew :core:test :android:assembleDebug :android:assembleRelease \
+            --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
 
       - name: Collect APKs
+        if: success()
         run: |
           mkdir -p artifacts
           find android/build/outputs/apk -name '*.apk' -exec cp {} artifacts/ \;
           ls -la artifacts
 
       - name: Upload debug APK
+        if: success()
         uses: actions/upload-artifact@v5
         with:
           name: backrooms-debug-apk
@@ -61,6 +63,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload release APK
+        if: success()
         uses: actions/upload-artifact@v5
         with:
           name: backrooms-release-apk
@@ -74,6 +77,19 @@ jobs:
           name: unit-test-report
           path: core/build/reports/tests/test
           if-no-files-found: ignore
+
+      # The job log is not always reachable from the build sandbox, so on failure the tail of
+      # the compiler output is also posted as an issue comment where it can be read back.
+      - name: Report failure
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f build.log ]; then exit 0; fi
+          BODY=$(printf 'Build failed on `%s`\n\n```\n%s\n```\n' "${GITHUB_SHA::7}" "$(tail -c 50000 build.log)")
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" -f body="$BODY" \
+            || echo "could not comment"
 
       - name: Publish APK to GitHub release (tags only)
         if: startsWith(github.ref, 'refs/tags/v')

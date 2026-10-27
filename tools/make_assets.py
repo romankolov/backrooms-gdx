@@ -71,6 +71,15 @@ def convert(src, dst, size, quality=90, keep_alpha=False):
     log("%-34s %4dpx  %6.1f KiB" % (os.path.basename(dst), im.size[0], os.path.getsize(dst) / 1024.0))
 
 
+def convert_from_image(im, dst, size, quality=90):
+    im = im.convert("RGB")
+    if size and im.size != (size, size):
+        im = im.resize((size, size), Image.LANCZOS)
+    im.save(dst, quality=quality, subsampling=1)
+    log("%-34s %4dpx  %6.1f KiB" % (os.path.basename(dst), im.size[0],
+                                    os.path.getsize(dst) / 1024.0))
+
+
 def sharpen_normal(im, strength=1.0):
     """Normal maps survive downscaling better with a touch of contrast."""
     from PIL import ImageEnhance
@@ -78,42 +87,28 @@ def sharpen_normal(im, strength=1.0):
 
 
 def build_textures(src_dir):
+    """Re-encodes the CC0 maps at the size the game samples them.
+
+    The world shader uses one tiled texture per surface type (carpet, wallpaper, ceiling
+    tiles) plus a normal map for each; all of them are power of two so GLES2 can mipmap
+    and repeat them.
+    """
     os.makedirs(TEX_OUT, exist_ok=True)
     img = os.path.join(src_dir, "img")
 
-    convert(os.path.join(img, "backrooms-wall-diffuse.png"),
-            os.path.join(TEX_OUT, "wall_diffuse.jpg"), 1024, 90)
     convert(os.path.join(img, "backrooms-carpet-diffuse.png"),
             os.path.join(TEX_OUT, "carpet_diffuse.jpg"), 1024, 90)
+    convert(os.path.join(img, "backrooms-wall-diffuse.png"),
+            os.path.join(TEX_OUT, "wall_diffuse.jpg"), 1024, 90)
     convert(os.path.join(img, "backrooms-ceiling-tile-diffuse.png"),
             os.path.join(TEX_OUT, "ceiling_diffuse.jpg"), 512, 90)
 
-    for name, out in (("backrooms-wall-normal.png", "wall_normal.jpg"),
-                      ("backrooms-carpet-normal.png", "carpet_normal.jpg"),
-                      ("backrooms-ceiling-tile-normal.png", "ceiling_normal.jpg")):
+    for name, out, size in (("backrooms-carpet-normal.png", "carpet_normal.jpg", 512),
+                            ("backrooms-wall-normal.png", "wall_normal.jpg", 512),
+                            ("backrooms-ceiling-tile-normal.png", "ceiling_normal.jpg", 512)):
         im = Image.open(os.path.join(img, name)).convert("RGB")
         im = sharpen_normal(im)
-        convert_from_image(im, os.path.join(TEX_OUT, out), 512, 92)
-
-    # Light panel: RGB = fixture colour, A = emitted light mask.
-    diffuse = Image.open(os.path.join(img, "backrooms-ceiling-light-diffuse.png")).convert("RGB")
-    emission = Image.open(os.path.join(img, "backrooms-ceiling-light-emission.png")).convert("L")
-    diffuse = diffuse.resize((256, 256), Image.LANCZOS)
-    emission = emission.resize((256, 256), Image.LANCZOS)
-    # Slight bloom around the tube so the panel reads as a hot surface.
-    glow = emission.filter(ImageFilter.GaussianBlur(6))
-    emissive = Image.blend(emission, glow, 0.35)
-    panel = Image.merge("RGBA", (*diffuse.split(), emissive))
-    panel.save(os.path.join(TEX_OUT, "light_panel.png"), optimize=True)
-    log("%-34s 256px  %6.1f KiB" % ("light_panel.png", os.path.getsize(os.path.join(TEX_OUT, "light_panel.png")) / 1024.0))
-
-
-def convert_from_image(im, dst, size, quality=90):
-    im = im.convert("RGB")
-    if size and im.size != (size, size):
-        im = im.resize((size, size), Image.LANCZOS)
-    im.save(dst, quality=quality, subsampling=1)
-    log("%-34s %4dpx  %6.1f KiB" % (os.path.basename(dst), im.size[0], os.path.getsize(dst) / 1024.0))
+        convert_from_image(im, os.path.join(TEX_OUT, out), size, 90)
 
 
 # --------------------------------------------------------------------------

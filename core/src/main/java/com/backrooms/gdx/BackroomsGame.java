@@ -1,18 +1,89 @@
 package com.backrooms.gdx;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
+import java.util.Random;
 
-/** Temporary bootstrap; replaced by the real game implementation. */
-public class BackroomsGame extends ApplicationAdapter {
+import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.backrooms.gdx.render.WorldRenderer;
+import com.backrooms.gdx.screens.PlayScreen;
+import com.backrooms.gdx.screens.TitleScreen;
+
+/**
+ * Entry point shared by every launcher.
+ *
+ * <p>Graphical resources live here so a new run does not have to re-upload the 15 MB of wallpaper,
+ * carpet and ceiling textures every time the player returns to the title screen.
+ */
+public final class BackroomsGame extends Game {
+
+    public Assets assets;
+    public GameSettings settings;
+
+    private WorldRenderer renderer;
+    private PlayScreen playScreen;
+    private TitleScreen titleScreen;
+
     @Override
     public void create() {
-        Gdx.gl.glClearColor(0.75f, 0.72f, 0.45f, 1f);
+        settings = new GameSettings();
+        settings.load();
+        assets = new Assets();
+        titleScreen = new TitleScreen(this);
+        setScreen(titleScreen);
+    }
+
+    public WorldRenderer renderer() {
+        if (renderer == null) {
+            renderer = new WorldRenderer();
+        }
+        return renderer;
+    }
+
+    public void startGame() {
+        int seed = new Random().nextInt();
+        if (playScreen != null) {
+            playScreen.dispose();
+        }
+        playScreen = new PlayScreen(this, seed);
+        setScreen(playScreen);
+        if (titleScreen != null) {
+            titleScreen.dispose();
+            titleScreen = null;
+        }
+    }
+
+    public void showTitle() {
+        if (playScreen != null) {
+            playScreen.dispose();
+            playScreen = null;
+        }
+        if (titleScreen == null) {
+            titleScreen = new TitleScreen(this);
+        }
+        setScreen(titleScreen);
     }
 
     @Override
-    public void render() {
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+    public void pause() {
+        super.pause();
+        if (playScreen != null) {
+            playScreen.pause();
+        }
+    }
+
+    @Override
+    public void dispose() {
+        if (playScreen != null) {
+            playScreen.dispose();
+            playScreen = null;
+        }
+        if (renderer != null) {
+            renderer.dispose();
+            renderer = null;
+        }
+        if (assets != null) {
+            assets.dispose();
+        }
+        Gdx.app.log("Backrooms", "bye");
     }
 }
