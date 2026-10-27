@@ -1,6 +1,6 @@
 # APK sanity check
 
-Commit: 40b5e397d7edfc436cb4cb2013176064a25951c6
+Commit: 29752a9f60626fa4f0cc21becc0ab6471c4b1f10
 
 ```
 ANDROID_HOME=/usr/local/lib/android/sdk ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
@@ -21,7 +21,7 @@ targetSdkVersion:'35'
 launchable-activity: name='com.backrooms.gdx.android.AndroidLauncher'  label='' icon=''
 native-code: 'arm64-v8a' 'armeabi-v7a' 'x86_64'
 ok: launcher activity
-FATAL: AndroidLauncher is not in classes.dex
+ok: AndroidLauncher in classes.dex
 -- shared libraries packaged: 3
 == android/build/outputs/apk/release/android-release-unsigned.apk
 ok: lib/arm64-v8a/libgdx.so
@@ -34,4 +34,5 @@ native-code: 'arm64-v8a' 'armeabi-v7a' 'x86_64'
 ok: launcher activity
 ok: AndroidLauncher in classes.dex
 -- shared libraries packaged: 3
+APK sanity checks passed
 ```
