@@ -48,16 +48,36 @@ if [ ! -x "$SDK/emulator/emulator" ]; then
   exit 1
 fi
 
+# Keep the AVD in a directory both avdmanager and the emulator agree on.
+export ANDROID_USER_HOME="${ANDROID_USER_HOME:-$HOME/.android}"
+export ANDROID_AVD_HOME="${ANDROID_AVD_HOME:-$HOME/.android/avd}"
+mkdir -p "$ANDROID_AVD_HOME"
+echo "ANDROID_USER_HOME=$ANDROID_USER_HOME ANDROID_AVD_HOME=$ANDROID_AVD_HOME"
+
 echo "no" | "$AVDMANAGER" create avd -n bgdx -k "$SYSTEM_IMAGE" -d pixel_2 --force \
   > "$SHOTS/avdmanager.log" 2>&1 || echo "avd creation returned $?"
 cat "$SHOTS/avdmanager.log" 2>/dev/null || true
+echo "--- avd files"
+ls -la "$ANDROID_AVD_HOME" 2>&1 | head -10
+find "$HOME" -name "bgdx*" -maxdepth 6 2>/dev/null | head -10
+"$AVDMANAGER" list avd 2>&1 | head -20
+
+if [ ! -f "$ANDROID_AVD_HOME/bgdx.ini" ]; then
+  echo "FATAL: the AVD was not created in $ANDROID_AVD_HOME"
+  exit 1
+fi
+
+# The runner user is usually not in the kvm group; GitHub's images allow passwordless sudo.
+if [ -e /dev/kvm ] && [ ! -w /dev/kvm ]; then
+  sudo chmod 666 /dev/kvm 2>/dev/null || true
+fi
 
 ACCEL=auto
 GPU=swiftshader_indirect
 if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
   echo "KVM is usable"
 else
-  echo "KVM not usable: running unaccelerated"
+  echo "KVM not usable: running unaccelerated (slow)"
   ACCEL=off
 fi
 
