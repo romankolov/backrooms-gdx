@@ -173,6 +173,38 @@ jobs:
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
+      - name: Commit diagnostics
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p docs/ci
+          {
+            echo "# Emulator smoke test diagnostics"
+            echo
+            echo "Commit: ${GITHUB_SHA}"
+            echo "Outcome: ${{ steps.smoke.outcome }}"
+            echo
+            echo '## Environment'
+            echo '```'
+            cat emulator-shots/env.txt 2>/dev/null || true
+            echo '```'
+            echo '## Emulator log'
+            echo '```'
+            tail -30 emulator-shots/emulator.log 2>/dev/null || true
+            echo '```'
+            echo '## Logcat (filtered)'
+            echo '```'
+            grep -aE "AndroidRuntime|FATAL|UnsatisfiedLink|GLSL|libGDX|Backrooms|Perf|ActivityManager|am_proc|E/" \
+              emulator-shots/logcat.txt 2>/dev/null | tail -60 || true
+            echo '```'
+          } > docs/ci/emulator-report.md
+          git add -f docs/ci/emulator-report.md
+          git diff --cached --quiet || git commit -m "chore: emulator diagnostics [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}" || true
+
       - name: Fail the job when the app did not stay alive
         if: steps.smoke.outcome != 'success'
         run: |
