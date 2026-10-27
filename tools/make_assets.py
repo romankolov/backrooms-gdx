@@ -306,13 +306,16 @@ def build_font(ttf_path, out_base, size=48, padding=2):
     while pot < sheet_h:
         pot *= 2
     sheet_h = pot
-    img = Image.new("L", (sheet_w, sheet_h), 0)
+    # RGBA with a white face and a transparent background: libGDX reads the alpha channel of the
+    # page for glyph coverage, so a grayscale PNG would come out as solid blocks.
+    img = Image.new("RGBA", (sheet_w, sheet_h), (255, 255, 255, 0))
     from PIL import ImageDraw
     draw = ImageDraw.Draw(img)
     for ch, gx, gy, w, h, bbox in glyphs:
-        draw.text((gx - bbox[0], gy - bbox[1]), ch, font=font, fill=255)
+        draw.text((gx - bbox[0], gy - bbox[1]), ch, font=font, fill=(255, 255, 255, 255))
     png = out_base + ".png"
     img.save(png)
+    log("%-34s %dx%d" % (os.path.basename(png), sheet_w, sheet_h))
     # BMFont text format, ASCII, one page
     ascent, descent = font.getmetrics()
     line_h = ascent + descent
