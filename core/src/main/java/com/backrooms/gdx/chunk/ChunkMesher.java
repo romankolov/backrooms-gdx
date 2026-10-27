@@ -100,7 +100,9 @@ public final class ChunkMesher {
                 }
 
                 // Ceiling steps, also owned by the higher cell.
-                // Ceiling steps only where the rooms connect; a wall already covers the gap.
+                // Ceiling steps are vertical drop faces at the cell boundary, from the lower
+                // ceiling up to this one. Without them the taller room would look straight
+                // through into the void above its neighbour.
                 nc = d.ceil[lj * size + li + 1];
                 if (nc < c - EPS && !d.vWallAt(li + 1, lj)) {
                     mb.rect(x + 1f, nc, z, 0f, 0f, 1f, 0f, c - nc, 0f, 1f, 0f, 0f,
