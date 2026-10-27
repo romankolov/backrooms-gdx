@@ -100,25 +100,24 @@ public final class ChunkMesher {
                 }
 
                 // Ceiling steps, also owned by the higher cell.
-                // Ceiling steps are emitted even where a wall stands between the two cells:
-                // the wall stops at the highest ceiling, so the step below it must be filled.
+                // Ceiling steps only where the rooms connect; a wall already covers the gap.
                 nc = d.ceil[lj * size + li + 1];
-                if (nc < c - EPS) {
+                if (nc < c - EPS && !d.vWallAt(li + 1, lj)) {
                     mb.rect(x + 1f, nc, z, 0f, 0f, 1f, 0f, c - nc, 0f, 1f, 0f, 0f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
                 nc = d.ceil[lj * size + li - 1];
-                if (nc < c - EPS) {
+                if (nc < c - EPS && !d.vWallAt(li, lj)) {
                     mb.rect(x, nc, z, 0f, 0f, 1f, 0f, c - nc, 0f, -1f, 0f, 0f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
                 nc = d.ceil[(lj + 1) * size + li];
-                if (nc < c - EPS) {
+                if (nc < c - EPS && !d.hWallAt(li, lj + 1)) {
                     mb.rect(x, nc, z + 1f, 1f, 0f, 0f, 0f, c - nc, 0f, 0f, 0f, 1f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
                 nc = d.ceil[(lj - 1) * size + li];
-                if (nc < c - EPS) {
+                if (nc < c - EPS && !d.hWallAt(li, lj)) {
                     mb.rect(x, nc, z, 1f, 0f, 0f, 0f, c - nc, 0f, 0f, 0f, -1f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
@@ -144,28 +143,33 @@ public final class ChunkMesher {
                 }
                 float x = d.cellX0 + li;
                 float z = d.cellZ0 + lj;
-                float lo = Math.min(d.floor[lj * size + li - 1], d.floor[lj * size + li]);
-                float hi = Math.max(d.ceil[lj * size + li - 1], d.ceil[lj * size + li]);
+                // Each face is sized to the room it faces: the wall on the far side would
+                // otherwise fight with the ceiling step of the taller room.
+                float loW = d.floor[lj * size + li - 1];
+                float hiW = d.ceil[lj * size + li - 1];
+                float loE = d.floor[lj * size + li];
+                float hiE = d.ceil[lj * size + li];
+                float lo = Math.min(loW, loE);
+                float hi = Math.max(hiW, hiE);
                 float h = hi - lo;
                 if (h <= 0f) {
                     continue;
                 }
-                // Faces on both sides of the thin wall.
                 mb.setLightmapOffset(-0.3f, 0f);
-                mb.rectGradient(x - th, lo, z, 0f, 0f, 1f, 0f, h, 0f, -1f, 0f, 0f,
-                        MeshBuilder.MAT_WALL, d.floor[lj * size + li - 1], 1f / h);
+                mb.rectGradient(x - th, loW, z, 0f, 0f, 1f, 0f, hiW - loW, 0f, -1f, 0f, 0f,
+                        MeshBuilder.MAT_WALL, loW, 1f / Math.max(0.01f, hiW - loW));
                 mb.setLightmapOffset(0.3f, 0f);
-                mb.rectGradient(x + th, lo, z, 0f, 0f, 1f, 0f, h, 0f, 1f, 0f, 0f,
-                        MeshBuilder.MAT_WALL, d.floor[lj * size + li], 1f / h);
+                mb.rectGradient(x + th, loE, z, 0f, 0f, 1f, 0f, hiE - loE, 0f, 1f, 0f, 0f,
+                        MeshBuilder.MAT_WALL, loE, 1f / Math.max(0.01f, hiE - loE));
                 mb.setLightmapOffset(0f, 0f);
                 // End caps where the wall run stops.
                 if (!d.vWallAt(li, lj - 1)) {
                     mb.rect(x - th, lo, z, th * 2f, 0f, 0f, 0f, h, 0f, 0f, 0f, -1f,
-                            MeshBuilder.MAT_WALL, 0.4f);
+                            MeshBuilder.MAT_WALL, 0.5f);
                 }
                 if (!d.vWallAt(li, lj + 1)) {
                     mb.rect(x - th, lo, z + 1f, th * 2f, 0f, 0f, 0f, h, 0f, 0f, 0f, 1f,
-                            MeshBuilder.MAT_WALL, 0.4f);
+                            MeshBuilder.MAT_WALL, 0.5f);
                 }
             }
         }
@@ -177,26 +181,30 @@ public final class ChunkMesher {
                 }
                 float x = d.cellX0 + li;
                 float z = d.cellZ0 + lj;
-                float lo = Math.min(d.floor[(lj - 1) * size + li], d.floor[lj * size + li]);
-                float hi = Math.max(d.ceil[(lj - 1) * size + li], d.ceil[lj * size + li]);
+                float loN = d.floor[(lj - 1) * size + li];
+                float hiN = d.ceil[(lj - 1) * size + li];
+                float loS = d.floor[lj * size + li];
+                float hiS = d.ceil[lj * size + li];
+                float lo = Math.min(loN, loS);
+                float hi = Math.max(hiN, hiS);
                 float h = hi - lo;
                 if (h <= 0f) {
                     continue;
                 }
                 mb.setLightmapOffset(0f, -0.3f);
-                mb.rectGradient(x, lo, z - th, 1f, 0f, 0f, 0f, h, 0f, 0f, 0f, -1f,
-                        MeshBuilder.MAT_WALL, d.floor[(lj - 1) * size + li], 1f / h);
+                mb.rectGradient(x, loN, z - th, 1f, 0f, 0f, 0f, hiN - loN, 0f, 0f, 0f, -1f,
+                        MeshBuilder.MAT_WALL, loN, 1f / Math.max(0.01f, hiN - loN));
                 mb.setLightmapOffset(0f, 0.3f);
-                mb.rectGradient(x, lo, z + th, 1f, 0f, 0f, 0f, h, 0f, 0f, 0f, 1f,
-                        MeshBuilder.MAT_WALL, d.floor[lj * size + li], 1f / h);
+                mb.rectGradient(x, loS, z + th, 1f, 0f, 0f, 0f, hiS - loS, 0f, 0f, 0f, 1f,
+                        MeshBuilder.MAT_WALL, loS, 1f / Math.max(0.01f, hiS - loS));
                 mb.setLightmapOffset(0f, 0f);
                 if (!d.hWallAt(li - 1, lj)) {
                     mb.rect(x, lo, z - th, 0f, 0f, th * 2f, 0f, h, 0f, -1f, 0f, 0f,
-                            MeshBuilder.MAT_WALL, 0.4f);
+                            MeshBuilder.MAT_WALL, 0.5f);
                 }
                 if (!d.hWallAt(li + 1, lj)) {
                     mb.rect(x + 1f, lo, z - th, 0f, 0f, th * 2f, 0f, h, 0f, 1f, 0f, 0f,
-                            MeshBuilder.MAT_WALL, 0.4f);
+                            MeshBuilder.MAT_WALL, 0.5f);
                 }
             }
         }
