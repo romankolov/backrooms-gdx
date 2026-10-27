@@ -18,3 +18,6 @@ screenshots/
 *.log
 
 assets/screenshots/
+
+# libGDX natives extracted by :android:copyAndroidNatives
+android/libs/

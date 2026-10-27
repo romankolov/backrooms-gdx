@@ -47,6 +47,20 @@ jobs:
           ./gradlew :core:test :android:assembleDebug :android:assembleRelease \
             --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
 
+      - name: Check native libraries are packaged
+        shell: bash
+        run: |
+          set -e
+          for f in $(find android/build/outputs/apk -name '*.apk'); do
+            echo "== $f"
+            unzip -l "$f" | grep -E 'lib/[^/]+/lib.*\.so' || {
+              echo "FATAL: $f has no native libraries, it would crash on launch"; exit 1; }
+            for abi in arm64-v8a armeabi-v7a x86_64; do
+              unzip -l "$f" | grep -q "lib/$abi/libgdx.so" || {
+                echo "FATAL: $f is missing lib/$abi/libgdx.so"; exit 1; }
+            done
+          done
+
       - name: Collect APKs
         if: success()
         run: |
