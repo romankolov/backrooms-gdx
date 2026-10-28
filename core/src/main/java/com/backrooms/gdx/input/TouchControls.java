@@ -11,6 +11,13 @@ import com.backrooms.gdx.GameSettings;
 /**
  * Touch controls: a floating stick on the left, drag-to-look on the right, and buttons.
  * Keyboard and mouse are supported as well so the game can also be played on a desktop build.
+ *
+ * <p>Input events are delivered <em>between</em> frames, and the screen reads the values once per
+ * frame in {@link #update(float)}. So the event handlers never write the per-frame values directly:
+ * they queue into {@code pending*} and {@code update} promotes them. Clearing the values at the top
+ * of {@code update} instead (which is what this class used to do) threw away every drag and every
+ * button press on Android, where events are dispatched just before {@code render}: only the
+ * position-based stick kept working. Keyboard state is polled and is merged in here too.
  */
 public final class TouchControls implements InputProcessor {
 
@@ -45,12 +52,23 @@ public final class TouchControls implements InputProcessor {
     private float stickRadius;
     private int screenWidth = 1;
     private int screenHeight = 1;
-    private boolean desktop;
+    private final boolean desktop;
+
+    // Queued between frames, consumed by update().
+    private float pendingLookX;
+    private float pendingLookY;
+    private boolean pendingJump;
+    private int pendingButton = BTN_NONE;
 
     public TouchControls(GameSettings settings) {
+        this(settings, Gdx.app.getType() == ApplicationType.Desktop
+                || Gdx.app.getType() == ApplicationType.WebGL);
+    }
+
+    /** Test seam: exercises the pointer logic without a running GDX application. */
+    TouchControls(GameSettings settings, boolean desktop) {
         this.settings = settings;
-        desktop = Gdx.app.getType() == ApplicationType.Desktop
-                || Gdx.app.getType() == ApplicationType.WebGL;
+        this.desktop = desktop;
     }
 
     public boolean isDesktop() {
@@ -75,28 +93,54 @@ public final class TouchControls implements InputProcessor {
         return buttons[id];
     }
 
-    /** Clears per frame accumulators. Call once per frame before rendering. */
+    /** Width and height the controls were laid out for, in screen pixels. */
+    public int screenWidth() {
+        return screenWidth;
+    }
+
+    public int screenHeight() {
+        return screenHeight;
+    }
+
+    /**
+     * Promotes everything queued since the last frame and polls the keyboard. Call once per frame
+     * before reading any field.
+     */
     public void update(float delta) {
-        lookDeltaX = 0f;
-        lookDeltaY = 0f;
-        jumpRequested = false;
-        pressedButton = BTN_NONE;
+        boolean jump = pendingJump;
+        pendingJump = false;
+
+        lookDeltaX = pendingLookX;
+        lookDeltaY = pendingLookY;
+        pendingLookX = 0f;
+        pendingLookY = 0f;
+
+        if (pendingButton != BTN_NONE) {
+            pressedButton = pendingButton;
+            pendingButton = BTN_NONE;
+        } else {
+            pressedButton = BTN_NONE;
+        }
+
+        float forward = 0f;
+        float side = 0f;
+        boolean sprinting = sprintPointer != -1;   // the run button is a hold
 
         if (desktop) {
-            boolean forward = Gdx.input.isKeyPressed(Input.Keys.W)
+            boolean up = Gdx.input.isKeyPressed(Input.Keys.W)
                     || Gdx.input.isKeyPressed(Input.Keys.UP);
-            boolean back = Gdx.input.isKeyPressed(Input.Keys.S)
+            boolean down = Gdx.input.isKeyPressed(Input.Keys.S)
                     || Gdx.input.isKeyPressed(Input.Keys.DOWN);
             boolean left = Gdx.input.isKeyPressed(Input.Keys.A)
                     || Gdx.input.isKeyPressed(Input.Keys.LEFT);
             boolean right = Gdx.input.isKeyPressed(Input.Keys.D)
                     || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
-            moveForward = (forward ? 1f : 0f) - (back ? 1f : 0f);
-            moveSide = (right ? 1f : 0f) - (left ? 1f : 0f);
-            sprint = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)
+            forward = (up ? 1f : 0f) - (down ? 1f : 0f);
+            side = (right ? 1f : 0f) - (left ? 1f : 0f);
+            sprinting |= Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)
                     || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT);
             if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                jumpRequested = true;
+                jump = true;
             }
             if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
                 pressedButton = BTN_TORCH;
@@ -109,6 +153,7 @@ public final class TouchControls implements InputProcessor {
                 lookDeltaY += Gdx.input.getDeltaY() * 0.0034f;
             }
         }
+
         if (stickActive) {
             float dx = stickX - stickOriginX;
             float dy = stickY - stickOriginY;
@@ -124,16 +169,17 @@ public final class TouchControls implements InputProcessor {
             float ny = dy / max;
             if (Math.abs(nx) < dead) nx = 0f;
             if (Math.abs(ny) < dead) ny = 0f;
-            moveSide = nx;
-            moveForward = ny;
+            side = nx;
+            forward = ny;
             if (len > max * 0.85f) {
-                sprint = true;
+                sprinting = true;
             }
-        } else if (!desktop) {
-            moveForward = 0f;
-            moveSide = 0f;
-            sprint = false;
         }
+
+        moveForward = forward;
+        moveSide = side;
+        sprint = sprinting;
+        jumpRequested = jump;
         lookDeltaX *= settings.sensitivity;
         lookDeltaY *= settings.sensitivity;
     }
@@ -147,20 +193,18 @@ public final class TouchControls implements InputProcessor {
         float y = screenHeight - screenY;
         int hit = hitButton(screenX, y);
         if (hit != BTN_NONE) {
-            pressedButton = hit;
+            pendingButton = hit;
             if (hit == BTN_SPRINT) {
-                sprint = true;
                 sprintPointer = pointer;
             }
             if (hit == BTN_JUMP) {
-                jumpRequested = true;
-            }
-            if (hit == BTN_SPRINT || hit == BTN_JUMP) {
-                return true;
+                pendingJump = true;
             }
             return true;
         }
-        if (pointer == 0 && screenX < screenWidth * 0.45f) {
+        // Any finger can grab the stick while it is free, even when the other hand is already
+        // looking around: the two thumbs have to work at the same time.
+        if (stickPointer == -1 && screenX < screenWidth * 0.45f) {
             stickPointer = pointer;
             stickActive = true;
             stickOriginX = screenX;
@@ -186,8 +230,8 @@ public final class TouchControls implements InputProcessor {
             return true;
         }
         if (pointer == lookPointer) {
-            lookDeltaX += (screenX - lastLookX) * 0.0042f;
-            lookDeltaY += (lastLookY - y) * 0.0034f;
+            pendingLookX += (screenX - lastLookX) * 0.0042f;
+            pendingLookY += (lastLookY - y) * 0.0034f;
             lastLookX = screenX;
             lastLookY = y;
             return true;
@@ -208,7 +252,6 @@ public final class TouchControls implements InputProcessor {
         }
         if (pointer == sprintPointer) {
             sprintPointer = -1;
-            sprint = false;
             return true;
         }
         return false;
@@ -216,10 +259,6 @@ public final class TouchControls implements InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
-        if (desktop && (keycode == Input.Keys.SPACE)) {
-            jumpRequested = true;
-            return true;
-        }
         return false;
     }
 

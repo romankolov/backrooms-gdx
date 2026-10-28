@@ -87,6 +87,12 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
     private final Matrix4 projView = new Matrix4();
     private final Vector3 tmp = new Vector3();
 
+    private float cameraX;
+    private float cameraY;
+    private float cameraZ;
+    private float torchX;
+    private float torchY;
+    private float torchZ;
     private int drawnChunks;
     private int drawnVertices;
     private int skippedNoMesh;
@@ -158,14 +164,19 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         camera.update();
         projView.set(camera.projection).mul(camera.view);
 
+        this.cameraX = cameraPos.x;
+        this.cameraY = cameraPos.y;
+        this.cameraZ = cameraPos.z;
+        this.torchX = torchPos.x;
+        this.torchY = torchPos.y;
+        this.torchZ = torchPos.z;
+
         shader.begin();
         shader.setUniformMatrix("u_projView", projView);
         // The full clock goes to the vertex shader (highp); the fragment shader gets a wrapped
         // value that mediump can hold exactly. See the precision notes in the shader sources.
         shader.setUniformf("u_time", time);
         shader.setUniformf("u_grainTime", time % 64f);
-        shader.setUniformf("u_camPos", cameraPos.x, cameraPos.y, cameraPos.z);
-        shader.setUniformf("u_flashPos", torchPos.x, torchPos.y, torchPos.z);
         shader.setUniformf("u_flashDir", torchDir.x, torchDir.y, torchDir.z);
         shader.setUniformf("u_flashOn", torchOn);
         shader.setUniformf("u_fogColor", fogInput(FOG_COLOR_R, exposure),
@@ -211,6 +222,17 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
                 skippedCulled++;
                 continue;
             }
+            // The mesh is stored relative to the chunk origin, so the shader gets the origin back
+            // and the camera/torch positions in the same local frame. That keeps every value the
+            // fragment shader interpolates small, which is what mediump precision needs.
+            // (begin() again: Mesh.render() may unbind the program, and a uniform set on no program
+            // is silently dropped.)
+            shader.begin();
+            float ox = chunk.originX;
+            float oz = chunk.originZ;
+            shader.setUniformf("u_origin", ox, 0f, oz);
+            shader.setUniformf("u_camPos", cameraX - ox, cameraY, cameraZ - oz);
+            shader.setUniformf("u_flashPos", torchX - ox, torchY, torchZ - oz);
             Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0 + UNIT_LIGHTMAP);
             chunk.lightmap.bind();
             chunk.mesh.render(shader, GL20.GL_TRIANGLES);
@@ -251,6 +273,8 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         texture.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
         chunk.lightmap = texture;
 
+        chunk.originX = build.originX;
+        chunk.originZ = build.originZ;
         chunk.minX = build.minX;
         chunk.minY = build.minY;
         chunk.minZ = build.minZ;

@@ -5,9 +5,11 @@ import com.backrooms.gdx.util.Hash;
 /**
  * The infinite backrooms: a pure, stateless description of the level.
  *
- * <p>The map is a height field (floors, stairs, ledges and holes) cut up by thin walls that run along
- * the integer grid lines. Every wall, height and ceiling light is derived from a hash of its integer
- * coordinates, so any chunk can be produced in isolation and the world never ends in any direction.
+ * <p>Level 0 is a single flat storey: one floor level, one ceiling height, no stairs and no ledges,
+ * cut up by thin walls that run along the integer grid lines. The only thing that ever interrupts
+ * the floor is the occasional hole. Walls, holes and ceiling lights are all derived from a hash of
+ * their integer coordinates, so any chunk can be produced in isolation and the world never ends in
+ * any direction.
  */
 public final class WorldGen {
 
@@ -19,18 +21,16 @@ public final class WorldGen {
     public static final float CHUNK_SIZE = CHUNK_CELLS * CELL;
     /** Thin wall half-thickness. Walls are boxes 16cm thick. */
     public static final float WALL_HALF_THICKNESS = 0.08f;
-    /** Height of a room from floor to ceiling. */
-    public static final float ROOM_HEIGHT = 2.9f;
+    /** Height of a room from floor to ceiling. The same everywhere: Level 0 is flat. */
+    public static final float ROOM_HEIGHT = 3.0f;
+    /** How far below the floor the bottom of a hole sits. */
+    public static final float HOLE_DEPTH = 2.5f;
     /** Room grid period, in cells. */
     public static final int MACRO = 7;
     /** Light fixtures sit on this lattice (in cells), one per room. */
     public static final int LIGHT_SPACING = MACRO;
     /** Fixtures are placed on cells with this phase inside the room lattice. */
     public static final int LIGHT_PHASE = 3;
-    /** Height quantisation of the terrain; also the tread height of the stairs. */
-    public static final float HEIGHT_STEP = 0.25f;
-    /** Highest the player can step up without jumping. */
-    public static final float STEP_HEIGHT = 0.62f;
 
     private final int seed;
 
@@ -46,39 +46,31 @@ public final class WorldGen {
     // terrain
     // ---------------------------------------------------------------------------------------------
 
-    /** Smooth, unquantised floor height at a world position (metres). */
-    public float rawHeight(float x, float z) {
-        float t = Hash.fbm2(seed ^ 0x1b873593, x * 0.022f, z * 0.022f);
-        float h = 0f;
-        if (t > 0.26f) {
-            h = (t - 0.26f) * 2.2f;              // terraces and stair cases climbing up
-        } else if (t < -0.30f) {
-            h = (t + 0.30f) * 2.4f;              // shallow dips
-        }
-        float pit = Hash.fbm3(seed ^ 0x2545f491, x * 0.016f + 11f, z * 0.016f - 7f);
-        if (pit > 0.47f) {
-            h -= (pit - 0.47f) * 14f;            // the occasional hole in the floor
-        }
-        return Hash.clamp(h, -5f, 2.25f);
-    }
-
-    /** Quantised floor height of a cell; the visible stair treads. */
+    /**
+     * Floor level of a cell. Flat everywhere except inside a hole, where the pit bottom sits
+     * {@link #HOLE_DEPTH} metres lower.
+     */
     public float floorY(int cellX, int cellZ) {
-        return quantise(rawHeight(cellX + 0.5f, cellZ + 0.5f));
+        return isHole(cellX, cellZ) ? -HOLE_DEPTH : 0f;
     }
 
+    /** Ceiling height of a cell. Flat everywhere, holes included - only the floor drops. */
     public float ceilY(int cellX, int cellZ) {
-        return floorY(cellX, cellZ) + roomHeight(cellX, cellZ);
+        return ROOM_HEIGHT;
     }
 
-    /** Rooms vary slightly in height, which reads as different ceiling tiles. */
-    public float roomHeight(int cellX, int cellZ) {
-        int h = Hash.hash2(seed ^ 0x5bd1e995, Hash.floorDiv(cellX, 5), Hash.floorDiv(cellZ, 5));
-        return ROOM_HEIGHT + ((h >>> 8) & 7) * 0.06f;
-    }
-
-    public static float quantise(float h) {
-        return Math.round(h / HEIGHT_STEP) * HEIGHT_STEP;
+    /**
+     * True where the floor drops away into a pit. The blobs come from the same low frequency noise
+     * the level always used, but now they are only ever holes: everything else stays on one level.
+     */
+    public boolean isHole(int cellX, int cellZ) {
+        float pit = Hash.fbm3(seed ^ 0x2545f491,
+                cellX * 0.055f + 11f, cellZ * 0.055f - 7f);
+        if (pit <= 0.46f) {
+            return false;
+        }
+        // Thin the blobs out so a hole is a landmark instead of a minefield: about 3% of cells.
+        return (Hash.hash2(seed ^ 0x6ac690c5, cellX, cellZ) & 255) < 150;
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -194,15 +186,10 @@ public final class WorldGen {
                 && !hWall(cellX, cellZ) && !hWall(cellX, cellZ + 1);
     }
 
-    /** Slope of the floor around a cell, used to keep lights on flat ground. */
-    public float cellSlope(int cellX, int cellZ) {
-        float h = floorY(cellX, cellZ);
-        float d = 0f;
-        d = Math.max(d, Math.abs(floorY(cellX + 1, cellZ) - h));
-        d = Math.max(d, Math.abs(floorY(cellX - 1, cellZ) - h));
-        d = Math.max(d, Math.abs(floorY(cellX, cellZ + 1) - h));
-        d = Math.max(d, Math.abs(floorY(cellX, cellZ - 1) - h));
-        return d;
+    /** True when the cell and its four neighbours are all on the floor level (no pit underfoot). */
+    public boolean isSolidGround(int cellX, int cellZ) {
+        return !isHole(cellX, cellZ) && !isHole(cellX + 1, cellZ) && !isHole(cellX - 1, cellZ)
+                && !isHole(cellX, cellZ + 1) && !isHole(cellX, cellZ - 1);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -269,8 +256,7 @@ public final class WorldGen {
             for (int k = -ring; k <= ring; k++) {
                 int[][] candidates = {{k, -ring}, {k, ring}, {-ring, k}, {ring, k}};
                 for (int[] c : candidates) {
-                    if (isOpenSpace(c[0], c[1]) && cellSlope(c[0], c[1]) <= 0.3f
-                            && Math.abs(floorY(c[0], c[1])) < 1.2f) {
+                    if (isOpenSpace(c[0], c[1]) && isSolidGround(c[0], c[1])) {
                         out[0] = c[0] + 0.5f;
                         out[1] = floorY(c[0], c[1]);
                         out[2] = c[1] + 0.5f;
@@ -285,7 +271,7 @@ public final class WorldGen {
         out[2] = 0.5f;
     }
 
-    /** Nearest cell whose floor is walkable, searching outwards from a position. */
+    /** Nearest cell with solid floor around it, searching outwards from a position. */
     public boolean findLanding(float x, float z, float[] out) {
         int ci = Hash.floorInt(x);
         int cj = Hash.floorInt(z);
@@ -294,7 +280,7 @@ public final class WorldGen {
                 int[][] candidates = {{ci + k, cj - ring}, {ci + k, cj + ring},
                         {ci - ring, cj + k}, {ci + ring, cj + k}};
                 for (int[] c : candidates) {
-                    if (cellSlope(c[0], c[1]) <= 0.55f) {
+                    if (isSolidGround(c[0], c[1])) {
                         out[0] = c[0] + 0.5f;
                         out[1] = floorY(c[0], c[1]);
                         out[2] = c[1] + 0.5f;

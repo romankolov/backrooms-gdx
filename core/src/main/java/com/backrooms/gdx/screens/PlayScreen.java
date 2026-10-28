@@ -143,6 +143,27 @@ public final class PlayScreen extends ScreenAdapter {
         hud.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         hud.refreshLabels(settings);
         audio.setEnabled(settings.audio);
+        logHitTargets();
+    }
+
+    /**
+     * Prints the touch buttons in screen coordinates (origin top left, the way {@code adb shell
+     * input tap} wants them). The emulator smoke test reads these to press the real buttons instead
+     * of guessing where they are, which is how the dead-button bug would have been caught.
+     */
+    private void logHitTargets() {
+        StringBuilder line = new StringBuilder();
+        line.append("screen=").append(controls.screenWidth()).append('x')
+                .append(controls.screenHeight());
+        String[] names = {"pause", "torch", "sprint", "jump"};
+        for (int id = 0; id < names.length; id++) {
+            com.badlogic.gdx.math.Rectangle r = controls.button(id);
+            int cx = Math.round(r.x + r.width * 0.5f);
+            int cy = Math.round(Gdx.graphics.getHeight() - (r.y + r.height * 0.5f));
+            line.append(' ').append(names[id]).append('=').append(cx).append(',').append(cy);
+        }
+        line.append(" stickZone=").append(Math.round(controls.screenWidth() * 0.45f));
+        Gdx.app.log("BackroomsInput", line.toString());
     }
 
     @Override
@@ -152,6 +173,7 @@ public final class PlayScreen extends ScreenAdapter {
         camera.update();
         controls.resize(width, height);
         hud.resize(width, height);
+        logHitTargets();
     }
 
     @Override
@@ -162,8 +184,9 @@ public final class PlayScreen extends ScreenAdapter {
         delta = Math.min(delta, 0.06f);
         time += delta;
 
+        // Always drain the input queue, even while paused, so nothing stale fires on resume.
+        controls.update(delta);
         if (!paused) {
-            controls.update(delta);
             if (spin) {
                 player.yaw += delta * 0.35f;
             }
@@ -217,10 +240,11 @@ public final class PlayScreen extends ScreenAdapter {
         if (statTimer >= 2f) {
             Gdx.app.log("Perf", String.format(java.util.Locale.US,
                     "fps=%.1f worst=%d drawn=%d/%d queue=%d build=%dms verts=%dk "
-                            + "cam=%.1f,%.1f,%.1f %s",
+                            + "cam=%.1f,%.1f,%.1f yaw=%.2f pitch=%.2f torch=%d %s",
                     statFrames / statTimer, statWorst, renderer.drawnChunks(), world.loadedCount(),
                     world.pendingCount(), world.lastBuildMillis(), renderer.drawnVertices() / 1000,
-                    camera.position.x, camera.position.y, camera.position.z, renderer.statusLine()));
+                    camera.position.x, camera.position.y, camera.position.z,
+                    player.yaw, player.pitch, player.torchOn ? 1 : 0, renderer.statusLine()));
             statTimer = 0f;
             statFrames = 0;
             statWorst = 0;

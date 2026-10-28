@@ -21,3 +21,6 @@ assets/screenshots/
 
 # libGDX natives extracted by :android:copyAndroidNatives
 android/libs/
+
+# Python scratch
+__pycache__/

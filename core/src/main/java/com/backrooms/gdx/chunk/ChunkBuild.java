@@ -5,6 +5,9 @@ public final class ChunkBuild {
 
     public final int chunkX;
     public final int chunkZ;
+    /** World position the mesh coordinates are relative to; the renderer adds it back. */
+    public final float originX;
+    public final float originZ;
     public final float[] vertices;
     public final short[] indices;
     /** Packed RGBA8888 irradiance for this chunk, {@code LightBaker.TEXELS^2} texels. */
@@ -17,10 +20,13 @@ public final class ChunkBuild {
     public final float maxY;
     public final float maxZ;
 
-    ChunkBuild(int chunkX, int chunkZ, float[] vertices, short[] indices, int[] lightmap,
+    ChunkBuild(int chunkX, int chunkZ, float originX, float originZ,
+               float[] vertices, short[] indices, int[] lightmap,
                float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
         this.chunkX = chunkX;
         this.chunkZ = chunkZ;
+        this.originX = originX;
+        this.originZ = originZ;
         this.vertices = vertices;
         this.indices = indices;
         this.lightmap = lightmap;

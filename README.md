@@ -13,13 +13,13 @@ thrown away behind you, so the map never ends and memory never grows.
 
 | | |
 | --- | --- |
-| **Infinite map** | Height field of drooping floors, 25 cm stair treads, ledges and holes, cut by 7 m rooms with doorways, dividers and open halls. Every wall, height, light and hole is a pure hash of its integer coordinates and the world seed, so any chunk can be generated on its own and always comes out the same. |
+| **Infinite map** | One flat storey — a level floor at 0 m, a ceiling at 3 m, no stairs — cut by 7 m rooms with doorways, dividers and open halls, with the occasional pit in the carpet that swallows you. Every wall, light and hole is a pure hash of its integer coordinates and the world seed, so any chunk can be generated on its own and always comes out the same. |
 | **Streaming** | Chunks (16 × 16 m) are sampled, meshed and light-baked on background threads, uploaded at most two per frame, and released again behind you. Draw distance adjustable in game (2–6 chunks). |
 | **Baked lighting** | Soft fluorescent pools, contact shadows in corners and a bounce pass, all baked per chunk at 2 texels/m into an 8 KB lightmap (irradiance on floors in RGB, on walls in alpha). Zero dynamic lights at runtime. |
 | **Materials** | The CC0 wallpaper, carpet and ceiling tile sets with their normal maps (normal-mapped, specular, parallax-free), plus procedural fluorescent panels that flicker. |
 | **Lighting model** | Warm fluorescent tubes, a handheld torch cone, distance haze, ACES tone mapping, vignette and a touch of sensor grain. |
 | **Audio** | Procedural carpet footsteps (4 variations, randomised pitch/pan), a 50/100 Hz fluorescent buzz loop that fades in as you approach a working tube, and a low room tone. No third-party samples. |
-| **Controls** | Touch: floating stick on the left, drag-to-look on the right, run/jump/torch/pause buttons. Keyboard and mouse also work (desktop build). |
+| **Controls** | Touch: floating stick on the left, drag-to-look anywhere on the right, run (hold), jump, torch and pause buttons — all fingers at once. Keyboard and mouse also work (desktop build). The emulator job drives the real controls and checks the numbers the app logs, so a dead button or a dead look drag fails CI instead of shipping. |
 | **Platforms** | Android (`minSdk 24`, arm64 + armv7 + x86_64) and a desktop launcher used for development and screenshots. |
 
 ## Screenshots
@@ -161,7 +161,11 @@ torch cone, the panel emission with flicker, exponential haze, ACES tone mapping
 * no dynamic lights, no shadow maps, no lighting recomputation at runtime;
 * chunk build ≈ 27–51 ms on the CI runner's CPU, spread over up to two worker threads, two uploads
   per frame maximum;
-* per-frame allocations in the hot path are avoided; bitmaps are uploaded once.
+* per-frame allocations in the hot path are avoided; bitmaps are uploaded once;
+* geometry and tile UVs are stored **relative to their chunk** and the camera/torch positions are
+  handed to the shader in that same local frame. Phones run fragment shaders at `mediump` (10 bit
+  mantissa), so after a few hundred metres a world-space UV would be interpolated with centimetre
+  error and the wallpaper would visibly tear; chunk-local values keep it exact.
 
 On a mid-range phone the target is 60 fps with a 3 chunk radius; drop the radius in the pause menu
 if your device needs it.
@@ -173,7 +177,9 @@ if your device needs it.
 | `CHUNK_CELLS` | `WorldGen` | chunk edge in metres (16) |
 | `MACRO` | `WorldGen` | room size (7 m) |
 | `LIGHT_SPACING` / `LIGHT_PHASE` | `WorldGen` | fixture lattice |
-| `HEIGHT_STEP` | `WorldGen` | stair tread height (0.25 m) |
+| `ROOM_HEIGHT` | `WorldGen` | ceiling height (3 m) |
+| `HOLE_DEPTH` | `WorldGen` | how far the pits drop (2.5 m) |
+| `isHole()` | `WorldGen` | hole shape and density (about 2% of the floor) |
 | `LIGHT_INTENSITY`, `FALLOFF`, `RANGE` | `LightBaker` | brightness, falloff and lightmap encoding |
 | `TEXELS_PER_METER` | `LightBaker` | lightmap resolution (2) |
 | `WALK_SPEED`, `SPRINT_SPEED`, `GRAVITY`, `JUMP_SPEED` | `Player` | movement feel |
@@ -194,6 +200,8 @@ if your device needs it.
 * One GLSL ES trap is worth remembering: a uniform declared in both shader stages must have the
   same precision, and a `precision` statement is ES-only (wrap it in `#ifdef GL_ES`). Both rules are
   enforced by `ShaderPrecisionTest`, because a violation only shows up on the device.
+* The second device-only trap is `mediump`: anything the fragment shader interpolates has to stay
+  small, which is why chunk geometry is chunk-local. `ChunkMesherTest` guards it.
 * Entities (the occasional something in the corridors) are not implemented.
 * The desktop build is a development tool, not a shipped target.
 * Multi-threaded chunk building uses up to 2 workers; a job system would scale to more cores.

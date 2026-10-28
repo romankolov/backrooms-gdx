@@ -23,6 +23,10 @@ public final class Chunk {
     public Mesh mesh;
     public Texture lightmap;
 
+    /** World position the mesh coordinates are relative to. */
+    public float originX;
+    public float originZ;
+
     public float minX;
     public float minY;
     public float minZ;

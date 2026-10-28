@@ -21,7 +21,8 @@ public final class Player {
     public static final float SPRINT_SPEED = 5.4f;
     public static final float GRAVITY = 24f;
     public static final float JUMP_SPEED = 6.3f;
-    public static final float STEP_HEIGHT = 0.55f;   // stairs climb 0.25m per tread
+    /** Highest step the player walks up without jumping. Level 0 is flat; only the pit rims matter. */
+    public static final float STEP_HEIGHT = 0.55f;
     private static final float TH = WorldGen.WALL_HALF_THICKNESS;
 
     public final Vector3 position = new Vector3();

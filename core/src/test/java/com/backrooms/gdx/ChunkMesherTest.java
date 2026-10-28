@@ -88,6 +88,59 @@ public class ChunkMesherTest {
                 max - min > 60);
     }
 
+    /**
+     * Phones interpolate varyings at mediump (10 bit mantissa). A world coordinate of a few
+     * hundred metres loses centimetres of accuracy across a 16 m face, which made the tiling tear
+     * after a minute of walking, so geometry is stored relative to its chunk. Guard that.
+     */
+    @Test
+    public void geometryIsStoredRelativeToItsChunk() {
+        WorldGen gen = new WorldGen(4242);
+        for (int c : new int[] {0, 1, 7, -13, 96}) {
+            ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, c, -c));
+            assertEquals(c * WorldGen.CHUNK_SIZE, build.originX, 0f);
+            assertEquals(-c * WorldGen.CHUNK_SIZE, build.originZ, 0f);
+            float pad = WorldGen.WALL_HALF_THICKNESS + 0.01f;
+            for (int v = 0; v < build.vertexCount(); v++) {
+                int base = v * STRIDE;
+                float x = build.vertices[base];
+                float z = build.vertices[base + 2];
+                float u = build.vertices[base + 6];
+                float w = build.vertices[base + 7];
+                assertTrue("x must be chunk local: " + x, x >= -pad
+                        && x <= WorldGen.CHUNK_SIZE + pad);
+                assertTrue("z must be chunk local: " + z, z >= -pad
+                        && z <= WorldGen.CHUNK_SIZE + pad);
+                assertTrue("texture u must stay small: " + u, Math.abs(u) < 24f);
+                assertTrue("texture v must stay small: " + w, Math.abs(w) < 40f);
+            }
+        }
+    }
+
+    /** Chunk local UVs must not move the wallpaper: the pattern still follows the world grid. */
+    @Test
+    public void textureCoordinatesStillFollowTheWorldGrid() {
+        WorldGen gen = new WorldGen(4242);
+        for (int c : new int[] {0, 3, -8, 96}) {
+            ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, c, c));
+            float originX = build.originX;
+            for (int v = 0; v < build.vertexCount(); v++) {
+                int base = v * STRIDE;
+                float ny = Math.abs(build.vertices[base + 4]);
+                if (ny < 0.5f) {
+                    continue;                    // only the horizontal faces tile on X and Z
+                }
+                float tile = 2f;                 // carpet and ceiling
+                double world = build.vertices[base] + originX + 0.001;
+                double local = build.vertices[base + 6] + 0.001;
+                double expected = world / tile - Math.floor(world / tile);
+                double actual = local / tile - Math.floor(local / tile);
+                assertTrue("u leaves the world grid at " + world + ": " + actual
+                        + " vs " + expected, Math.abs(expected - actual) < 0.02);
+            }
+        }
+    }
+
     @Test
     public void neighbourChunksAgreeOnTheirSharedEdge() {
         WorldGen gen = new WorldGen(31337);

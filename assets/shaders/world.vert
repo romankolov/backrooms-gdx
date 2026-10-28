@@ -15,6 +15,9 @@ attribute float a_aux;
 
 uniform mat4 u_projView;
 uniform float u_time;
+// World position of the chunk this mesh belongs to. Vertices are stored relative to it, so the
+// values handed to the fragment stage stay small enough for mediump to interpolate exactly.
+uniform vec3 u_origin;
 
 varying vec3 v_pos;
 varying vec3 v_normal;
@@ -35,6 +38,8 @@ float flicker(float t, float phase) {
 }
 
 void main() {
+    // Everything downstream of here works in chunk space; the origin only comes back for the
+    // clip space transform, which happens in this highp stage.
     v_pos = a_position;
     v_normal = a_normal;
     v_uv = a_uv;
@@ -53,5 +58,5 @@ void main() {
         }
     }
 
-    gl_Position = u_projView * vec4(a_position, 1.0);
+    gl_Position = u_projView * vec4(a_position + u_origin, 1.0);
 }

@@ -44,20 +44,29 @@ public class WorldGenTest {
     }
 
     @Test
-    public void terrainStaysWithinBoundsAndOnTheStairGrid() {
+    public void theFloorAndTheCeilingAreFlat() {
         WorldGen gen = new WorldGen(99);
+        int holes = 0;
+        int cells = 0;
         for (int i = -200; i < 200; i += 3) {
             for (int j = -200; j < 200; j += 3) {
                 float f = gen.floorY(i, j);
                 float c = gen.ceilY(i, j);
-                assertTrue("floor out of range: " + f, f >= -8f && f <= 4f);
-                assertTrue("ceiling must be above the floor", c - f > 2f);
-                float steps = f / WorldGen.HEIGHT_STEP;
-                assertEquals("heights snap to the stair grid", Math.round(steps), steps, 0.0001f);
+                cells++;
+                // Level 0 has exactly two floor levels: the floor and the bottom of a hole.
+                assertEquals("ceiling must be flat: " + i + "," + j, WorldGen.ROOM_HEIGHT, c, 0f);
+                if (gen.isHole(i, j)) {
+                    holes++;
+                    assertEquals("hole bottom", -WorldGen.HOLE_DEPTH, f, 0f);
+                } else {
+                    assertEquals("floor must be flat: " + i + "," + j, 0f, f, 0f);
+                }
                 assertFalse(Float.isNaN(f));
-                assertFalse(Float.isNaN(c));
             }
         }
+        float ratio = holes / (float) cells;
+        assertTrue("holes should exist: " + ratio, ratio > 0.002f);
+        assertTrue("holes should stay rare: " + ratio, ratio < 0.12f);
     }
 
     @Test

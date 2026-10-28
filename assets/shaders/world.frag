@@ -19,6 +19,8 @@ uniform sampler2D u_ceilTex;
 uniform sampler2D u_ceilNormal;
 uniform sampler2D u_lightmap;
 
+// These two are handed over in chunk space (the renderer subtracts u_origin per draw call), so
+// fog and the torch stay accurate a kilometre out, where mediump would fall apart.
 uniform vec3 u_camPos;
 uniform vec3 u_flashPos;
 uniform vec3 u_flashDir;

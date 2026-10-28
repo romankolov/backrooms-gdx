@@ -22,8 +22,9 @@ public final class ChunkMesher {
     public static ChunkBuild build(WorldGen gen, ChunkData data) {
         float worldX = data.chunkX * WorldGen.CHUNK_SIZE;
         float worldZ = data.chunkZ * WorldGen.CHUNK_SIZE;
-        MeshBuilder mb = new MeshBuilder(worldX - LightBaker.PAD, worldZ - LightBaker.PAD,
-                1f / LightBaker.SPAN);
+        // Geometry and UVs are stored relative to the chunk origin; the renderer adds it back.
+        MeshBuilder mb = new MeshBuilder(worldX, worldZ,
+                worldX - LightBaker.PAD, worldZ - LightBaker.PAD, 1f / LightBaker.SPAN);
 
         emitFloors(mb, data);
         emitWalls(mb, data);
@@ -50,7 +51,8 @@ public final class ChunkMesher {
         }
         float pad = WorldGen.WALL_HALF_THICKNESS + 0.05f;
 
-        return new ChunkBuild(data.chunkX, data.chunkZ, vertices, indices, lightmap,
+        return new ChunkBuild(data.chunkX, data.chunkZ, worldX, worldZ,
+                vertices, indices, lightmap,
                 worldX - pad, minY - 0.05f, worldZ - pad,
                 worldX + WorldGen.CHUNK_SIZE + pad, maxY + 0.05f,
                 worldZ + WorldGen.CHUNK_SIZE + pad);

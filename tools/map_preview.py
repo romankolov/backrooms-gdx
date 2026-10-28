@@ -2,7 +2,7 @@
 """Renders a top-down map of the generated level.
 
 This is a direct port of Hash/WorldGen so the layout can be inspected without a device:
-heights become colours, walls black lines, ceiling fixtures bright dots.
+floor is the carpet colour, holes are dark, walls are black lines, ceiling fixtures bright dots.
 
     python3 tools/map_preview.py [out.png] [seed] [cells]
 """
@@ -72,35 +72,26 @@ CELL = 1
 CHUNK = 16
 MACRO = 7
 LIGHT_PHASE = 3
-STEP = 0.25
+ROOM_HEIGHT = 3.0
+HOLE_DEPTH = 2.5
 
 
 class Gen:
     def __init__(self, seed):
         self.seed = seed
 
-    def raw_height(self, x, z):
-        t = fbm2(self.seed ^ 0x1B873593, x * 0.022, z * 0.022)
-        h = 0.0
-        if t > 0.26:
-            h = (t - 0.26) * 2.2
-        elif t < -0.30:
-            h = (t + 0.30) * 2.4
-        pit = fbm3(self.seed ^ 0x2545F491, x * 0.016 + 11, z * 0.016 - 7)
-        if pit > 0.47:
-            h -= (pit - 0.47) * 14
-        return max(-5.0, min(2.25, h))
+    def is_hole(self, i, j):
+        pit = fbm3(self.seed ^ 0x2545F491, i * 0.055 + 11, j * 0.055 - 7)
+        if pit <= 0.46:
+            return False
+        # Thin the blobs out so a hole is a landmark instead of a minefield: about 3% of cells.
+        return (hash2(self.seed ^ 0x6AC690C5, i, j) & 255) < 150
 
     def floor_y(self, i, j):
-        h = self.raw_height(i + 0.5, j + 0.5)
-        return round(h / STEP) * STEP
-
-    def room_height(self, i, j):
-        h = hash2(self.seed ^ 0x5BD1E995, floor_div(i, 5), floor_div(j, 5))
-        return 2.9 + ((h >> 8) & 7) * 0.06
+        return -HOLE_DEPTH if self.is_hole(i, j) else 0.0
 
     def ceil_y(self, i, j):
-        return self.floor_y(i, j) + self.room_height(i, j)
+        return ROOM_HEIGHT
 
     def v_macro(self, x):
         if floor_mod(x, MACRO) != 0:
@@ -180,12 +171,9 @@ class Gen:
                   floor_div(z - LIGHT_PHASE, MACRO))
         return (h & 255) < 232
 
-    def slope(self, i, j):
-        h = self.floor_y(i, j)
-        d = 0
-        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            d = max(d, abs(self.floor_y(i + di, j + dj) - h))
-        return d
+    def solid_ground(self, i, j):
+        return not any(self.is_hole(i + di, j + dj)
+                       for di, dj in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)))
 
 
 def main():
@@ -196,22 +184,16 @@ def main():
     scale = 4
     img = Image.new("RGB", (cells * scale, cells * scale))
     px = img.load()
-    lo = min(gen.floor_y(i, j) for i in range(cells) for j in range(cells))
-    hi = max(gen.floor_y(i, j) for i in range(cells) for j in range(cells))
-    print("height range %.2f .. %.2f" % (lo, hi))
+    # Level 0 is flat: the carpet is one colour and a hole is simply a dark square.
     for j in range(cells):
         for i in range(cells):
-            h = gen.floor_y(i, j)
-            t = (h - lo) / max(0.001, hi - lo)
-            # dark blue (low) to bright yellow (high); pure black for deep pits
-            r = int(30 + 215 * t)
-            g = int(30 + 200 * t)
-            b = int(60 + 60 * (1 - t))
-            if h < -1.5:
-                r, g, b = int(r * 0.25), int(g * 0.25), int(b * 0.35)
+            if gen.is_hole(i, j):
+                colour = (26, 24, 18)
+            else:
+                colour = (188, 172, 108)
             for y in range(j * scale, j * scale + scale):
                 for x in range(i * scale, i * scale + scale):
-                    px[x, y] = (r, g, b)
+                    px[x, y] = colour
     draw = ImageDraw.Draw(img)
     for j in range(cells):
         for i in range(cells):
@@ -231,13 +213,11 @@ def main():
     img.save(out)
     walls = sum(1 for j in range(cells) for i in range(cells)
                 if gen.v_wall(i, j) or gen.h_wall(i, j))
-    deep = sum(1 for j in range(cells) for i in range(cells) if gen.floor_y(i, j) < -1.5)
-    stairs = sum(1 for j in range(cells) for i in range(cells)
-                 if 0.25 <= gen.slope(i, j) <= 0.75)
+    deep = sum(1 for j in range(cells) for i in range(cells) if gen.is_hole(i, j))
     lights = sum(1 for j in range(cells) for i in range(cells) if gen.fixture_at(i, j))
-    print("cells=%d walls=%d (%.1f%%) holes=%d (%.1f%%) stairs=%d (%.1f%%) lights=%d"
+    print("cells=%d walls=%d (%.1f%%) holes=%d (%.1f%%) lights=%d"
           % (cells * cells, walls, 100.0 * walls / (cells * cells), deep,
-             100.0 * deep / (cells * cells), stairs, 100.0 * stairs / (cells * cells), lights))
+             100.0 * deep / (cells * cells), lights))
     print("wrote", out)
 
 

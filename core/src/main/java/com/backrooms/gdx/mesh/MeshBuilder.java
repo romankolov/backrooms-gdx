@@ -3,8 +3,15 @@ package com.backrooms.gdx.mesh;
 /**
  * Growable vertex/index buffer for chunk geometry.
  *
- * <p>Vertex layout (12 floats): position(3) normal(3) worldUV(2) lightmapUV(2) material(1) aux(1).
+ * <p>Vertex layout (12 floats): position(3) normal(3) tileUV(2) lightmapUV(2) material(1) aux(1).
  * All geometry is axis aligned rectangles, so a single primitive covers every face in the level.
+ *
+ * <p>Positions and texture coordinates are stored <em>relative to the chunk</em>. Phones run
+ * fragment shaders at {@code mediump} precision (10 bit mantissa, roughly three decimal digits), so
+ * a world coordinate of a few hundred metres interpolated across a 16 m face loses centimetres of
+ * accuracy and the tiling visibly tears. Keeping every value a phone has to interpolate small fixes
+ * that at the source. The offsets subtracted here are whole numbers of texture tiles, so the pattern
+ * still lines up across chunk borders; the renderer passes the chunk origin back to the shader.
  */
 public final class MeshBuilder {
 
@@ -20,6 +27,17 @@ public final class MeshBuilder {
     private int floatsUsed;
     private int indicesUsed;
 
+    /** Wallpaper tile size in metres: the shader scales {@code uv} by 0.8. */
+    public static final float WALL_TILE = 1.25f;
+    /** Carpet and ceiling tile size in metres: the shader scales {@code uv} by 0.5. */
+    public static final float FLOOR_TILE = 2f;
+
+    private final float originX;
+    private final float originZ;
+    private final float wallBaseX;
+    private final float wallBaseZ;
+    private final float floorBaseX;
+    private final float floorBaseZ;
     private final float lmOriginX;
     private final float lmOriginZ;
     private final float lmScale;
@@ -28,7 +46,18 @@ public final class MeshBuilder {
     private float uvOffU;
     private float uvOffV;
 
-    public MeshBuilder(float lmOriginX, float lmOriginZ, float lmScale) {
+    /**
+     * @param originX world X of the chunk origin; positions and UVs are stored relative to it
+     * @param originZ world Z of the chunk origin
+     */
+    public MeshBuilder(float originX, float originZ,
+                       float lmOriginX, float lmOriginZ, float lmScale) {
+        this.originX = originX;
+        this.originZ = originZ;
+        this.wallBaseX = tileBase(originX, WALL_TILE);
+        this.wallBaseZ = tileBase(originZ, WALL_TILE);
+        this.floorBaseX = tileBase(originX, FLOOR_TILE);
+        this.floorBaseZ = tileBase(originZ, FLOOR_TILE);
         this.lmOriginX = lmOriginX;
         this.lmOriginZ = lmOriginZ;
         this.lmScale = lmScale;
@@ -133,24 +162,30 @@ public final class MeshBuilder {
             System.arraycopy(vertices, 0, bigger, 0, floatsUsed);
             vertices = bigger;
         }
+        // Tile UVs follow the world grid so neighbouring chunks line up, but each value has the
+        // largest whole number of tiles that fits in this chunk subtracted from it. That keeps the
+        // attribute small without moving the pattern: see the class comment.
+        boolean wall = mat == MAT_WALL;
+        float baseX = wall ? wallBaseX : floorBaseX;
+        float baseZ = wall ? wallBaseZ : floorBaseZ;
         float u;
         float v;
         if (ny > 0.5f || ny < -0.5f) {
-            u = x;
-            v = z;
+            u = x - baseX;
+            v = z - baseZ;
         } else if (nx > 0.5f || nx < -0.5f) {
-            u = z;
+            u = z - baseZ;                  // wall running along Z
             v = y;
         } else {
-            u = x;
+            u = x - baseX;                  // wall running along X
             v = y;
         }
         u += uvOffU;
         v += uvOffV;
         int i = floatsUsed;
-        vertices[i] = x;
+        vertices[i] = x - originX;
         vertices[i + 1] = y;
-        vertices[i + 2] = z;
+        vertices[i + 2] = z - originZ;
         vertices[i + 3] = nx;
         vertices[i + 4] = ny;
         vertices[i + 5] = nz;
@@ -166,5 +201,10 @@ public final class MeshBuilder {
             vertices[i + 11] = aux;
         }
         floatsUsed += STRIDE;
+    }
+
+    /** Largest whole number of tiles not above {@code worldCoordinate}. */
+    static float tileBase(float worldCoordinate, float tile) {
+        return (float) (Math.floor(worldCoordinate / (double) tile) * (double) tile);
     }
 }
