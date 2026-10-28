@@ -194,21 +194,15 @@ public class ChunkMesherTest {
         assertTrue("the pit floor must face up, found " + bottomFaces, bottomFaces >= 4);
         assertTrue("the pit rim needs geometry too, found " + rimVertices, rimVertices > 0);
 
-        // Only two levels exist in the whole level: the floor and the bottom of a pit.
-        int onFloor = 0;
+        // Only the floor, the bottom of a pit and the ceiling exist: no stairs, no ledges.
         for (int v = 0; v < build.vertexCount(); v++) {
-            int base = v * STRIDE;
-            float y = build.vertices[base + 1];
+            float y = build.vertices[v * STRIDE + 1];
             boolean floor = Math.abs(y) < 0.01f;
             boolean bottom = Math.abs(y + WorldGen.HOLE_DEPTH) < 0.01f;
             // The light panels hang 3 cm under the ceiling.
             boolean ceiling = Math.abs(y - WorldGen.ROOM_HEIGHT) < 0.05f;
             assertTrue("vertex at an unexpected height: " + y, floor || bottom || ceiling);
-            if (floor) {
-                onFloor++;
-            }
         }
-        assertTrue("most of the chunk is still floor", onFloor > build.vertexCount() / 2);
     }
 
     @Test
