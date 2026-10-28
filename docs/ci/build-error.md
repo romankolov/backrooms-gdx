@@ -1,6 +1,6 @@
 # Last build failure
 
-Commit: ea39a20
+Commit: 0dec3e0
 
 ```
 Welcome to Gradle 8.11.1!
@@ -29,60 +29,36 @@ Android natives: arm64-v8a/libgdx.so, armeabi-v7a/libgdx.so, x86_64/libgdx.so
 > Task :android:processDebugMainManifest FROM-CACHE
 > Task :android:processDebugManifest FROM-CACHE
 > Task :android:processDebugManifestForPackage FROM-CACHE
-> Task :android:processDebugResources FROM-CACHE
-> Task :android:mergeDebugShaders
-> Task :android:compileDebugShaders NO-SOURCE
-> Task :android:generateDebugAssets UP-TO-DATE
-> Task :android:mergeDebugAssets
-> Task :android:desugarDebugFileDependencies FROM-CACHE
-> Task :android:processDebugJavaRes NO-SOURCE
-> Task :android:mergeDebugJniLibFolders
-> Task :android:checkDebugDuplicateClasses
-> Task :android:compressDebugAssets
-> Task :core:compileJava FAILED
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:130: error: incompatible types: possible lossy conversion from float to int
-            animation.animate(scareClip, 0.12f, null, 1f);
-                                         ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:235: error: incompatible types: float cannot be converted to AnimationListener
-                animation.setAnimation(idleClip, -1, 1f);
-                                                     ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:352: error: incompatible types: possible lossy conversion from float to int
-            animation.animate(wanted, 0.3f, null, wantedSpeed);
-                                      ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:356: error: incompatible types: float cannot be converted to AnimationListener
-            animation.setAnimation(wanted, -1, wantedSpeed);
-                                               ^
+> Task :core:compileJava
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
-Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
-4 errors
-> Task :android:validateSigningDebug
+> Task :android:processDebugResources FROM-CACHE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+> Task :android:mergeDebugShaders
+> Task :core:compileTestJava FAILED
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/AcousticsTest.java:38: error: cannot inherit from final Acoustics
+                new Acoustics() {{ mean = 0.5f; derive(); }}.openness, 0.001f);
+                    ^
+1 error
+> Task :android:compileDebugJavaWithJavac
+Note: /home/runner/work/backrooms-gdx/backrooms-gdx/android/src/main/java/com/backrooms/gdx/android/AndroidLauncher.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
 [Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
 FAILURE: Build failed with an exception.
 * What went wrong:
-Execution failed for task ':core:compileJava'.
+Execution failed for task ':core:compileTestJava'.
 > Compilation failed; see the compiler output below.
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:130: error: incompatible types: possible lossy conversion from float to int
-              animation.animate(scareClip, 0.12f, null, 1f);
-                                           ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:235: error: incompatible types: float cannot be converted to AnimationListener
-                  animation.setAnimation(idleClip, -1, 1f);
-                                                       ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:352: error: incompatible types: possible lossy conversion from float to int
-              animation.animate(wanted, 0.3f, null, wantedSpeed);
-                                        ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:356: error: incompatible types: float cannot be converted to AnimationListener
-              animation.setAnimation(wanted, -1, wantedSpeed);
-                                                 ^
-  Note: Recompile with -Xlint:deprecation for details.
-  Note: Some input files use or override a deprecated API.
-  Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
-  4 errors
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/AcousticsTest.java:38: error: cannot inherit from final Acoustics
+                  new Acoustics() {{ mean = 0.5f; derive(); }}.openness, 0.001f);
+                      ^
+  1 error
 * Try:
 > Check your code and dependencies to fix the compilation error(s)
 > Run with --scan to get full insights.
 * Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:compileJava'.
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:compileTestJava'.
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
@@ -115,22 +91,10 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:co
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
 Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:130: error: incompatible types: possible lossy conversion from float to int
-            animation.animate(scareClip, 0.12f, null, 1f);
-                                         ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:235: error: incompatible types: float cannot be converted to AnimationListener
-                animation.setAnimation(idleClip, -1, 1f);
-                                                     ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:352: error: incompatible types: possible lossy conversion from float to int
-            animation.animate(wanted, 0.3f, null, wantedSpeed);
-                                      ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:356: error: incompatible types: float cannot be converted to AnimationListener
-            animation.setAnimation(wanted, -1, wantedSpeed);
-                                               ^
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use or override a deprecated API.
-Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
-4 errors
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/AcousticsTest.java:38: error: cannot inherit from final Acoustics
+                new Acoustics() {{ mean = 0.5f; derive(); }}.openness, 0.001f);
+                    ^
+1 error
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:84)
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:46)
 	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
@@ -287,6 +251,6 @@ Note: Some messages have been simplified; recompile with -Xdiags:verbose to get 
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 10s
-23 actionable tasks: 11 executed, 12 from cache
+BUILD FAILED in 25s
+20 actionable tasks: 9 executed, 11 from cache
 ```
