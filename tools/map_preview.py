@@ -81,11 +81,8 @@ class Gen:
         self.seed = seed
 
     def is_hole(self, i, j):
-        pit = fbm3(self.seed ^ 0x2545F491, i * 0.055 + 11, j * 0.055 - 7)
-        if pit <= 0.46:
-            return False
-        # Thin the blobs out so a hole is a landmark instead of a minefield: about 3% of cells.
-        return (hash2(self.seed ^ 0x6AC690C5, i, j) & 255) < 150
+        """Compact round pits: two octaves only, about 3% of the floor."""
+        return fbm2(self.seed ^ 0x2545F491, i * 0.07 + 11, j * 0.07 - 7) > 0.57
 
     def floor_y(self, i, j):
         return -HOLE_DEPTH if self.is_hole(i, j) else 0.0

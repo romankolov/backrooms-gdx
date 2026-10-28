@@ -60,17 +60,12 @@ public final class WorldGen {
     }
 
     /**
-     * True where the floor drops away into a pit. The blobs come from the same low frequency noise
-     * the level always used, but now they are only ever holes: everything else stays on one level.
+     * True where the floor drops away into a pit. Two octaves only, so the blobs come out compact
+     * and round instead of as one-cell slivers: about 3% of the floor, in pits a few metres across.
+     * Everything outside them is on the same level.
      */
     public boolean isHole(int cellX, int cellZ) {
-        float pit = Hash.fbm3(seed ^ 0x2545f491,
-                cellX * 0.055f + 11f, cellZ * 0.055f - 7f);
-        if (pit <= 0.46f) {
-            return false;
-        }
-        // Thin the blobs out so a hole is a landmark instead of a minefield: about 3% of cells.
-        return (Hash.hash2(seed ^ 0x6ac690c5, cellX, cellZ) & 255) < 150;
+        return Hash.fbm2(seed ^ 0x2545f491, cellX * 0.07f + 11f, cellZ * 0.07f - 7f) > 0.57f;
     }
 
     // ---------------------------------------------------------------------------------------------
