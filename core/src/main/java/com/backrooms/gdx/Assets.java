@@ -18,6 +18,7 @@ public final class Assets implements Disposable {
     public final Sound[] footsteps = new Sound[4];
     public Sound buzz;
     public Sound roomTone;
+    public Sound tapeHiss;
 
     public Assets() {
         font = new BitmapFont(Gdx.files.internal("ui/font.fnt"));
@@ -30,6 +31,7 @@ public final class Assets implements Disposable {
         try {
             buzz = Gdx.audio.newSound(Gdx.files.internal("sounds/light_buzz.ogg"));
             roomTone = Gdx.audio.newSound(Gdx.files.internal("sounds/room_tone.ogg"));
+            tapeHiss = Gdx.audio.newSound(Gdx.files.internal("sounds/tape_hiss.ogg"));
         } catch (Exception e) {
             Gdx.app.error("Assets", "Could not load ambience: " + e.getMessage());
         }
@@ -46,5 +48,6 @@ public final class Assets implements Disposable {
         }
         if (buzz != null) buzz.dispose();
         if (roomTone != null) roomTone.dispose();
+        if (tapeHiss != null) tapeHiss.dispose();
     }
 }

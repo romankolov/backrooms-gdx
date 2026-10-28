@@ -23,7 +23,7 @@ tasks.register("run", JavaExec) {
     workingDir = rootProject.file("assets")
     ["backrooms.capture", "backrooms.frames", "backrooms.autostart", "backrooms.seed",
      "backrooms.spin", "backrooms.yaw", "backrooms.pitch", "backrooms.debug", "backrooms.hud",
-     "backrooms.title", "backrooms.spawn", "backrooms.pit"].each { key ->
+     "backrooms.title", "backrooms.spawn", "backrooms.pit", "backrooms.vhs"].each { key ->
         def value = System.getProperty(key)
         if (value != null) {
             systemProperty key, value

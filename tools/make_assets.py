@@ -9,7 +9,8 @@ They are downscaled/re-encoded here so the APK stays small:
     single PNG so the shader only needs one sampler for it.
 
 Audio is synthesised from scratch (no third-party samples): muffled carpet
-footsteps, a fluorescent tube buzz loop and a low room tone loop.
+footsteps, a fluorescent tube buzz loop, a low room tone loop and the tape hiss
+of the VHS camcorder.
 
 Usage:  python3 tools/make_assets.py [path/to/backrooms-textures]
 """
@@ -262,6 +263,34 @@ def make_room_tone(duration=8.0):
     return (base + air) * tremolo * 0.6
 
 
+def make_tape_hiss(duration=6.0):
+    """The sound of a worn VHS tape: broadband hiss, mains hum, and a slow wow/flutter."""
+    n = int(SR * duration)
+    t = np.arange(n) / SR
+    rng = np.random.default_rng(17)
+
+    # Tape hiss is not white noise: the head gap rolls off the top end and the preamp rolls off the
+    # bottom, so it sits in a band around a few kHz.
+    white = rng.uniform(-1.0, 1.0, n)
+    bright = white - one_pole_lowpass(white, 400.0)          # high-pass at ~400 Hz
+    hiss = one_pole_lowpass(bright, 6500.0) * 0.55
+
+    # The transport adds a low rumble and the electronics a little 50 Hz hum.
+    rumble = (np.sin(2 * np.pi * 31.0 * t) * 0.02
+              + np.sin(2 * np.pi * 33.7 * t + 0.9) * 0.015)
+    hum = np.sin(2 * np.pi * 50.0 * t) * 0.012 + np.sin(2 * np.pi * 100.0 * t) * 0.006
+
+    # Wow and flutter: the speed wanders, which smears the hiss and makes it breathe.
+    wow = 1.0 + 0.18 * np.sin(2 * np.pi * 0.35 * t) + 0.10 * np.sin(2 * np.pi * 2.7 * t + 1.3)
+    # Occasional dropouts, when the tape loses contact with the head for a few milliseconds.
+    drop = np.ones(n)
+    for start in rng.integers(0, n - 400, size=max(4, int(duration))):
+        length = int(rng.integers(150, 400))
+        drop[start:start + length] *= 0.25
+    signal = (hiss * wow + rumble + hum) * drop
+    return signal
+
+
 def build_audio():
     rng = np.random.default_rng(3)
     for i in range(4):
@@ -269,6 +298,7 @@ def build_audio():
         write_ogg(os.path.join(SFX_OUT, "footstep_%d.ogg" % (i + 1)), step)
     write_ogg(os.path.join(SFX_OUT, "light_buzz.ogg"), make_buzz(), loop=True)
     write_ogg(os.path.join(SFX_OUT, "room_tone.ogg"), make_room_tone(), loop=True)
+    write_ogg(os.path.join(SFX_OUT, "tape_hiss.ogg"), make_tape_hiss(), loop=True)
 
 
 # --------------------------------------------------------------------------

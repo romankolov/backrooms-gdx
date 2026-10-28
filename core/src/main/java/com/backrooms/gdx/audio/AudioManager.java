@@ -17,6 +17,8 @@ public final class AudioManager implements Disposable {
     private final WorldGen gen;
     private long buzzId = -1;
     private long toneId = -1;
+    private long tapeId = -1;
+    private boolean tapeWanted;
     private float buzzVolume;
     private float targetBuzz;
     private boolean enabled = true;
@@ -37,6 +39,34 @@ public final class AudioManager implements Disposable {
         } else if (toneId == -1 && assets.roomTone != null) {
             toneId = assets.roomTone.loop(0.22f);
         }
+    }
+
+    /**
+     * Tape hiss follows the VHS effect: it is the sound of the tape the picture is coming off, so
+     * it is on exactly when the effect is.
+     */
+    public void setTapeEnabled(boolean on) {
+        tapeWanted = on;
+        if (!on) {
+            stopTape();
+        } else if (tapeId == -1 && enabled && assets.tapeHiss != null) {
+            tapeId = assets.tapeHiss.loop(0f);
+        }
+    }
+
+    private void stopTape() {
+        if (tapeId != -1 && assets.tapeHiss != null) {
+            assets.tapeHiss.stop(tapeId);
+        }
+        tapeId = -1;
+    }
+
+    /** 0..1: raises the hiss while the tape is glitching. */
+    public void setTapeLevel(float level, float glitch) {
+        if (tapeId == -1) {
+            return;
+        }
+        assets.tapeHiss.setVolume(tapeId, MathUtils.clamp(0.10f + 0.18f * glitch, 0f, 0.6f) * level);
     }
 
     public void update(float delta, float x, float z) {
@@ -117,6 +147,7 @@ public final class AudioManager implements Disposable {
             assets.roomTone.stop(toneId);
             toneId = -1;
         }
+        stopTape();
     }
 
     @Override

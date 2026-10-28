@@ -16,8 +16,10 @@ import com.backrooms.gdx.GameSettings;
 import com.backrooms.gdx.audio.AudioManager;
 import com.backrooms.gdx.input.TouchControls;
 import com.backrooms.gdx.player.Player;
+import com.backrooms.gdx.render.VhsEffect;
 import com.backrooms.gdx.render.WorldRenderer;
 import com.backrooms.gdx.ui.Hud;
+import com.backrooms.gdx.ui.VhsOsd;
 import com.backrooms.gdx.world.World;
 
 /** The game itself: streaming world, first person walking, ambience and HUD. */
@@ -34,6 +36,8 @@ public final class PlayScreen extends ScreenAdapter {
     private final TouchControls controls;
     private final AudioManager audio;
     private final Hud hud;
+    private final VhsEffect vhs;
+    private final VhsOsd osd;
     private final PerspectiveCamera camera = new PerspectiveCamera(74f, 1, 1);
     private final InputAdapter menuInput;
     private final InputMultiplexer input;
@@ -52,6 +56,8 @@ public final class PlayScreen extends ScreenAdapter {
     private boolean waitingForWorld = true;
     private float waited;
     private float fogDensity;
+    private float tapeTime;
+    private boolean vhsOn;
     private float exposure = 0.95f;
     private int seed;
     private final boolean spin;
@@ -69,6 +75,15 @@ public final class PlayScreen extends ScreenAdapter {
         this.controls = new TouchControls(settings);
         this.audio = new AudioManager(assets, world.gen());
         this.hud = new Hud(assets);
+        this.vhs = new VhsEffect(1f);
+        this.osd = new VhsOsd();
+        this.vhsOn = settings.vhs;
+        // -Dbackrooms.vhs=0 renders the raw frame, which is what a screenshot wants when the
+        // effect itself is being worked on.
+        String vhsFlag = System.getProperty("backrooms.vhs");
+        if (vhsFlag != null) {
+            vhsOn = vhsFlag.trim().matches("1|true|yes|on");
+        }
 
         float[] spawn = new float[3];
         world.gen().findSpawn(spawn);
@@ -156,6 +171,7 @@ public final class PlayScreen extends ScreenAdapter {
         };
         input = new InputMultiplexer(menuInput, controls);
         audio.setEnabled(settings.audio);
+        audio.setTapeEnabled(settings.audio && vhsOn);
     }
 
     /**
@@ -194,6 +210,7 @@ public final class PlayScreen extends ScreenAdapter {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(input);
+        vhs.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         controls.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         hud.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         hud.refreshLabels(settings);
@@ -226,6 +243,7 @@ public final class PlayScreen extends ScreenAdapter {
         camera.viewportWidth = width;
         camera.viewportHeight = height;
         camera.update();
+        vhs.resize(width, height);
         controls.resize(width, height);
         hud.resize(width, height);
         logHitTargets();
@@ -287,6 +305,15 @@ public final class PlayScreen extends ScreenAdapter {
             }
         }
 
+        if (tape) {
+            // An old tape is never quite clean: every so often the tracking slips for a moment.
+            if (!paused && random.nextFloat() < delta * 0.10f) {
+                vhs.setGlitch(0.35f + random.nextFloat() * 0.25f);
+            }
+            vhs.update(delta);
+            audio.setTapeLevel(1f, vhs.glitch());
+        }
+
         statTimer += rawDelta;
         statFrames++;
         if (rawDelta > 0.0001f) {
@@ -309,7 +336,14 @@ public final class PlayScreen extends ScreenAdapter {
         player.cameraDirection(torchDir);
         torchPos.set(camera.position).mulAdd(torchDir, 0.15f);
 
-        Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        // With the VHS pass on, the world is drawn into an offscreen buffer and the tape shader puts
+        // it on screen afterwards. The debug material view bypasses it: colours have to be readable.
+        boolean tape = vhsOn && vhs.isReady() && !debugView;
+        if (tape) {
+            vhs.begin();                       // also sets the viewport to the buffer
+        } else {
+            Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        }
         if (debugView) {
             // Anything magenta on screen is a hole: there is no geometry there.
             Gdx.gl.glClearColor(1f, 0f, 1f, 1f);
@@ -332,6 +366,17 @@ public final class PlayScreen extends ScreenAdapter {
 
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDisable(GL20.GL_CULL_FACE);
+
+        if (tape) {
+            vhs.end(time);
+            // The camcorder's own overlay, drawn crisp on top of the tape: this is the camera's
+            // character generator, not part of the recording.
+            tapeTime += delta;
+            assets.batch.begin();
+            osd.draw(assets.batch, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
+                    time, tapeTime, vhs.glitch());
+            assets.batch.end();
+        }
 
         boolean hudDebug = settings.showDebug || System.getProperty("backrooms.hud", "0")
                 .trim().matches("1|true|yes");
@@ -370,6 +415,7 @@ public final class PlayScreen extends ScreenAdapter {
     private void setPaused(boolean value) {
         paused = value;
         audio.setEnabled(settings.audio && !paused);
+        audio.setTapeEnabled(settings.audio && !paused && vhsOn);
         if (paused) {
             hud.refreshLabels(settings);
         }
@@ -453,6 +499,8 @@ public final class PlayScreen extends ScreenAdapter {
     public void dispose() {
         audio.dispose();
         world.dispose();
+        vhs.dispose();
+        osd.dispose();
         if (Gdx.input.getInputProcessor() == input) {
             Gdx.input.setInputProcessor(null);
         }

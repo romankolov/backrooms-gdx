@@ -18,6 +18,7 @@ thrown away behind you, so the map never ends and memory never grows.
 | **Baked lighting** | Soft fluorescent pools, contact shadows in corners and a bounce pass, all baked per chunk at 2 texels/m into an 8 KB lightmap (irradiance on floors in RGB, on walls in alpha). Zero dynamic lights at runtime. |
 | **Materials** | The CC0 wallpaper, carpet and ceiling tile sets with their normal maps (normal-mapped, specular, parallax-free), plus procedural fluorescent panels that flicker. |
 | **Lighting model** | Warm fluorescent tubes, a handheld torch cone, distance haze, ACES tone mapping, vignette and a touch of sensor grain. |
+| **VHS camcorder** | The whole frame goes through an offscreen pass that emulates tape: drum curvature, head-switch tear along the bottom edge, chroma smear from the low chroma bandwidth, a tracking band that drifts up the frame, dropout speckles, scanlines, grain and a warm washed-out grade. Plus a camcorder OSD (REC lamp, SP, date, tape counter) drawn from a hand-built 5x7 character generator, and synthesised tape hiss. Toggle it in the pause menu (`VHS LOOK`) or with `-Dbackrooms.vhs=0`. |
 | **Audio** | Procedural carpet footsteps (4 variations, randomised pitch/pan), a 50/100 Hz fluorescent buzz loop that fades in as you approach a working tube, and a low room tone. No third-party samples. |
 | **Controls** | Touch: floating stick on the left, drag-to-look anywhere on the right, run (hold), jump, torch and pause buttons — all fingers at once. Keyboard and mouse also work (desktop build). The emulator job drives the real controls and checks the numbers the app logs, so a dead button or a dead look drag fails CI instead of shipping. |
 | **Platforms** | Android (`minSdk 24`, arm64 + armv7 + x86_64) and a desktop launcher used for development and screenshots. |
@@ -80,6 +81,8 @@ Handy system properties for the desktop run:
 | `-Dbackrooms.spawn=0.5,-29.5` | drop the player at a known position (screenshots, debugging) |
 | `-Dbackrooms.debug=1` | material colour view, magenta = hole in the geometry |
 | `-Dbackrooms.hud=1` | show the performance readout |
+| `-Dbackrooms.vhs=0` | render the raw frame without the camcorder pass |
+| `-Dbackrooms.pit=1` | spawn on the rim of the nearest floor pit |
 | `-Dbackrooms.capture=dir -Dbackrooms.frames=270` | render `frames` frames, dump PNGs into `dir`, quit |
 
 ### Tests

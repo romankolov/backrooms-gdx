@@ -25,6 +25,9 @@ import org.junit.Test;
  */
 public class ShaderPrecisionTest {
 
+    /** Every shader that ships, so a new one cannot slip past these rules. */
+    private static final String[] SHADERS = {"world.vert", "world.frag", "vhs.vert", "vhs.frag"};
+
     private static final Pattern UNIFORM = Pattern.compile(
             "^\\s*uniform\\s+((?:(?:lowp|mediump|highp)\\s+)?)(\\w+)\\s+(\\w+)\\s*(?:\\[[^\\]]*\\])?\\s*;",
             Pattern.MULTILINE);
@@ -33,22 +36,22 @@ public class ShaderPrecisionTest {
 
     @Test
     public void sharedUniformsUseTheSamePrecision() throws IOException {
-        String vertex = read("world.vert");
-        String fragment = read("world.frag");
+        String[][] pairs = {{"world.vert", "world.frag"}, {"vhs.vert", "vhs.frag"}};
+        for (String[] pair : pairs) {
+            Map<String, String> v = uniforms(read(pair[0]));
+            Map<String, String> f = uniforms(read(pair[1]));
+            assertTrue("no uniforms parsed out of " + pair[0], v.size() > 0);
 
-        Map<String, String> v = uniforms(vertex);
-        Map<String, String> f = uniforms(fragment);
-        assertTrue("no uniforms parsed out of the vertex shader", v.size() > 0);
-
-        for (Map.Entry<String, String> entry : f.entrySet()) {
-            String name = entry.getKey();
-            if (!v.containsKey(name)) {
-                continue;
-            }
-            if (!v.get(name).equals(entry.getValue())) {
-                fail("uniform " + name + " is declared differently per stage: vertex "
-                        + v.get(name) + " vs fragment " + entry.getValue()
-                        + " - GLES2 rejects this link");
+            for (Map.Entry<String, String> entry : f.entrySet()) {
+                String name = entry.getKey();
+                if (!v.containsKey(name)) {
+                    continue;
+                }
+                if (!v.get(name).equals(entry.getValue())) {
+                    fail(pair[0] + "/" + pair[1] + ": uniform " + name
+                            + " is declared differently per stage: vertex " + v.get(name)
+                            + " vs fragment " + entry.getValue() + " - GLES2 rejects this link");
+                }
             }
         }
     }
@@ -60,7 +63,7 @@ public class ShaderPrecisionTest {
      */
     @Test
     public void precisionStatementsAreGuardedForDesktopGl() throws IOException {
-        for (String name : new String[] {"world.vert", "world.frag"}) {
+        for (String name : SHADERS) {
             String[] lines = read(name).split("\n");
             int guard = 0;
             for (int i = 0; i < lines.length; i++) {
