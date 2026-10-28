@@ -72,6 +72,8 @@ public final class EntityController {
 
     private State state = State.ABSENT;
     private boolean enabled = true;
+    /** Set for screenshots: it stands where it was put instead of walking at the camera. */
+    private boolean frozen;
     private float dormant;
     private float stalkTime;
     private float lostTime;
@@ -129,6 +131,11 @@ public final class EntityController {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    /** Holds it in place while the rest of the encounter logic runs. Used for screenshots. */
+    public void setFrozen(boolean frozen) {
+        this.frozen = frozen;
     }
 
     /**
@@ -207,7 +214,9 @@ public final class EntityController {
                     lostTime = 0f;
                     break;
                 }
-                walkToward(player, STALK_SPEED, delta);
+                if (!frozen) {
+                    walkToward(player, STALK_SPEED, delta);
+                }
                 break;
             }
 
@@ -220,6 +229,9 @@ public final class EntityController {
                 }
                 if (dist > ABANDON_RANGE * 1.6f) {
                     vanish(20f + random.nextFloat() * 25f);
+                    break;
+                }
+                if (frozen) {
                     break;
                 }
                 float speed = dist < LUNGE_RANGE && seen ? LUNGE_SPEED : HUNT_SPEED;

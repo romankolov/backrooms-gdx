@@ -134,10 +134,10 @@ public final class PlayScreen extends ScreenAdapter {
         // view of the player, so it is never behind a wall and never right on top of the camera.
         String entityFlag = System.getProperty("backrooms.entity");
         if (entityFlag != null && entityFlag.trim().matches("1|true|yes|on")) {
-            float ahead = 9f;
-            float fx = player.position.x - MathUtils.sin(player.yaw) * 9f;
-            float fz = player.position.z - MathUtils.cos(player.yaw) * 9f;
-            for (float d = 13f; d >= 8f; d -= 0.5f) {
+            float ahead = 6.5f;
+            float fx = player.position.x - MathUtils.sin(player.yaw) * 6.5f;
+            float fz = player.position.z - MathUtils.cos(player.yaw) * 6.5f;
+            for (float d = 7.5f; d >= 4.5f; d -= 0.5f) {
                 float x = player.position.x - MathUtils.sin(player.yaw) * d;
                 float z = player.position.z - MathUtils.cos(player.yaw) * d;
                 int cx = com.backrooms.gdx.util.Hash.floorInt(x);
@@ -150,10 +150,11 @@ public final class PlayScreen extends ScreenAdapter {
                     break;
                 }
             }
-            // Stalking, not hunting: the screenshot harness runs on software OpenGL at a handful of
-            // frames per second, so a hunting entity crosses the whole corridor before the last
-            // frame and the capture fade turns the shot black.
+            // Stalking and frozen: the screenshot harness runs for far longer in game time than the
+            // frame count suggests (software OpenGL), so anything that walks ends up standing on
+            // the camera - or catches the player and fades the shot to black.
             entity.forceSpawn(fx, fz, EntityController.State.STALK);
+            entity.setFrozen(true);
             Gdx.app.log("BackroomsInput", String.format(java.util.Locale.US,
                     "entity at %.1f,%.1f (%.1f m ahead)", fx, fz, ahead));
         }
