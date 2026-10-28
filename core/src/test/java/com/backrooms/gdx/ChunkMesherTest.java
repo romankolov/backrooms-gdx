@@ -141,6 +141,49 @@ public class ChunkMesherTest {
         }
     }
 
+    /**
+     * A pit has to actually be in the mesh: a floor quad at the bottom, and riser quads on its rim.
+     * The level is flat everywhere else, so a missing hole would just look like more carpet.
+     */
+    @Test
+    public void holesAreCutIntoTheFloor() {
+        WorldGen gen = new WorldGen(20241027);
+        int cellX = 1;
+        int cellZ = -33;
+        assertTrue("the test needs a hole at " + cellX + "," + cellZ, gen.isHole(cellX, cellZ));
+
+        int chunkX = Math.floorDiv(cellX, WorldGen.CHUNK_CELLS);
+        int chunkZ = Math.floorDiv(cellZ, WorldGen.CHUNK_CELLS);
+        ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, chunkX, chunkZ));
+
+        int pitVertices = 0;
+        for (int v = 0; v < build.vertexCount(); v++) {
+            int base = v * STRIDE;
+            float y = build.vertices[base + 1];
+            if (y > -WorldGen.HOLE_DEPTH + 0.01f) {
+                continue;
+            }
+            // Positions are chunk local.
+            float x = build.vertices[base] + build.originX;
+            float z = build.vertices[base + 2] + build.originZ;
+            assertTrue("pit vertex outside its cell: " + x + "," + z,
+                    x >= cellX - 1 && x <= cellX + 2 && z >= cellZ - 1 && z <= cellZ + 2);
+            pitVertices++;
+        }
+        assertTrue("the hole must have geometry, found " + pitVertices, pitVertices >= 4 * 4);
+
+        // And nothing else in the chunk may sit at the pit bottom.
+        int sunk = 0;
+        for (int i = -20; i < 20; i++) {
+            for (int j = -40; j < -20; j++) {
+                if (gen.floorY(i, j) < -1f) {
+                    sunk++;
+                }
+            }
+        }
+        assertTrue("holes exist in the sample area", sunk > 0);
+    }
+
     @Test
     public void neighbourChunksAgreeOnTheirSharedEdge() {
         WorldGen gen = new WorldGen(31337);
