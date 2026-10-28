@@ -1,6 +1,6 @@
 # Emulator smoke test diagnostics
 
-Commit: ab84bd339c38171c499f17c98c8d609330b1f97d
+Commit: ec8162253dbc886a192aaba4a237f44deffe421b
 Outcome: success
 
 ## Environment
@@ -8,7 +8,7 @@ Outcome: success
 SDK=/usr/local/lib/android/sdk
 APK=android/build/outputs/apk/debug/android-debug.apk
 --- kvm
-crw-rw---- 1 root kvm 10, 232 Oct 28 08:05 /dev/kvm
+crw-rw---- 1 root kvm 10, 232 Oct 28 08:11 /dev/kvm
 --- sdk contents
 build-tools
 cmake
@@ -41,128 +41,128 @@ INFO         |   qemu.wifi=1
 INFO         | Monitoring duration of emulator setup.
 WARNING      | The emulator now requires a signed jwt token for gRPC access! Use the -grpc flag if you really want an open unprotected grpc port
 INFO         | Using security allow list from: /usr/local/lib/android/sdk/emulator/lib/emulator_access.json
-INFO         | The active JSON Web Key Sets can be found here: /run/user/1001/avd/running/2736/jwks/0407f1e2-58f6-4729-8552-d90f9c75e0ed/active.jwk
-INFO         | Scanning /run/user/1001/avd/running/2736/jwks/0407f1e2-58f6-4729-8552-d90f9c75e0ed for jwk keys.
+INFO         | The active JSON Web Key Sets can be found here: /run/user/1001/avd/running/2742/jwks/378e87e4-9ca0-4489-90fb-a0db0de34d9d/active.jwk
+INFO         | Scanning /run/user/1001/avd/running/2742/jwks/378e87e4-9ca0-4489-90fb-a0db0de34d9d for jwk keys.
 INFO         | Started GRPC server at 127.0.0.1:8554, security: Local, auth: +token
-INFO         | Advertising in: /run/user/1001/avd/running/pid_2736.ini
+INFO         | Advertising in: /run/user/1001/avd/running/pid_2742.ini
 INFO         | Setting display: 0 configuration to: 1080x1920, dpi: 420x420 
 INFO         | setDisplayActiveConfig: id:0, 1080x1920
 INFO         | emulatorSetupEnvironment: Environment scene is not required
 USER_INFO    | Emulator is performing a full startup. This may take upto two minutes, or more.
 WARNING      | Failed to process .ini file /home/runner/.android/emu-update-last-check.ini for reading.
 WARNING      | Failed to process .ini file /home/runner/.android/emu-update-last-check.ini for reading.
-INFO         | Boot completed in 20133 ms
+INFO         | Boot completed in 25789 ms
 INFO         | Increasing screen off timeout, logcat buffer size to 2M.
 ```
 ## Logcat (filtered)
 ```
-10-28 08:09:13.175   507   547 W ActivityManager: Slow operation: 60ms so far, now at startProcess: returned from zygote!
-10-28 08:09:13.176   507   547 W ActivityManager: Slow operation: 61ms so far, now at startProcess: done updating battery stats
-10-28 08:09:13.176   507   547 W ActivityManager: Slow operation: 61ms so far, now at startProcess: building log message
-10-28 08:09:13.176   507   547 I ActivityManager: Start proc 2290:com.android.traceur/u0a90 for broadcast {com.android.traceur/com.android.traceur.Receiver}
-10-28 08:09:13.176   507   547 W ActivityManager: Slow operation: 61ms so far, now at startProcess: starting to update pids map
-10-28 08:09:13.176   507   547 W ActivityManager: Slow operation: 61ms so far, now at startProcess: done updating pids map
-10-28 08:09:13.574   507   534 I ActivityManager: Finished processing BOOT_COMPLETED for u0
-10-28 08:09:13.575   507   534 I ActivityManager: Killing 1718:com.android.externalstorage/u0a68 (adj 985): empty #17
-10-28 08:09:14.881   430  2012 I iorapd  : Perfetto TraceBuffer saved to file: /data/misc/iorapd/com.backrooms.gdx.debug/1/com.backrooms.gdx.android.AndroidLauncher/raw_traces/1793174954881583014.perfetto_trace.pb
-10-28 08:09:28.690   507   537 I ActivityManager: Killing 1322:com.android.cellbroadcastreceiver/u0a66 (adj 985): empty #17
-10-28 08:09:31.935  2340  2340 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-28 08:09:31.937  2340  2340 I AndroidRuntime: Using default boot image
-10-28 08:09:31.937  2340  2340 I AndroidRuntime: Leaving lock profiling enabled
-10-28 08:09:32.013  2340  2340 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-28 08:09:32.031  2340  2340 D AndroidRuntime: Shutting down VM
-10-28 08:09:32.550  2006  2062 I BackroomsGL: world shader compiled
-10-28 08:09:32.602  2006  2062 I BackroomsInput: screen=1920x1080 pause=1820,100 torch=1820,255 sprint=1805,940 jump=1609,937 stickZone=864
-10-28 08:09:32.602  2006  2062 I BackroomsInput: screen=1920x1080 pause=1820,100 torch=1820,255 sprint=1805,940 jump=1609,937 stickZone=864
-10-28 08:09:33.405   507   537 I ActivityManager: Killing 2073:com.android.calendar/u0a107 (adj 985): empty #17
-10-28 08:09:33.405   507   537 I ActivityManager: Killing 1938:com.android.quicksearchbox/u0a104 (adj 985): empty #18
-10-28 08:09:33.480   507  2311 I ActivityManager: Killing 2107:com.android.camera2/u0a111 (adj 975): empty #17
-10-28 08:09:34.540  2006  2062 I Perf    : fps=6.4 worst=46 drawn=10/16 queue=2 build=12ms verts=26k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=10 noMesh=0 culled=4
-10-28 08:09:36.688  2006  2062 I Perf    : fps=6.0 worst=6 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=22
-10-28 08:09:38.700  2006  2062 I Perf    : fps=6.5 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:40.767  2006  2062 I Perf    : fps=6.3 worst=6 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:42.840  2006  2062 I Perf    : fps=6.3 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:44.975  2006  2062 I Perf    : fps=6.1 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:46.992  2006  2062 I Perf    : fps=6.4 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:49.053  2006  2062 I Perf    : fps=6.3 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:51.058  2006  2062 I Perf    : fps=6.5 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:53.066  2006  2062 I Perf    : fps=6.5 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:55.075  2006  2062 I Perf    : fps=6.5 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:57.174  2006  2062 I Perf    : fps=6.2 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:59.229  2006  2062 I Perf    : fps=6.4 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:10:01.376  2006  2062 I Perf    : fps=6.0 worst=6 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:10:01.530  2384  2384 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-28 08:10:01.531  2384  2384 I AndroidRuntime: Using default boot image
-10-28 08:10:01.531  2384  2384 I AndroidRuntime: Leaving lock profiling enabled
-10-28 08:10:01.809  2384  2384 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-28 08:10:02.500  2384  2384 D AndroidRuntime: Shutting down VM
-10-28 08:10:03.428  2006  2062 I Perf    : fps=6.8 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=1 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:05.465  2006  2062 I Perf    : fps=7.4 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=1 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:07.127  2400  2400 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-28 08:10:07.141  2400  2400 I AndroidRuntime: Using default boot image
-10-28 08:10:07.141  2400  2400 I AndroidRuntime: Leaving lock profiling enabled
-10-28 08:10:07.281  2400  2400 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-28 08:10:07.290  2400  2400 D AndroidRuntime: Shutting down VM
-10-28 08:10:07.571  2006  2062 I Perf    : fps=7.1 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:09.645  2006  2062 I Perf    : fps=7.2 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:11.733  2006  2062 I Perf    : fps=7.2 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:12.116  2435  2435 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-28 08:10:12.118  2435  2435 I AndroidRuntime: Using default boot image
-10-28 08:10:12.118  2435  2435 I AndroidRuntime: Leaving lock profiling enabled
-10-28 08:10:12.204  2435  2435 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-28 08:10:13.776  2435  2435 D AndroidRuntime: Shutting down VM
-10-28 08:10:13.811  2006  2062 I Perf    : fps=7.2 worst=8 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.7,1.6,2.7 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
-10-28 08:10:15.867  2006  2062 I Perf    : fps=7.3 worst=8 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.8,1.6,2.8 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
-10-28 08:10:17.952  2006  2062 I Perf    : fps=7.2 worst=8 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.8,1.6,2.8 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
-10-28 08:10:19.971  2006  2062 I Perf    : fps=6.9 worst=7 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.8,1.6,2.8 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
-10-28 08:10:22.095  2006  2062 I Perf    : fps=7.1 worst=8 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.8,1.6,2.8 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
+10-28 08:14:49.211   503   546 W ActivityManager: Slow operation: 62ms so far, now at startProcess: returned from zygote!
+10-28 08:14:49.233   503   546 W ActivityManager: Slow operation: 64ms so far, now at startProcess: done updating battery stats
+10-28 08:14:49.233   503   546 W ActivityManager: Slow operation: 84ms so far, now at startProcess: building log message
+10-28 08:14:49.233   503   546 I ActivityManager: Start proc 2309:com.android.traceur/u0a88 for broadcast {com.android.traceur/com.android.traceur.Receiver}
+10-28 08:14:49.233   503   546 W ActivityManager: Slow operation: 84ms so far, now at startProcess: starting to update pids map
+10-28 08:14:49.233   503   546 W ActivityManager: Slow operation: 84ms so far, now at startProcess: done updating pids map
+10-28 08:14:49.547   503   637 I ActivityManager: Finished processing BOOT_COMPLETED for u0
+10-28 08:14:49.547   503   637 I ActivityManager: Killing 1746:com.android.externalstorage/u0a68 (adj 985): empty #17
+10-28 08:15:03.666   503   544 I ActivityManager: Killing 1280:com.android.cellbroadcastreceiver/u0a63 (adj 985): empty #17
+10-28 08:15:09.459   503   536 I ActivityManager: Killing 1982:com.android.calendar/u0a109 (adj 985): empty #17
+10-28 08:15:09.469   503   536 I ActivityManager: Killing 1885:com.android.quicksearchbox/u0a101 (adj 985): empty #18
+10-28 08:15:10.047  2368  2368 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-28 08:15:10.063  2368  2368 I AndroidRuntime: Using default boot image
+10-28 08:15:10.064  2368  2368 I AndroidRuntime: Leaving lock profiling enabled
+10-28 08:15:10.137  2368  2368 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-28 08:15:10.173  2368  2368 D AndroidRuntime: Shutting down VM
+10-28 08:15:10.741  2164  2218 I BackroomsGL: world shader compiled
+10-28 08:15:10.791  2164  2218 I BackroomsInput: screen=1920x1080 pause=1820,100 torch=1820,255 sprint=1805,940 jump=1609,937 stickZone=864
+10-28 08:15:10.791  2164  2218 I BackroomsInput: screen=1920x1080 pause=1820,100 torch=1820,255 sprint=1805,940 jump=1609,937 stickZone=864
+10-28 08:15:12.785  2164  2218 I Perf    : fps=5.6 worst=64 drawn=7/13 queue=2 build=18ms verts=20k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=7 noMesh=0 culled=4
+10-28 08:15:14.507   503   533 I ActivityManager: Killing 2029:com.android.camera2/u0a110 (adj 975): empty #17
+10-28 08:15:14.935  2164  2218 I Perf    : fps=4.2 worst=4 drawn=11/27 queue=2 build=34ms verts=31k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=11 noMesh=0 culled=14
+10-28 08:15:17.046  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:19.130  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:21.231  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:23.342  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:25.439  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:27.642  2164  2218 I Perf    : fps=4.1 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:29.743  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:31.879  2164  2218 I Perf    : fps=4.2 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:33.978  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:36.139  2164  2218 I Perf    : fps=4.2 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:38.247  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:40.429  2164  2218 I Perf    : fps=4.1 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:41.544  2404  2404 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-28 08:15:41.548  2404  2404 I AndroidRuntime: Using default boot image
+10-28 08:15:41.548  2404  2404 I AndroidRuntime: Leaving lock profiling enabled
+10-28 08:15:41.660  2404  2404 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-28 08:15:42.362  2404  2404 D AndroidRuntime: Shutting down VM
+10-28 08:15:42.577  2164  2218 I Perf    : fps=4.2 worst=5 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=1 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:44.722  2164  2218 I Perf    : fps=5.6 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=1 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:46.836  2164  2218 I Perf    : fps=5.7 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=1 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:46.983  2431  2431 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-28 08:15:47.002  2431  2431 I AndroidRuntime: Using default boot image
+10-28 08:15:47.002  2431  2431 I AndroidRuntime: Leaving lock profiling enabled
+10-28 08:15:47.157  2431  2431 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-28 08:15:47.215  2431  2431 D AndroidRuntime: Shutting down VM
+10-28 08:15:48.949  2164  2218 I Perf    : fps=5.7 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:51.129  2164  2218 I Perf    : fps=5.5 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:51.970  2448  2448 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-28 08:15:51.982  2448  2448 I AndroidRuntime: Using default boot image
+10-28 08:15:51.982  2448  2448 I AndroidRuntime: Leaving lock profiling enabled
+10-28 08:15:52.145  2448  2448 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-28 08:15:53.256  2164  2218 I Perf    : fps=5.6 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.3,1.7,0.8 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:53.787  2448  2448 D AndroidRuntime: Shutting down VM
+10-28 08:15:55.432  2164  2218 I Perf    : fps=5.1 worst=6 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
+10-28 08:15:57.559  2164  2218 I Perf    : fps=4.7 worst=5 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
+10-28 08:15:59.648  2164  2218 I Perf    : fps=4.8 worst=5 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
+10-28 08:16:01.735  2164  2218 I Perf    : fps=4.8 worst=5 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
+10-28 08:16:03.915  2164  2218 I Perf    : fps=4.6 worst=5 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
 ```
 ## Step log
 ```
- 2062 I BackroomsInput: screen=1920x1080 pause=1820,100 torch=1820,255 sprint=1805,940 jump=1609,937 stickZone=864
-10-28 08:09:32.602  2006  2062 I BackroomsInput: screen=1920x1080 pause=1820,100 torch=1820,255 sprint=1805,940 jump=1609,937 stickZone=864
-10-28 08:09:34.540  2006  2062 I Perf    : fps=6.4 worst=46 drawn=10/16 queue=2 build=12ms verts=26k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=10 noMesh=0 culled=4
-10-28 08:09:36.688  2006  2062 I Perf    : fps=6.0 worst=6 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=22
-10-28 08:09:38.700  2006  2062 I Perf    : fps=6.5 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:40.767  2006  2062 I Perf    : fps=6.3 worst=6 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:42.840  2006  2062 I Perf    : fps=6.3 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:44.975  2006  2062 I Perf    : fps=6.1 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:46.992  2006  2062 I Perf    : fps=6.4 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:49.053  2006  2062 I Perf    : fps=6.3 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:51.058  2006  2062 I Perf    : fps=6.5 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:53.066  2006  2062 I Perf    : fps=6.5 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:55.075  2006  2062 I Perf    : fps=6.5 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:57.174  2006  2062 I Perf    : fps=6.2 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:09:57.855  2378  2378 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
-10-28 08:09:59.229  2006  2062 I Perf    : fps=6.4 worst=7 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:10:01.376  2006  2062 I Perf    : fps=6.0 worst=6 drawn=14/37 queue=0 build=181ms verts=37k cam=-0.5,1.6,1.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
-10-28 08:10:01.530  2384  2384 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-28 08:10:01.531  2384  2384 I AndroidRuntime: Using default boot image
-10-28 08:10:01.531  2384  2384 I AndroidRuntime: Leaving lock profiling enabled
-10-28 08:10:01.809  2384  2384 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-28 08:10:02.500  2384  2384 D AndroidRuntime: Shutting down VM
-10-28 08:10:03.428  2006  2062 I Perf    : fps=6.8 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=1 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:05.465  2006  2062 I Perf    : fps=7.4 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=1 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:07.127  2400  2400 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-28 08:10:07.141  2400  2400 I AndroidRuntime: Using default boot image
-10-28 08:10:07.141  2400  2400 I AndroidRuntime: Leaving lock profiling enabled
-10-28 08:10:07.281  2400  2400 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-28 08:10:07.290  2400  2400 D AndroidRuntime: Shutting down VM
-10-28 08:10:07.571  2006  2062 I Perf    : fps=7.1 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:09.645  2006  2062 I Perf    : fps=7.2 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:11.733  2006  2062 I Perf    : fps=7.2 worst=8 drawn=21/37 queue=0 build=181ms verts=55k cam=-0.5,1.6,1.5 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=21 noMesh=0 culled=16
-10-28 08:10:12.116  2435  2435 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-28 08:10:12.118  2435  2435 I AndroidRuntime: Using default boot image
-10-28 08:10:12.118  2435  2435 I AndroidRuntime: Leaving lock profiling enabled
-10-28 08:10:12.204  2435  2435 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-28 08:10:13.776  2435  2435 D AndroidRuntime: Shutting down VM
-10-28 08:10:13.811  2006  2062 I Perf    : fps=7.2 worst=8 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.7,1.6,2.7 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
-10-28 08:10:15.867  2006  2062 I Perf    : fps=7.3 worst=8 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.8,1.6,2.8 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
-10-28 08:10:17.952  2006  2062 I Perf    : fps=7.2 worst=8 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.8,1.6,2.8 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
-10-28 08:10:18.976  2456  2456 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
-10-28 08:10:19.971  2006  2062 I Perf    : fps=6.9 worst=7 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.8,1.6,2.8 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
-10-28 08:10:22.095  2006  2062 I Perf    : fps=7.1 worst=8 drawn=20/37 queue=0 build=181ms verts=52k cam=-1.8,1.6,2.8 yaw=2.36 pitch=0.00 torch=0 ready=true drawn=20 noMesh=0 culled=17
-+ '[' -z 2006 ']'
+: screen=1920x1080 pause=1820,100 torch=1820,255 sprint=1805,940 jump=1609,937 stickZone=864
+10-28 08:15:12.785  2164  2218 I Perf    : fps=5.6 worst=64 drawn=7/13 queue=2 build=18ms verts=20k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=7 noMesh=0 culled=4
+10-28 08:15:14.935  2164  2218 I Perf    : fps=4.2 worst=4 drawn=11/27 queue=2 build=34ms verts=31k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=11 noMesh=0 culled=14
+10-28 08:15:17.046  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:19.130  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:21.231  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:23.342  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:25.439  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:27.642  2164  2218 I Perf    : fps=4.1 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:29.743  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:31.879  2164  2218 I Perf    : fps=4.2 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:33.978  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:35.907  2390  2390 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+10-28 08:15:36.139  2164  2218 I Perf    : fps=4.2 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:38.247  2164  2218 I Perf    : fps=4.3 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:40.429  2164  2218 I Perf    : fps=4.1 worst=4 drawn=14/37 queue=0 build=199ms verts=38k cam=0.5,1.6,0.5 yaw=0.00 pitch=0.00 torch=1 ready=true drawn=14 noMesh=0 culled=23
+10-28 08:15:41.544  2404  2404 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-28 08:15:41.548  2404  2404 I AndroidRuntime: Using default boot image
+10-28 08:15:41.548  2404  2404 I AndroidRuntime: Leaving lock profiling enabled
+10-28 08:15:41.660  2404  2404 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-28 08:15:42.362  2404  2404 D AndroidRuntime: Shutting down VM
+10-28 08:15:42.577  2164  2218 I Perf    : fps=4.2 worst=5 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=1 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:44.722  2164  2218 I Perf    : fps=5.6 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=1 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:46.836  2164  2218 I Perf    : fps=5.7 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=1 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:46.983  2431  2431 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-28 08:15:47.002  2431  2431 I AndroidRuntime: Using default boot image
+10-28 08:15:47.002  2431  2431 I AndroidRuntime: Leaving lock profiling enabled
+10-28 08:15:47.157  2431  2431 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-28 08:15:47.215  2431  2431 D AndroidRuntime: Shutting down VM
+10-28 08:15:48.949  2164  2218 I Perf    : fps=5.7 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:51.129  2164  2218 I Perf    : fps=5.5 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.5,1.6,0.5 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:51.970  2448  2448 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-28 08:15:51.982  2448  2448 I AndroidRuntime: Using default boot image
+10-28 08:15:51.982  2448  2448 I AndroidRuntime: Leaving lock profiling enabled
+10-28 08:15:52.145  2448  2448 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-28 08:15:53.256  2164  2218 I Perf    : fps=5.6 worst=6 drawn=15/37 queue=0 build=199ms verts=39k cam=0.3,1.7,0.8 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=15 noMesh=0 culled=22
+10-28 08:15:53.787  2448  2448 D AndroidRuntime: Shutting down VM
+10-28 08:15:55.432  2164  2218 I Perf    : fps=5.1 worst=6 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
+10-28 08:15:57.559  2164  2218 I Perf    : fps=4.7 worst=5 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
+10-28 08:15:59.210  2468  2468 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+10-28 08:15:59.648  2164  2218 I Perf    : fps=4.8 worst=5 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
+10-28 08:16:01.735  2164  2218 I Perf    : fps=4.8 worst=5 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
+10-28 08:16:03.915  2164  2218 I Perf    : fps=4.6 worst=5 drawn=19/44 queue=0 build=103ms verts=49k cam=-0.4,1.6,1.7 yaw=2.61 pitch=0.00 torch=0 ready=true drawn=19 noMesh=0 culled=25
++ '[' -z 2164 ']'
 + grep -qa 'FATAL EXCEPTION' emulator-shots/logcat.txt
 + '[' 0 '!=' 0 ']'
 + echo 'OK: the app is alive, rendering, and the touch controls work'
