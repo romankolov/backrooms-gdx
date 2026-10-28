@@ -142,8 +142,8 @@ public class ChunkMesherTest {
     }
 
     /**
-     * A pit has to actually be in the mesh: a floor quad at the bottom, and riser quads on its rim.
-     * The level is flat everywhere else, so a missing hole would just look like more carpet.
+     * A pit has to actually be in the mesh: a floor quad at the bottom, on its own cell. The level
+     * is flat everywhere else, so a missing hole would simply look like more carpet.
      */
     @Test
     public void holesAreCutIntoTheFloor() {
@@ -167,32 +167,41 @@ public class ChunkMesherTest {
         int chunkZ = Math.floorDiv(cellZ, WorldGen.CHUNK_CELLS);
         ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, chunkX, chunkZ));
 
-        int pitVertices = 0;
+        int bottomVertices = 0;
+        int rimVertices = 0;
         for (int v = 0; v < build.vertexCount(); v++) {
             int base = v * STRIDE;
             float y = build.vertices[base + 1];
-            if (y > -WorldGen.HOLE_DEPTH + 0.01f) {
-                continue;
-            }
-            // Positions are chunk local.
             float x = build.vertices[base] + build.originX;
             float z = build.vertices[base + 2] + build.originZ;
-            assertTrue("pit vertex outside its cell: " + x + "," + z,
-                    x >= cellX - 1 && x <= cellX + 2 && z >= cellZ - 1 && z <= cellZ + 2);
-            pitVertices++;
-        }
-        assertTrue("the hole must have geometry, found " + pitVertices, pitVertices >= 4 * 4);
-
-        // And nothing else in the chunk may sit at the pit bottom.
-        int sunk = 0;
-        for (int i = -20; i < 20; i++) {
-            for (int j = -40; j < -20; j++) {
-                if (gen.floorY(i, j) < -1f) {
-                    sunk++;
-                }
+            boolean overThePit = x >= cellX && x <= cellX + 1 && z >= cellZ && z <= cellZ + 1;
+            if (!overThePit) {
+                continue;
+            }
+            if (Math.abs(y + WorldGen.HOLE_DEPTH) < 0.01f) {
+                bottomVertices++;
+            }
+            if (Math.abs(y) < 0.01f) {
+                rimVertices++;
             }
         }
-        assertTrue("holes exist in the sample area", sunk > 0);
+        assertEquals("the pit needs a floor quad at the bottom", 4, bottomVertices);
+        assertTrue("the pit rim needs geometry too, found " + rimVertices, rimVertices > 0);
+
+        // Only two levels exist in the whole level: the floor and the bottom of a pit.
+        int onFloor = 0;
+        for (int v = 0; v < build.vertexCount(); v++) {
+            int base = v * STRIDE;
+            float y = build.vertices[base + 1];
+            boolean floor = Math.abs(y) < 0.01f;
+            boolean bottom = Math.abs(y + WorldGen.HOLE_DEPTH) < 0.01f;
+            boolean ceiling = Math.abs(y - WorldGen.ROOM_HEIGHT) < 0.01f;
+            assertTrue("vertex at an unexpected height: " + y, floor || bottom || ceiling);
+            if (floor) {
+                onFloor++;
+            }
+        }
+        assertTrue("most of the chunk is still floor", onFloor > build.vertexCount() / 2);
     }
 
     @Test
