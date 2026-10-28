@@ -1,53 +1,9 @@
 # Last build failure
 
-Commit: 0f85c82
+Commit: 02a6e96
 
 ```
-arseDebugLocalResources FROM-CACHE
-> Task :android:createDebugCompatibleScreenManifests
-> Task :android:extractDeepLinksDebug FROM-CACHE
-> Task :android:processDebugMainManifest FROM-CACHE
-> Task :android:processDebugManifest FROM-CACHE
-> Task :android:processDebugManifestForPackage FROM-CACHE
-> Task :android:processDebugResources FROM-CACHE
-> Task :android:mergeDebugShaders
-> Task :android:compileDebugShaders NO-SOURCE
-> Task :android:generateDebugAssets UP-TO-DATE
-> Task :android:mergeDebugAssets
-> Task :android:desugarDebugFileDependencies FROM-CACHE
-> Task :android:processDebugJavaRes NO-SOURCE
-> Task :android:mergeDebugJniLibFolders
-> Task :core:compileJava
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/render/VhsEffect.java:84: error: cannot find symbol
-        buffer.setFilter(com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest,
-              ^
-  symbol:   method setFilter(TextureFilter,TextureFilter)
-  location: variable buffer of type FrameBuffer
-> Task :android:checkDebugDuplicateClasses
-> Task :android:compressDebugAssets
-> Task :core:compileJava FAILED
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-1 error
-> Task :android:validateSigningDebug
-[Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
-FAILURE: Build failed with an exception.
-* What went wrong:
-Execution failed for task ':core:compileJava'.
-> Compilation failed; see the compiler output below.
-  Note: Recompile with -Xlint:deprecation for details.
-  Note: Some input files use or override a deprecated API.
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/render/VhsEffect.java:84: error: cannot find symbol
-          buffer.setFilter(com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest,
-                ^
-    symbol:   method setFilter(TextureFilter,TextureFilter)
-    location: variable buffer of type FrameBuffer
-  1 error
-* Try:
-> Check your code and dependencies to fix the compilation error(s)
-> Run with --scan to get full insights.
-* Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:compileJava'.
+ption: Execution failed for task ':core:compileTestJava'.
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
@@ -109,14 +65,34 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:co
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
 Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use or override a deprecated API.
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/render/VhsEffect.java:84: error: cannot find symbol
-        buffer.setFilter(com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest,
-              ^
-  symbol:   method setFilter(TextureFilter,TextureFilter)
-  location: variable buffer of type FrameBuffer
-1 error
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:22: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
+        assertEquals(5, VhsOsd.glyphWidth());
+                              ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:23: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
+        assertEquals(7, VhsOsd.glyphHeight());
+                              ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:25: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+            assertNotNull("missing glyph for '" + c + "'", VhsOsd.bits(c));
+                                                                 ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
+                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
+                          ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
+                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
+                                                ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
+                                                                      ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:49: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+            for (byte b : VhsOsd.bits(c)) {
+                                ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:61: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+            byte[] a = VhsOsd.bits(pair[0]);
+                             ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:62: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+            byte[] b = VhsOsd.bits(pair[1]);
+                             ^
+9 errors
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:84)
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:46)
 	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
@@ -302,6 +278,6 @@ Note: Some input files use or override a deprecated API.
 	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 16s
-23 actionable tasks: 11 executed, 12 from cache
+BUILD FAILED in 18s
+26 actionable tasks: 14 executed, 12 from cache
 ```
