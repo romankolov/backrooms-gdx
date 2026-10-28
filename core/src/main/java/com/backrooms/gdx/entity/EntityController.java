@@ -119,6 +119,18 @@ public final class EntityController {
         return lostTime;
     }
 
+    /** Turns the whole encounter on or off without losing the cooldown state. */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        if (!enabled && state != State.ABSENT) {
+            vanish(1e9f);
+        }
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     /**
      * 0..1: how much of a presence it is right now, by distance and by intent. The camera uses this
      * to start tearing the tape long before the thing is visible.
