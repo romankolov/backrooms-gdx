@@ -124,19 +124,27 @@ fi
 echo "installing $APK"
 adb install -r -t "$APK" || exit 1
 
+# adb shell input talks in display pixels; the app logs the GL surface. The launcher is
+# landscape-only, so the surface is the display rotated - same pixel count, so no scaling is
+# needed unless the device really renders at a different resolution.
+WM=$(adb shell wm size 2>/dev/null | tr -d '\r' | sed -n 's/.*: \([0-9]*\)x\([0-9]*\).*/\1 \2/p' | tail -1)
+DW=$(echo "$WM" | cut -d' ' -f1)
+DH=$(echo "$WM" | cut -d' ' -f2)
+echo "display ${WM:-unknown}"
+
 adb logcat -c || true
 adb shell am start -W -n "$ACTIVITY" || exit 1
 
 sleep 20
 adb exec-out screencap -p > "$SHOTS/title.png" || true
-adb shell input tap 640 360 || true      # TAP TO ENTER
+adb shell input tap $(( DW / 2 )) $(( DH / 2 )) || true     # TAP TO ENTER, from the display centre
 sleep 25
 adb exec-out screencap -p > "$SHOTS/ingame.png" || true
 
 # ---------------------------------------------------------------------------------------------
 # Actually play the game. The look drag and the buttons used to be dead on device while the
-# stick kept working, and nothing in CI noticed, so the controls are exercised here and the
-# numbers the app logs are checked.
+# stick kept working, and nothing in CI noticed, so the controls are driven here and the numbers
+# the app logs are checked.
 # ---------------------------------------------------------------------------------------------
 
 FAILED=0
@@ -163,18 +171,13 @@ if ! [ "$SW" -gt 0 ] 2>/dev/null || ! [ "$SH" -gt 0 ] 2>/dev/null; then
 fi
 echo "surface ${SW}x${SH}"
 
-# adb shell input talks in display pixels; the app logs the GL surface, which is the display
-# rotated into landscape. Only a scale factor is ever needed on top of that.
-WM=$(adb shell wm size 2>/dev/null | tr -d '\r' | sed -n 's/.*: \([0-9]*\)x\([0-9]*\).*/\1 \2/p' | tail -1)
-DW=$(echo "$WM" | cut -d' ' -f1)
-DH=$(echo "$WM" | cut -d' ' -f2)
 SX=1
 SY=1
-if [ -n "$DW" ] && [ "$DW" != "$SW" ] && [ "$DW" != "$SH" ]; then
-  SX=$(awk "BEGIN{printf \"%.4f\", $DW/$SW}")
-  SY=$(awk "BEGIN{printf \"%.4f\", $DH/$SH}")
+if [ -n "$DW" ] && [ $(( SW * SH )) -ne $(( DW * DH )) ]; then
+  SX=$(awk "BEGIN{printf \"%.4f\", sqrt(($DW*$DH)/($SW*$SH))}")
+  SY=$SX
+  echo "scaling taps by $SX"
 fi
-echo "display ${DW}x${DH} scale ${SX}x${SY}"
 
 tap_at() {  # tap_at x y, in surface coordinates
   local x=$(awk "BEGIN{printf \"%d\", $1*$SX}")
@@ -184,23 +187,22 @@ tap_at() {  # tap_at x y, in surface coordinates
 }
 
 # ---- 1. dragging on the right side must turn the camera --------------------------------------
-dump
 BEFORE=$(last_perf)
 YAW_BEFORE=$(field yaw "$BEFORE")
 DRAWN=$(field drawn "$BEFORE")
 echo "before look: $BEFORE"
 if [ -z "$YAW_BEFORE" ]; then
-  echo "FATAL: no [Perf] line from the app, it is not running"
+  echo "FATAL: no [Perf] line from the app, the title screen was not passed"
   exit 1
 fi
-DRAW_N=$(echo "$DRAWN" | cut -d/ -f1)
-if ! [ "${DRAW_N:-0}" -gt 0 ] 2>/dev/null; then
+if ! [ "$(echo "$DRAWN" | cut -d/ -f1)" -gt 0 ] 2>/dev/null; then
   echo "FATAL: the renderer drew no chunks (drawn=$DRAWN)"
   FAILED=1
 fi
 
 LOOK_Y=$(( SH / 2 ))
-adb shell input swipe $(( SW * 3 / 4 )) "$LOOK_Y" $(( SW * 2 / 5 )) "$LOOK_Y" 500 || true
+echo "drag right side leftwards"
+adb shell input swipe $(( SW * 3 / 4 )) "$LOOK_Y" $(( SW * 2 / 5 )) "$LOOK_Y" 600 || true
 sleep 4
 dump
 AFTER=$(last_perf)
@@ -213,7 +215,7 @@ fi
 
 # ---- 2. the torch button must toggle the torch ------------------------------------------------
 TORCH_XY=$(field torch "$TARGETS")
-TORCH_BEFORE=$(field torch "$AFTER")
+TORCH_BEFORE=$(field torch "$(last_perf)")
 echo "torch button at ${TORCH_XY}, torch=${TORCH_BEFORE}"
 if [ -n "$TORCH_XY" ]; then
   TORCH_X=${TORCH_XY%,*}
@@ -242,7 +244,8 @@ fi
 # ---- 3. the stick must move the player ---------------------------------------------------------
 STICK_Y=$(( SH * 3 / 4 ))
 POS_BEFORE=$(field cam "$(last_perf)")
-adb shell input swipe $(( SW / 5 )) "$STICK_Y" $(( SW / 5 )) $(( STICK_Y - SH / 4 )) 1200 || true
+echo "push the stick forward"
+adb shell input swipe $(( SW / 5 )) "$STICK_Y" $(( SW / 5 )) $(( STICK_Y - SH / 5 )) 1500 || true
 sleep 4
 dump
 POS_AFTER=$(field cam "$(last_perf)")

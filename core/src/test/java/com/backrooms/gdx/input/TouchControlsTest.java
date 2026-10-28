@@ -22,7 +22,6 @@ public class TouchControlsTest {
 
     private static final int WIDTH = 1080;
     private static final int HEIGHT = 1920;
-    /** Screen Y of a touch, given the controls' Y-up button rectangles. */
     private static final float SENSITIVITY = 1f;
 
     private TouchControls controls;
@@ -45,17 +44,17 @@ public class TouchControlsTest {
 
     @Test
     public void draggingOnTheRightLooksAround() {
-        // Right half, away from the buttons.
+        // Right half, away from the buttons. Player::addLook does yaw -= dx and pitch -= dy.
         controls.touchDown(900, 1200, 0, 0);
         controls.touchDragged(700, 1200, 0);       // 200 px to the left
-        controls.touchDragged(700, 1100, 0);       // and 100 px up screen
-        controls.touchUp(700, 1100, 0, 0);
         controls.update(1f / 60f);
-
-        assertTrue("horizontal drag must turn the camera, got " + controls.lookDeltaX,
+        assertTrue("dragging left must turn the camera, got " + controls.lookDeltaX,
                 controls.lookDeltaX < -0.5f);
-        assertTrue("vertical drag must pitch the camera, got " + controls.lookDeltaY,
-                controls.lookDeltaY > 0.2f);
+
+        controls.touchDragged(700, 1100, 0);       // 100 px up the screen
+        controls.update(1f / 60f);
+        assertTrue("dragging up must look up, got " + controls.lookDeltaY,
+                controls.lookDeltaY < -0.2f);
     }
 
     @Test
