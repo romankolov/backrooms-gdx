@@ -1,9 +1,90 @@
 # Last build failure
 
-Commit: 02a6e96
+Commit: 382b402
 
 ```
-ption: Execution failed for task ':core:compileTestJava'.
+E
+> Task :android:generateDebugAssets UP-TO-DATE
+> Task :android:mergeDebugAssets
+> Task :android:desugarDebugFileDependencies FROM-CACHE
+> Task :android:processDebugJavaRes NO-SOURCE
+> Task :android:mergeDebugJniLibFolders
+> Task :android:checkDebugDuplicateClasses
+> Task :android:compressDebugAssets
+> Task :core:compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+> Task :android:validateSigningDebug
+> Task :core:compileTestJava FAILED
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:22: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
+        assertEquals(5, VhsOsd.glyphWidth());
+                              ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:23: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
+        assertEquals(7, VhsOsd.glyphHeight());
+                              ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:25: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+            assertNotNull("missing glyph for '" + c + "'", VhsOsd.bits(c));
+                                                                 ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
+                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
+                          ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
+                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
+                                                ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
+                                                                      ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:49: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+            for (byte b : VhsOsd.bits(c)) {
+                                ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:61: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+            byte[] a = VhsOsd.bits(pair[0]);
+                             ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:62: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+            byte[] b = VhsOsd.bits(pair[1]);
+                             ^
+9 errors
+[Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
+FAILURE: Build failed with an exception.
+* What went wrong:
+Execution failed for task ':core:compileTestJava'.
+> Compilation failed; see the compiler output below.
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:22: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
+          assertEquals(5, VhsOsd.glyphWidth());
+                                ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:23: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
+          assertEquals(7, VhsOsd.glyphHeight());
+                                ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:25: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+              assertNotNull("missing glyph for '" + c + "'", VhsOsd.bits(c));
+                                                                   ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
+                      VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
+                            ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
+                      VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
+                                                  ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+                      VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
+                                                                        ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:49: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+              for (byte b : VhsOsd.bits(c)) {
+                                  ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:61: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+              byte[] a = VhsOsd.bits(pair[0]);
+                               ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:62: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
+              byte[] b = VhsOsd.bits(pair[1]);
+                               ^
+  9 errors
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:compileTestJava'.
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
@@ -33,35 +114,6 @@ ption: Execution failed for task ':core:compileTestJava'.
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
-	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
-	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
-	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
-	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
-	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
-	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
-	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
 Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
@@ -247,37 +299,8 @@ Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Com
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
-	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
-	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
-	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
-	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
-	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
-	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
-	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 18s
-26 actionable tasks: 14 executed, 12 from cache
+BUILD FAILED in 16s
+25 actionable tasks: 13 executed, 12 from cache
 ```
