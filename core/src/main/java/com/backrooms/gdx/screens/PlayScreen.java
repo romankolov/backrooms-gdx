@@ -149,7 +149,10 @@ public final class PlayScreen extends ScreenAdapter {
                     break;
                 }
             }
-            entity.forceSpawn(fx, fz, EntityController.State.HUNT);
+            // Stalking, not hunting: the screenshot harness runs on software OpenGL at a handful of
+            // frames per second, so a hunting entity crosses the whole corridor before the last
+            // frame and the capture fade turns the shot black.
+            entity.forceSpawn(fx, fz, EntityController.State.STALK);
             Gdx.app.log("BackroomsInput", String.format(java.util.Locale.US,
                     "entity at %.1f,%.1f (%.1f m ahead)", fx, fz, ahead));
         }

@@ -79,8 +79,11 @@ jobs:
           # A failed shader link leaves a frame of pure clear colour: no geometry, and a PNG that
           # compresses to a few KB. Never publish (or commit) that.
           fail=0
-          if grep -qa "BUILD FAILED\|error:\|SHADER FAILED" render.log; then
-            echo "the desktop build or the render itself failed:"; grep -a "error:\|BUILD FAILED\|SHADER FAILED" render.log | head -5
+          # Note the anchored patterns: the ALSA warnings in the log end with "error: No such file
+          # or directory" and must not be mistaken for a build failure.
+          if grep -qaE "^(FAILURE:|BUILD FAILED)|\.java:[0-9]+: error:|SHADER FAILED" render.log; then
+            echo "the desktop build or the render itself failed:"
+            grep -aE "^(FAILURE:|BUILD FAILED)|\.java:[0-9]+: error:|SHADER FAILED" render.log | head -5
             fail=1
           fi
           if grep -qa "SHADER FAILED" render.log; then
