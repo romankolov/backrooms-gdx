@@ -24,7 +24,6 @@ import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
-import net.mgsx.gltf.scene3d.lights.PointLightEx;
 import net.mgsx.gltf.scene3d.scene.Scene;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
@@ -65,7 +64,7 @@ public final class EntityRenderer implements Disposable {
     private SceneAsset asset;
     private Scene scene;
     private AnimationController animation;
-    private PointLightEx torchLight;
+    private PointLight torchLight;
     private String walkClip;
     private String idleClip;
     private String scareClip;
@@ -127,7 +126,7 @@ public final class EntityRenderer implements Disposable {
     /** Plays the lunge once, then falls back to whatever it was doing. */
     public void lunge() {
         if (modelLoaded && animation != null && scareClip != null) {
-            animation.animate(scareClip, 0.12f, null, 1f);
+            animation.animate(scareClip, 0.12f);
             currentClip = scareClip;
             scareLock = 1.6f;
         }
@@ -169,10 +168,10 @@ public final class EntityRenderer implements Disposable {
                     .rotate(Vector3.Y, entity.yaw * MathUtils.radiansToDegrees)
                     .mul(modelSpace);
             scene.modelInstance.transform.set(transform);
-            if (torchLight != null) {
-                torchLight.position.set(torchPos);
-                torchLight.intensity = 11f * flicker * torchOn;
-            }
+            // Inverse-square falloff: a point light this bright reads at three or four metres,
+            // which is exactly how close you want the thing to get before it is lit.
+            torchLight.position.set(torchPos);
+            torchLight.intensity = 34f * flicker * torchOn;
             scenes.setCamera(camera);
             scenes.update(pendingDelta);
             pendingDelta = 0f;
@@ -220,19 +219,21 @@ public final class EntityRenderer implements Disposable {
         }
         try {
             asset = new GLBLoader().load(file);
-            scenes = new SceneManager(64);
-            scenes.setAmbientLight(0.085f);
+            scenes = new SceneManager();
             scene = new Scene(asset.scene);
             scenes.addScene(scene);
             animation = scene.animationController;
             pickClips(asset.animations);
             fitModel();
-            // The torch is the only light that matters in here, so it is the only light added;
-            // ambient stands in for the fluorescent wash.
-            torchLight = new PointLightEx().set(TORCH_COLOR, new Vector3(), 0f, 18f);
+            // The torch is the only light that matters in here; the flat ambient stands in for the
+            // fluorescent wash from the ceiling fixtures above.
+            scenes.environment.set(new ColorAttribute(ColorAttribute.AmbientLight,
+                    0.20f, 0.20f, 0.21f, 1f));
+            torchLight = new PointLight();
+            torchLight.set(TORCH_COLOR, new Vector3(), 0f);
             scenes.environment.add(torchLight);
             if (idleClip != null) {
-                animation.setAnimation(idleClip, -1, 1f);
+                animation.animate(idleClip, -1, 1f, null, 0f);
                 currentClip = idleClip;
             }
             ready = true;
@@ -349,11 +350,11 @@ public final class EntityRenderer implements Disposable {
                 ? MathUtils.clamp(entity.speed() / 2.2f, 0.8f, 2.0f)
                 : 1f;
         if (!wanted.equals(currentClip)) {
-            animation.animate(wanted, 0.3f, null, wantedSpeed);
+            animation.animate(wanted, 1, wantedSpeed, null, 0.3f);
             currentClip = wanted;
             clipTimeScale = wantedSpeed;
         } else if (Math.abs(wantedSpeed - clipTimeScale) > 0.15f) {
-            animation.setAnimation(wanted, -1, wantedSpeed);
+            animation.animate(wanted, -1, wantedSpeed, null, 0.25f);
             clipTimeScale = wantedSpeed;
         }
     }
