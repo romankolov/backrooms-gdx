@@ -88,7 +88,7 @@ Handy system properties for the desktop run:
 | `-Dbackrooms.hud=1` | show the performance readout |
 | `-Dbackrooms.vhs=0` | render the raw frame without the camcorder pass |
 | `-Dbackrooms.pit=1` | spawn on the rim of the nearest floor pit |
-| `-Dbackrooms.entity=1` | put the entity in the corridor in front of you (`0` removes it entirely) |
+| `-Dbackrooms.entity=1` | pose the entity a few metres ahead for a screenshot (`0` removes it entirely) |
 | `-Dbackrooms.capture=dir -Dbackrooms.frames=270` | render `frames` frames, dump PNGs into `dir`, quit |
 
 ### Tests
