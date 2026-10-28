@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Rebuilds assets/models/entity.glb from the Sketchfab download.
 #
-#   tools/prepare_entity_model.sh accurate_backrooms_bacteria_v2_with_animations.zip
+#   tools/prepare_entity_model.sh accurate_backrooms_bacteria_v2_with_animations.zip [maxBones]
 #
 # Needs Node 18+ and the glTF tooling, which is not a dependency of the game itself:
 #
@@ -11,6 +11,9 @@
 set -euo pipefail
 
 zip="${1:-accurate_backrooms_bacteria_v2_with_animations.zip}"
+# libGDX hands bone matrices over as `mat4 u_bones[N]`; gdx-gltf configures N = 24 by default and
+# refuses to build a shader for more, so the skeleton has to fit in 24 joints (96 uniform vectors).
+max_bones="${2:-24}"
 here="$(cd "$(dirname "$0")/.." && pwd)"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
@@ -31,7 +34,7 @@ echo "== simplify (231k triangles is a lot of creature)"
 
 echo "== reduce the skeleton to what mobile skinning uniforms can hold"
 GLTF_MODULES="${GLTF_MODULES:-$(cd "$(dirname "$(command -v "$gt")")/.." 2>/dev/null && pwd || echo "$here")}" \
-  node "$here/tools/prepare_entity_model.mjs" "$work/f.glb" "$work/g.glb" 44
+  node "$here/tools/prepare_entity_model.mjs" "$work/f.glb" "$work/g.glb" "$max_bones"
 "$gt" prune "$work/g.glb" "$work/h.glb"
 
 mkdir -p "$here/assets/models"

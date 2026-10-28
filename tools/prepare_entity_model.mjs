@@ -6,9 +6,11 @@
  * 1. The skeleton is far too big. libGDX sends bone matrices as a `mat4 u_bones[N]` uniform array,
  *    so every bone costs four vertex uniform vectors, and GLES2 only guarantees a small budget of
  *    them (256 on most modern GPUs, 128 on older ones). 135 bones is 540 vectors - the shader will
- *    not link anywhere. The fix is to collapse the least useful joints into their parents and to
- *    rewrite the skin weights to match; the silhouette survives because the weight of a removed
- *    joint is transferred to the nearest joint that is still there.
+ *    not link anywhere, and gdx-gltf refuses to even build one past its configured limit of 24.
+ *    The fix is to collapse the least useful joints into their parents and to rewrite the skin
+ *    weights to match; the silhouette survives because the weight of a removed joint is
+ *    transferred to the nearest joint that is still there. Two dozen joints is enough for a
+ *    crouched, long-limbed creature: spine, head, both arms and both legs.
  *
  * 2. The mesh is 231k triangles for a creature you mostly see in the dark. gltf-transform's
  *    simplifier is run before this script (see tools/prepare_entity_model.sh); by the time we get
