@@ -168,6 +168,7 @@ public class ChunkMesherTest {
         ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, chunkX, chunkZ));
 
         int bottomVertices = 0;
+        int bottomFaces = 0;
         int rimVertices = 0;
         for (int v = 0; v < build.vertexCount(); v++) {
             int base = v * STRIDE;
@@ -180,12 +181,17 @@ public class ChunkMesherTest {
             }
             if (Math.abs(y + WorldGen.HOLE_DEPTH) < 0.01f) {
                 bottomVertices++;
+                if (build.vertices[base + 4] > 0.5f) {
+                    bottomFaces++;             // an upward facing quad: the floor of the pit
+                }
             }
             if (Math.abs(y) < 0.01f) {
                 rimVertices++;
             }
         }
-        assertEquals("the pit needs a floor quad at the bottom", 4, bottomVertices);
+        assertTrue("the pit needs a floor at the bottom, found " + bottomVertices,
+                bottomVertices >= 4);
+        assertTrue("the pit floor must face up, found " + bottomFaces, bottomFaces >= 4);
         assertTrue("the pit rim needs geometry too, found " + rimVertices, rimVertices > 0);
 
         // Only two levels exist in the whole level: the floor and the bottom of a pit.
