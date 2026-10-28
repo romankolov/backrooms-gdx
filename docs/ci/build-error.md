@@ -1,6 +1,6 @@
 # Last build failure
 
-Commit: 983e4f1
+Commit: ea39a20
 
 ```
 Welcome to Gradle 8.11.1!
@@ -23,56 +23,61 @@ Android natives: arm64-v8a/libgdx.so, armeabi-v7a/libgdx.so, x86_64/libgdx.so
 > Task :android:generateDebugResources FROM-CACHE
 > Task :android:mergeDebugResources FROM-CACHE
 > Task :android:packageDebugResources FROM-CACHE
-> Task :core:compileJava
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/screens/PlayScreen.java:91: error: cannot find symbol
-        entity.setEnabled(settings.entity);
-              ^
-  symbol:   method setEnabled(boolean)
-  location: variable entity of type EntityController
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/screens/PlayScreen.java:329: error: cannot find symbol
-            if (entity.isEnabled()) {
-                      ^
-  symbol:   method isEnabled()
-  location: variable entity of type EntityController
 > Task :android:parseDebugLocalResources FROM-CACHE
 > Task :android:createDebugCompatibleScreenManifests
 > Task :android:extractDeepLinksDebug FROM-CACHE
 > Task :android:processDebugMainManifest FROM-CACHE
 > Task :android:processDebugManifest FROM-CACHE
 > Task :android:processDebugManifestForPackage FROM-CACHE
+> Task :android:processDebugResources FROM-CACHE
+> Task :android:mergeDebugShaders
+> Task :android:compileDebugShaders NO-SOURCE
+> Task :android:generateDebugAssets UP-TO-DATE
+> Task :android:mergeDebugAssets
+> Task :android:desugarDebugFileDependencies FROM-CACHE
+> Task :android:processDebugJavaRes NO-SOURCE
+> Task :android:mergeDebugJniLibFolders
+> Task :android:checkDebugDuplicateClasses
+> Task :android:compressDebugAssets
 > Task :core:compileJava FAILED
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/screens/PlayScreen.java:517: error: cannot find symbol
-                entity.setEnabled(settings.entity);
-                      ^
-  symbol:   method setEnabled(boolean)
-  location: variable entity of type EntityController
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:130: error: incompatible types: possible lossy conversion from float to int
+            animation.animate(scareClip, 0.12f, null, 1f);
+                                         ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:235: error: incompatible types: float cannot be converted to AnimationListener
+                animation.setAnimation(idleClip, -1, 1f);
+                                                     ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:352: error: incompatible types: possible lossy conversion from float to int
+            animation.animate(wanted, 0.3f, null, wantedSpeed);
+                                      ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:356: error: incompatible types: float cannot be converted to AnimationListener
+            animation.setAnimation(wanted, -1, wantedSpeed);
+                                               ^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
-3 errors
-> Task :android:processDebugResources FROM-CACHE
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+4 errors
+> Task :android:validateSigningDebug
 [Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
 FAILURE: Build failed with an exception.
 * What went wrong:
 Execution failed for task ':core:compileJava'.
 > Compilation failed; see the compiler output below.
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:130: error: incompatible types: possible lossy conversion from float to int
+              animation.animate(scareClip, 0.12f, null, 1f);
+                                           ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:235: error: incompatible types: float cannot be converted to AnimationListener
+                  animation.setAnimation(idleClip, -1, 1f);
+                                                       ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:352: error: incompatible types: possible lossy conversion from float to int
+              animation.animate(wanted, 0.3f, null, wantedSpeed);
+                                        ^
+  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:356: error: incompatible types: float cannot be converted to AnimationListener
+              animation.setAnimation(wanted, -1, wantedSpeed);
+                                                 ^
   Note: Recompile with -Xlint:deprecation for details.
   Note: Some input files use or override a deprecated API.
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/screens/PlayScreen.java:91: error: cannot find symbol
-          entity.setEnabled(settings.entity);
-                ^
-    symbol:   method setEnabled(boolean)
-    location: variable entity of type EntityController
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/screens/PlayScreen.java:329: error: cannot find symbol
-              if (entity.isEnabled()) {
-                        ^
-    symbol:   method isEnabled()
-    location: variable entity of type EntityController
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/screens/PlayScreen.java:517: error: cannot find symbol
-                  entity.setEnabled(settings.entity);
-                        ^
-    symbol:   method setEnabled(boolean)
-    location: variable entity of type EntityController
-  3 errors
+  Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+  4 errors
 * Try:
 > Check your code and dependencies to fix the compilation error(s)
 > Run with --scan to get full insights.
@@ -110,24 +115,22 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:co
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
 Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:130: error: incompatible types: possible lossy conversion from float to int
+            animation.animate(scareClip, 0.12f, null, 1f);
+                                         ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:235: error: incompatible types: float cannot be converted to AnimationListener
+                animation.setAnimation(idleClip, -1, 1f);
+                                                     ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:352: error: incompatible types: possible lossy conversion from float to int
+            animation.animate(wanted, 0.3f, null, wantedSpeed);
+                                      ^
+/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:356: error: incompatible types: float cannot be converted to AnimationListener
+            animation.setAnimation(wanted, -1, wantedSpeed);
+                                               ^
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use or override a deprecated API.
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/screens/PlayScreen.java:91: error: cannot find symbol
-        entity.setEnabled(settings.entity);
-              ^
-  symbol:   method setEnabled(boolean)
-  location: variable entity of type EntityController
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/screens/PlayScreen.java:329: error: cannot find symbol
-            if (entity.isEnabled()) {
-                      ^
-  symbol:   method isEnabled()
-  location: variable entity of type EntityController
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/screens/PlayScreen.java:517: error: cannot find symbol
-                entity.setEnabled(settings.entity);
-                      ^
-  symbol:   method setEnabled(boolean)
-  location: variable entity of type EntityController
-3 errors
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+4 errors
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:84)
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:46)
 	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
@@ -284,6 +287,6 @@ Note: Some input files use or override a deprecated API.
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 12s
-16 actionable tasks: 5 executed, 11 from cache
+BUILD FAILED in 10s
+23 actionable tasks: 11 executed, 12 from cache
 ```
