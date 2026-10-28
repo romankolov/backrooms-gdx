@@ -34,8 +34,11 @@ public class AcousticsTest {
         assertTrue("a hall should return more sound than a corridor",
                 hall.tailGain() > tight.tailGain());
         assertTrue("openness must stay in 0..1", hall.openness <= 1f && tight.openness >= 0f);
+        Acoustics pressed = new Acoustics();
+        pressed.mean = 0.5f;
+        pressed.derive();
         assertEquals("a corridor pressed against the walls should be nearly closed", 0f,
-                new Acoustics() {{ mean = 0.5f; derive(); }}.openness, 0.001f);
+                pressed.openness, 0.001f);
     }
 
     @Test
