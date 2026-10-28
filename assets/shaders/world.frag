@@ -95,7 +95,7 @@ void main() {
         // Left just under the point where ACES clips, so the tube stripes still read through the
         // glow instead of the panel becoming a plain white rectangle.
         emission = vec3(1.0, 0.985, 0.90) * (0.35 + 0.65 * frame) * tubes * diffuser
-                 * v_emit * 2.0;
+                 * v_emit * 2.4;
     }
 
     // ---- normal mapping (surfaces are axis aligned, so the tangent frame is cheap) ----

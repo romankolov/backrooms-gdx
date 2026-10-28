@@ -21,12 +21,14 @@ void main() {
     // Square panels, so the distance to the edge is the larger of the two axes.
     float edge = max(abs(v_local.x), abs(v_local.y));
 
-    // Even light across the whole diffuser, softening only in the last fraction before its edge.
-    float face = 1.0 - smoothstep(u_panelHalf * 0.86, u_panelHalf * 1.04, edge);
+    // Only a gentle lift across the diffuser: the panel geometry underneath already carries the
+    // brightness, the tube stripes and the frame, and drowning those in additive white is what made
+    // the fitting look like a glowing card. This pass is here for the spill.
+    float face = 0.35 * (1.0 - smoothstep(u_panelHalf * 0.86, u_panelHalf * 1.04, edge));
     // The spill onto the surrounding tiles: a short, square falloff, not a halo.
     float spill = exp(-max(edge - u_panelHalf, 0.0) * 7.0) * 0.45;
 
-    float amount = (face * 0.55 + spill * 0.9) * v_strength;
+    float amount = (face + spill * 0.95) * v_strength;
     if (amount < 0.002) {
         discard;
     }
