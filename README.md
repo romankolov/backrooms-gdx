@@ -97,12 +97,14 @@ Handy system properties for the desktop run:
 ./gradlew :core:test
 ```
 
-38 unit tests cover the generator (determinism, seeds, wall density, stair grid, chunk seams),
+45 unit tests cover the generator (determinism, seeds, wall density, stair grid, chunk seams),
 the mesher (winding, index bounds, bounds, lightmap), the light baker (occlusion, blockages),
 the player physics (landing, thin-wall collision, 1200 steps of random walking without ever
 clipping through a wall or sinking through the floor), the streaming that builds and releases
-chunks, the shader rules that only bite on GLES2, the camcorder's 5x7 glyph table, and the entity's
-encounter rules (it spawns out of sight, escalates when it can see you, and leaves when it cannot).
+chunks, the shader rules that only bite on GLES2, the camcorder's 5x7 glyph table, the acoustics
+(propagation delay, and that different rooms really do answer differently), and the entity's pass-by
+rules: it appears out of sight and metres away, is seen while it walks, never moves faster than a
+stroll, and only leaves once a wall has hidden it again.
 
 ### CI
 
@@ -136,7 +138,7 @@ core/src/main/java/com/backrooms/gdx
 ├── player/Player.java         first person movement, thin-wall capsule collision
 ├── input/TouchControls.java   floating stick, drag look, buttons, keyboard
 ├── entity/EntityController    the pass-by: where it appears, where it walks, when it goes (no GL)
-├── entity/EntityRenderer      the rigged creature: clips, torch lighting, placeholder fallback
+├── entity/EntityRenderer      the rigged silhouette: clips, black material, placeholder fallback
 ├── render/VhsEffect.java      offscreen buffer + the tape shader
 ├── ui/VhsOsd.java             camcorder OSD drawn from a 5x7 character generator
 ├── audio/Acoustics.java       probes the walls around a step and returns the room's answer
