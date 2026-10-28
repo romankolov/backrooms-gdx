@@ -7,6 +7,8 @@ precision highp float;
 attribute vec2 a_position;
 varying vec2 v_uv;
 
+// The tape is written to a framebuffer whose rows run bottom-up exactly like clip space, so the
+// picture must not be flipped here: doing that is what turned the whole level upside down.
 void main() {
     // No y flip. The scene was rendered into a framebuffer, whose texel rows run bottom-up just like
     // clip space does, so the mapping is a straight [-1,1] -> [0,1]. Flipping here - the habit from
