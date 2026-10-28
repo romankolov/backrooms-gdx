@@ -72,6 +72,18 @@ public final class PlayScreen extends ScreenAdapter {
 
         float[] spawn = new float[3];
         world.gen().findSpawn(spawn);
+        // Screenshots: -Dbackrooms.pit=1 walks out to the nearest pit and stands on its rim.
+        if (System.getProperty("backrooms.pit") != null) {
+            float[] rim = findPitRim(world.gen(), 0, 0);
+            if (rim != null) {
+                spawn[0] = rim[0];
+                spawn[1] = world.gen().floorY(com.backrooms.gdx.util.Hash.floorInt(rim[0]),
+                        com.backrooms.gdx.util.Hash.floorInt(rim[1]));
+                spawn[2] = rim[1];
+                Gdx.app.log("BackroomsInput", String.format(java.util.Locale.US,
+                        "pit at %.1f,%.1f (floor %.2f)", rim[0], rim[1], spawn[1]));
+            }
+        }
         // Screenshots and debugging: -Dbackrooms.spawn=x,z drops the player at a known cell.
         String at = System.getProperty("backrooms.spawn");
         if (at != null) {
@@ -144,6 +156,31 @@ public final class PlayScreen extends ScreenAdapter {
         };
         input = new InputMultiplexer(menuInput, controls);
         audio.setEnabled(settings.audio);
+    }
+
+    /**
+     * Finds the nearest cell with a pit south of it, and returns a point 1.5 m south of that pit so
+     * the camera looks straight into it. Used by the screenshot job, which cannot guess where the
+     * holes are.
+     */
+    private static float[] findPitRim(com.backrooms.gdx.world.WorldGen gen, int fromX, int fromZ) {
+        for (int ring = 0; ring < 80; ring++) {
+            for (int dz = -ring; dz <= ring; dz++) {
+                for (int dx = -ring; dx <= ring; dx++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) {
+                        continue;
+                    }
+                    int cx = fromX + dx;
+                    int cz = fromZ + dz;
+                    if (gen.isHole(cx, cz) && !gen.isHole(cx, cz - 1) && !gen.isHole(cx, cz - 2)
+                            && !gen.isHole(cx + 1, cz) && !gen.isHole(cx - 1, cz)
+                            && gen.isOpenSpace(cx, cz - 2) && gen.isOpenSpace(cx, cz - 1)) {
+                        return new float[] {cx + 0.5f, cz - 1.5f};
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private void updateCameraRange() {

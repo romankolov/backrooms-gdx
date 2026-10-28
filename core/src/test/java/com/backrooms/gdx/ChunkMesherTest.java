@@ -148,9 +148,20 @@ public class ChunkMesherTest {
     @Test
     public void holesAreCutIntoTheFloor() {
         WorldGen gen = new WorldGen(20241027);
-        int cellX = 1;
-        int cellZ = -33;
-        assertTrue("the test needs a hole at " + cellX + "," + cellZ, gen.isHole(cellX, cellZ));
+        int cellX = Integer.MIN_VALUE;
+        int cellZ = 0;
+        for (int ring = 0; ring < 40 && cellX == Integer.MIN_VALUE; ring++) {
+            for (int dz = -ring; dz <= ring && cellX == Integer.MIN_VALUE; dz++) {
+                for (int dx = -ring; dx <= ring; dx++) {
+                    if (gen.isHole(dx, dz)) {
+                        cellX = dx;
+                        cellZ = dz;
+                        break;
+                    }
+                }
+            }
+        }
+        assertTrue("the seed must produce a pit near the origin", cellX != Integer.MIN_VALUE);
 
         int chunkX = Math.floorDiv(cellX, WorldGen.CHUNK_CELLS);
         int chunkZ = Math.floorDiv(cellZ, WorldGen.CHUNK_CELLS);

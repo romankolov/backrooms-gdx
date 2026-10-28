@@ -62,8 +62,8 @@ jobs:
             -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/title" >> render.log 2>&1 || true
           # A pit in the carpet, from a spawn override, so the hole geometry is looked at by eye.
           xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
-            -Dbackrooms.autostart=1 -Dbackrooms.seed=20241027 -Dbackrooms.spawn=1.5,-31.5 \
-            -Dbackrooms.yaw=0 -Dbackrooms.pitch=-45 -Dbackrooms.frames=150 \
+            -Dbackrooms.autostart=1 -Dbackrooms.seed=20241027 -Dbackrooms.pit=1 \
+            -Dbackrooms.yaw=0 -Dbackrooms.pitch=-42 -Dbackrooms.frames=150 \
             -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/hole" >> render.log 2>&1 || true
           ls -la screenshots screenshots/title screenshots/hole 2>/dev/null
 
