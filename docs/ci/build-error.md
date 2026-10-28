@@ -1,9 +1,37 @@
 # Last build failure
 
-Commit: 382b402
+Commit: 2bcff4a
 
 ```
-E
+Welcome to Gradle 8.11.1!
+Here are the highlights of this release:
+ - Parallel load and store for Configuration Cache
+ - Java compilation errors at the end of the build output
+ - Consolidated report for warnings and deprecations
+For more details see https://docs.gradle.org/8.11.1/release-notes.html
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :android:copyAndroidNatives
+Android natives: arm64-v8a/libgdx.so, armeabi-v7a/libgdx.so, x86_64/libgdx.so
+> Task :android:preBuild
+> Task :android:preDebugBuild
+> Task :android:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :android:javaPreCompileDebug FROM-CACHE
+> Task :android:generateDebugResValues FROM-CACHE
+> Task :android:checkDebugAarMetadata
+> Task :android:mapDebugSourceSetPaths
+> Task :android:generateDebugResources FROM-CACHE
+> Task :android:mergeDebugResources FROM-CACHE
+> Task :android:packageDebugResources FROM-CACHE
+> Task :android:parseDebugLocalResources FROM-CACHE
+> Task :android:createDebugCompatibleScreenManifests
+> Task :android:extractDeepLinksDebug FROM-CACHE
+> Task :android:processDebugMainManifest FROM-CACHE
+> Task :android:processDebugManifest FROM-CACHE
+> Task :android:processDebugManifestForPackage FROM-CACHE
+> Task :android:processDebugResources FROM-CACHE
+> Task :android:mergeDebugShaders
+> Task :android:compileDebugShaders NO-SOURCE
 > Task :android:generateDebugAssets UP-TO-DATE
 > Task :android:mergeDebugAssets
 > Task :android:desugarDebugFileDependencies FROM-CACHE
@@ -18,73 +46,31 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :core:classes
 > Task :core:jar
 > Task :android:validateSigningDebug
-> Task :core:compileTestJava FAILED
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:22: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
-        assertEquals(5, VhsOsd.glyphWidth());
-                              ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:23: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
-        assertEquals(7, VhsOsd.glyphHeight());
-                              ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:25: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-            assertNotNull("missing glyph for '" + c + "'", VhsOsd.bits(c));
-                                                                 ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
-                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
-                          ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
-                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
-                                                ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
-                                                                      ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:49: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-            for (byte b : VhsOsd.bits(c)) {
-                                ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:61: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-            byte[] a = VhsOsd.bits(pair[0]);
-                             ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:62: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-            byte[] b = VhsOsd.bits(pair[1]);
-                             ^
-9 errors
+> Task :core:compileTestJava
+> Task :core:processTestResources NO-SOURCE
+> Task :core:testClasses
+> Task :android:compileDebugJavaWithJavac
+Note: /home/runner/work/backrooms-gdx/backrooms-gdx/android/src/main/java/com/backrooms/gdx/android/AndroidLauncher.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+> Task :android:dexBuilderDebug FROM-CACHE
+> Task :core:test
+EntityControllerTest > beingSeenLongEnoughEscalatesToHunting FAILED
+    java.lang.AssertionError: expected a clear line of sight at 2.5 m
+        at org.junit.Assert.fail(Assert.java:89)
+        at org.junit.Assert.assertTrue(Assert.java:42)
+        at com.backrooms.gdx.EntityControllerTest.beingSeenLongEnoughEscalatesToHunting(EntityControllerTest.java:104)
+38 tests completed, 1 failed
+> Task :core:test FAILED
+> Task :android:mergeDebugJavaResource
 [Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
 FAILURE: Build failed with an exception.
 * What went wrong:
-Execution failed for task ':core:compileTestJava'.
-> Compilation failed; see the compiler output below.
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:22: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
-          assertEquals(5, VhsOsd.glyphWidth());
-                                ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:23: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
-          assertEquals(7, VhsOsd.glyphHeight());
-                                ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:25: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-              assertNotNull("missing glyph for '" + c + "'", VhsOsd.bits(c));
-                                                                   ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
-                      VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
-                            ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
-                      VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
-                                                  ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-                      VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
-                                                                        ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:49: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-              for (byte b : VhsOsd.bits(c)) {
-                                  ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:61: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-              byte[] a = VhsOsd.bits(pair[0]);
-                               ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:62: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-              byte[] b = VhsOsd.bits(pair[1]);
-                               ^
-  9 errors
+Execution failed for task ':core:test'.
+> There were failing tests. See the report at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/core/build/reports/tests/test/index.html
 * Try:
-> Check your code and dependencies to fix the compilation error(s)
 > Run with --scan to get full insights.
 * Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:compileTestJava'.
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:test'.
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
@@ -116,72 +102,17 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:co
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:22: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
-        assertEquals(5, VhsOsd.glyphWidth());
-                              ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:23: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
-        assertEquals(7, VhsOsd.glyphHeight());
-                              ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:25: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-            assertNotNull("missing glyph for '" + c + "'", VhsOsd.bits(c));
-                                                                 ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphWidth() is not public in VhsOsd; cannot be accessed from outside package
-                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
-                          ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: glyphHeight() is not public in VhsOsd; cannot be accessed from outside package
-                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
-                                                ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:27: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-                    VhsOsd.glyphWidth() * VhsOsd.glyphHeight(), VhsOsd.bits(c).length);
-                                                                      ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:49: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-            for (byte b : VhsOsd.bits(c)) {
-                                ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:61: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-            byte[] a = VhsOsd.bits(pair[0]);
-                             ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/test/java/com/backrooms/gdx/VhsOsdFontTest.java:62: error: bits(char) is not public in VhsOsd; cannot be accessed from outside package
-            byte[] b = VhsOsd.bits(pair[1]);
-                             ^
-9 errors
-	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:84)
-	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:46)
-	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
-	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:52)
-	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:38)
-	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:52)
-	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:38)
-	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:46)
-	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:36)
-	at org.gradle.jvm.toolchain.internal.DefaultToolchainJavaCompiler.execute(DefaultToolchainJavaCompiler.java:57)
-	at org.gradle.api.tasks.compile.JavaCompile.lambda$createToolchainCompiler$3(JavaCompile.java:205)
-	at org.gradle.api.internal.tasks.compile.CleaningJavaCompiler.execute(CleaningJavaCompiler.java:53)
-	at org.gradle.api.internal.tasks.compile.incremental.IncrementalCompilerFactory.lambda$createRebuildAllCompiler$0(IncrementalCompilerFactory.java:52)
-	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:70)
-	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:44)
-	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:66)
-	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:52)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$1.call(CompileJavaBuildOperationReportingCompiler.java:64)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$1.call(CompileJavaBuildOperationReportingCompiler.java:48)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler.execute(CompileJavaBuildOperationReportingCompiler.java:48)
-	at org.gradle.api.tasks.compile.JavaCompile.performCompilation(JavaCompile.java:223)
-	at org.gradle.api.tasks.compile.JavaCompile.performIncrementalCompilation(JavaCompile.java:164)
-	at org.gradle.api.tasks.compile.JavaCompile.compile(JavaCompile.java:149)
+Caused by: org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/core/build/reports/tests/test/index.html
+	at org.gradle.api.tasks.testing.AbstractTestTask.handleTestFailures(AbstractTestTask.java:707)
+	at org.gradle.api.tasks.testing.AbstractTestTask.handleCollectedResults(AbstractTestTask.java:541)
+	at org.gradle.api.tasks.testing.AbstractTestTask.executeTests(AbstractTestTask.java:536)
+	at org.gradle.api.tasks.testing.Test.executeTests(Test.java:731)
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
 	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
-	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.doExecute(IncrementalTaskAction.java:45)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)
 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
-	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.execute(IncrementalTaskAction.java:26)
 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
 	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:244)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
@@ -301,6 +232,6 @@ Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Com
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 16s
-25 actionable tasks: 13 executed, 12 from cache
+BUILD FAILED in 18s
+29 actionable tasks: 16 executed, 13 from cache
 ```
