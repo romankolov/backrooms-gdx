@@ -1,38 +1,38 @@
 # Last screenshot run
 
-Commit: 0dec3e0
+Commit: 1c6b53a
 
 ```
 files:
 ls: cannot access 'screenshots/entity': No such file or directory
 ls: cannot access 'screenshots/entity-raw': No such file or directory
 screenshots:
-total 6096
-drwxr-xr-x  4 runner runner    4096 Oct 28 20:16 .
-drwxr-xr-x 14 runner runner    4096 Oct 28 20:17 ..
-drwxr-xr-x  2 runner runner    4096 Oct 28 20:16 hole
--rw-r--r--  1 runner runner 1870077 Oct 28 20:16 shot0.png
--rw-r--r--  1 runner runner 2172864 Oct 28 20:16 shot1.png
--rw-r--r--  1 runner runner 2177448 Oct 28 20:16 shot2.png
-drwxr-xr-x  2 runner runner    4096 Oct 28 20:16 title
+total 5928
+drwxr-xr-x  4 runner runner    4096 Oct 28 20:24 .
+drwxr-xr-x 14 runner runner    4096 Oct 28 20:25 ..
+drwxr-xr-x  2 runner runner    4096 Oct 28 20:25 hole
+-rw-r--r--  1 runner runner 1846589 Oct 28 20:24 shot0.png
+-rw-r--r--  1 runner runner 2093717 Oct 28 20:24 shot1.png
+-rw-r--r--  1 runner runner 2108415 Oct 28 20:24 shot2.png
+drwxr-xr-x  2 runner runner    4096 Oct 28 20:24 title
 screenshots/hole:
-total 7168
-drwxr-xr-x 2 runner runner    4096 Oct 28 20:16 .
-drwxr-xr-x 4 runner runner    4096 Oct 28 20:16 ..
--rw-r--r-- 1 runner runner 2416619 Oct 28 20:16 shot0.png
--rw-r--r-- 1 runner runner 2456336 Oct 28 20:16 shot1.png
--rw-r--r-- 1 runner runner 2456285 Oct 28 20:16 shot2.png
+total 7080
+drwxr-xr-x 2 runner runner    4096 Oct 28 20:25 .
+drwxr-xr-x 4 runner runner    4096 Oct 28 20:24 ..
+-rw-r--r-- 1 runner runner 2413789 Oct 28 20:24 shot0.png
+-rw-r--r-- 1 runner runner 2409878 Oct 28 20:25 shot1.png
+-rw-r--r-- 1 runner runner 2410681 Oct 28 20:25 shot2.png
 screenshots/title:
 total 212
-drwxr-xr-x 2 runner runner  4096 Oct 28 20:16 .
-drwxr-xr-x 4 runner runner  4096 Oct 28 20:16 ..
--rw-r--r-- 1 runner runner 67545 Oct 28 20:16 shot0.png
--rw-r--r-- 1 runner runner 68027 Oct 28 20:16 shot1.png
--rw-r--r-- 1 runner runner 67204 Oct 28 20:16 shot2.png
+drwxr-xr-x 2 runner runner  4096 Oct 28 20:24 .
+drwxr-xr-x 4 runner runner  4096 Oct 28 20:24 ..
+-rw-r--r-- 1 runner runner 67574 Oct 28 20:24 shot0.png
+-rw-r--r-- 1 runner runner 68027 Oct 28 20:24 shot1.png
+-rw-r--r-- 1 runner runner 67204 Oct 28 20:24 shot2.png
 performance:
-[Perf] fps=14.4 worst=16 drawn=10/37 queue=0 build=14ms verts=25k cam=33.5,1.6,59.5 yaw=0.00 pitch=-0.73 torch=1 ready=true drawn=10 noMesh=0 culled=27
-[Perf] fps=16.9 worst=17 drawn=10/37 queue=0 build=14ms verts=25k cam=33.5,1.6,59.5 yaw=0.00 pitch=-0.73 torch=1 ready=true drawn=10 noMesh=0 culled=27
-[Perf] fps=16.8 worst=17 drawn=10/37 queue=0 build=14ms verts=25k cam=33.5,1.6,59.5 yaw=0.00 pitch=-0.73 torch=1 ready=true drawn=10 noMesh=0 culled=27
+[Perf] fps=16.2 worst=19 drawn=10/37 queue=0 build=6ms verts=25k cam=33.5,1.6,59.5 yaw=0.00 pitch=-0.73 torch=1 ready=true drawn=10 noMesh=0 culled=27
+[Perf] fps=19.4 worst=19 drawn=10/37 queue=0 build=6ms verts=25k cam=33.5,1.6,59.5 yaw=0.00 pitch=-0.73 torch=1 ready=true drawn=10 noMesh=0 culled=27
+[Perf] fps=19.4 worst=19 drawn=10/37 queue=0 build=6ms verts=25k cam=33.5,1.6,59.5 yaw=0.00 pitch=-0.73 torch=1 ready=true drawn=10 noMesh=0 culled=27
 [Capture] wrote shot2.png
 ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
 ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
@@ -108,6 +108,6 @@ Execution failed for task ':desktop:run'.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
-BUILD FAILED in 8s
+BUILD FAILED in 9s
 4 actionable tasks: 1 executed, 3 up-to-date
 ```
