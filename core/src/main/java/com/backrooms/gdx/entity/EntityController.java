@@ -278,7 +278,8 @@ public final class EntityController {
         return hasLineOfSight(player, position.x, position.z);
     }
 
-    private boolean hasLineOfSight(Vector3 player, float x, float z) {
+    /** Would something standing at {@code x,z} see the player? */
+    public boolean hasLineOfSight(Vector3 player, float x, float z) {
         // Only the horizontal plane matters: the level is one storey and a pit is shallow, so the
         // eyes see over anything that is not a wall.
         float dx = player.x - x;

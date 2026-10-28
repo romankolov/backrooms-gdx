@@ -129,25 +129,25 @@ public final class PlayScreen extends ScreenAdapter {
         player.spawn(spawn[0], spawn[1], spawn[2]);
         player.torchOn = settings.torch;
         // -Dbackrooms.entity=1 puts it in front of the camera, hunting, so a screenshot can show it.
-        // It is walked forward along the view ray until the corridor ends, so it is never placed
-        // behind a wall where nobody can see it.
+        // The spot is chosen as the furthest point down the view ray that is walkable and has a clear
+        // view of the player, so it is never behind a wall and never right on top of the camera.
         String entityFlag = System.getProperty("backrooms.entity");
         if (entityFlag != null && entityFlag.trim().matches("1|true|yes|on")) {
-            float ahead = 2f;
-            float fx = player.position.x;
-            float fz = player.position.z;
-            for (float d = 2f; d <= 9f; d += 0.5f) {
+            float ahead = 9f;
+            float fx = player.position.x - MathUtils.sin(player.yaw) * 9f;
+            float fz = player.position.z - MathUtils.cos(player.yaw) * 9f;
+            for (float d = 13f; d >= 8f; d -= 0.5f) {
                 float x = player.position.x - MathUtils.sin(player.yaw) * d;
                 float z = player.position.z - MathUtils.cos(player.yaw) * d;
-                if (!world.gen().isOpenSpace(com.backrooms.gdx.util.Hash.floorInt(x),
-                        com.backrooms.gdx.util.Hash.floorInt(z))
-                        || world.gen().isHole(com.backrooms.gdx.util.Hash.floorInt(x),
-                        com.backrooms.gdx.util.Hash.floorInt(z))) {
+                int cx = com.backrooms.gdx.util.Hash.floorInt(x);
+                int cz = com.backrooms.gdx.util.Hash.floorInt(z);
+                if (world.gen().isOpenSpace(cx, cz) && world.gen().isSolidGround(cx, cz)
+                        && entity.hasLineOfSight(player.position, x, z)) {
+                    ahead = d;
+                    fx = x;
+                    fz = z;
                     break;
                 }
-                ahead = d;
-                fx = x;
-                fz = z;
             }
             entity.forceSpawn(fx, fz, EntityController.State.HUNT);
             Gdx.app.log("BackroomsInput", String.format(java.util.Locale.US,

@@ -70,7 +70,7 @@ jobs:
           # The thing in the corridor, walking at the camera.
           xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
             -Dbackrooms.autostart=1 -Dbackrooms.seed=20241027 -Dbackrooms.entity=1 \
-            -Dbackrooms.frames=90 \
+            -Dbackrooms.frames=70 \
             -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/entity" >> render.log 2>&1 || true
           ls -la screenshots screenshots/title screenshots/hole screenshots/entity 2>/dev/null
 
@@ -106,7 +106,7 @@ jobs:
         run: |
           {
             echo "files:"
-            ls -la screenshots || true
+            ls -la screenshots screenshots/title screenshots/hole screenshots/entity 2>&1 || true
             echo
             echo "performance:"
             grep -a "Perf\|Capture\|Exception\|error" render.log 2>/dev/null | tail -20 || true
