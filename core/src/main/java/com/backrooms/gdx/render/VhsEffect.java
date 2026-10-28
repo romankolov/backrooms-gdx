@@ -102,12 +102,12 @@ public final class VhsEffect implements Disposable {
         return intensity;
     }
 
-    /** 0 = no extra glitches, 1 = the tape is in trouble (the entity is close, or something happened). */
-    /** Current glitch amount, 0..1. */
+    /** Current glitch amount, 0..1: 0 is a clean tape, 1 is the tape in trouble. */
     public float glitch() {
         return glitch;
     }
 
+    /** 0 = no extra glitches, 1 = the tape is in trouble (the entity is close, or something happened). */
     public void setGlitch(float glitch) {
         this.glitchTarget = Math.max(0f, Math.min(1f, glitch));
     }

@@ -305,6 +305,9 @@ public final class PlayScreen extends ScreenAdapter {
             }
         }
 
+        // With the VHS pass on, the world is drawn into an offscreen buffer and the tape shader puts
+        // it on screen afterwards. The debug material view bypasses it: colours have to be readable.
+        boolean tape = vhsOn && vhs.isReady() && !debugView;
         if (tape) {
             // An old tape is never quite clean: every so often the tracking slips for a moment.
             if (!paused && random.nextFloat() < delta * 0.10f) {
@@ -336,9 +339,6 @@ public final class PlayScreen extends ScreenAdapter {
         player.cameraDirection(torchDir);
         torchPos.set(camera.position).mulAdd(torchDir, 0.15f);
 
-        // With the VHS pass on, the world is drawn into an offscreen buffer and the tape shader puts
-        // it on screen afterwards. The debug material view bypasses it: colours have to be readable.
-        boolean tape = vhsOn && vhs.isReady() && !debugView;
         if (tape) {
             vhs.begin();                       // also sets the viewport to the buffer
         } else {
