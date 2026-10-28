@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
@@ -81,8 +82,10 @@ public final class VhsEffect implements Disposable {
             buffer.dispose();
         }
         buffer = new FrameBuffer(Pixmap.Format.RGBA8888, renderWidth, renderHeight, true);
-        buffer.setFilter(com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest,
-                com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest);
+        // Point sampling: the tape shader does its own soft filtering, and a bilinear upsample from
+        // the reduced buffer would blur the scanlines into mush.
+        buffer.getColorBufferTexture().setFilter(Texture.TextureFilter.Nearest,
+                Texture.TextureFilter.Nearest);
     }
 
     /** Size the camera should render at while the effect is on. */
