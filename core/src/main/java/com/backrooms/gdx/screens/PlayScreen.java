@@ -129,13 +129,29 @@ public final class PlayScreen extends ScreenAdapter {
         player.spawn(spawn[0], spawn[1], spawn[2]);
         player.torchOn = settings.torch;
         // -Dbackrooms.entity=1 puts it in front of the camera, hunting, so a screenshot can show it.
+        // It is walked forward along the view ray until the corridor ends, so it is never placed
+        // behind a wall where nobody can see it.
         String entityFlag = System.getProperty("backrooms.entity");
         if (entityFlag != null && entityFlag.trim().matches("1|true|yes|on")) {
-            float fx = player.position.x - MathUtils.sin(player.yaw) * 8.5f;
-            float fz = player.position.z - MathUtils.cos(player.yaw) * 8.5f;
+            float ahead = 2f;
+            float fx = player.position.x;
+            float fz = player.position.z;
+            for (float d = 2f; d <= 9f; d += 0.5f) {
+                float x = player.position.x - MathUtils.sin(player.yaw) * d;
+                float z = player.position.z - MathUtils.cos(player.yaw) * d;
+                if (!world.gen().isOpenSpace(com.backrooms.gdx.util.Hash.floorInt(x),
+                        com.backrooms.gdx.util.Hash.floorInt(z))
+                        || world.gen().isHole(com.backrooms.gdx.util.Hash.floorInt(x),
+                        com.backrooms.gdx.util.Hash.floorInt(z))) {
+                    break;
+                }
+                ahead = d;
+                fx = x;
+                fz = z;
+            }
             entity.forceSpawn(fx, fz, EntityController.State.HUNT);
             Gdx.app.log("BackroomsInput", String.format(java.util.Locale.US,
-                    "entity at %.1f,%.1f", fx, fz));
+                    "entity at %.1f,%.1f (%.1f m ahead)", fx, fz, ahead));
         }
         String yaw = System.getProperty("backrooms.yaw");
         if (yaw != null) {
