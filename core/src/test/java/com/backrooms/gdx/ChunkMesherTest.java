@@ -201,7 +201,8 @@ public class ChunkMesherTest {
             float y = build.vertices[base + 1];
             boolean floor = Math.abs(y) < 0.01f;
             boolean bottom = Math.abs(y + WorldGen.HOLE_DEPTH) < 0.01f;
-            boolean ceiling = Math.abs(y - WorldGen.ROOM_HEIGHT) < 0.01f;
+            // The light panels hang 3 cm under the ceiling.
+            boolean ceiling = Math.abs(y - WorldGen.ROOM_HEIGHT) < 0.05f;
             assertTrue("vertex at an unexpected height: " + y, floor || bottom || ceiling);
             if (floor) {
                 onFloor++;
