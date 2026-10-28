@@ -19,6 +19,7 @@ thrown away behind you, so the map never ends and memory never grows.
 | **Materials** | The CC0 wallpaper, carpet and ceiling tile sets with their normal maps (normal-mapped, specular, parallax-free), plus procedural fluorescent panels that flicker. |
 | **Lighting model** | Warm fluorescent tubes, a handheld torch cone, distance haze, ACES tone mapping, vignette and a touch of sensor grain. |
 | **VHS camcorder** | The whole frame goes through an offscreen pass that emulates tape: drum curvature, head-switch tear along the bottom edge, chroma smear from the low chroma bandwidth, a tracking band that drifts up the frame, dropout speckles, scanlines, grain and a warm washed-out grade. Plus a camcorder OSD (REC lamp, SP, date, tape counter) drawn from a hand-built 5x7 character generator, and synthesised tape hiss. Toggle it in the pause menu (`VHS LOOK`) or with `-Dbackrooms.vhs=0`. |
+| **The presence** | Something else is in here. It stays away most of the time; eventually it appears a few rooms off, out of sight, and starts closing in - slowly at first, then not at all slowly. It navigates the level on the same cell grid the generator uses, cannot see through walls, and can be lost by breaking line of sight. Getting caught is survivable: the tape cuts and you wake up somewhere else. Toggle it in the pause menu (`THE PRESENCE`). |
 | **Audio** | Procedural carpet footsteps (4 variations, randomised pitch/pan), a 50/100 Hz fluorescent buzz loop that fades in as you approach a working tube, and a low room tone. No third-party samples. |
 | **Controls** | Touch: floating stick on the left, drag-to-look anywhere on the right, run (hold), jump, torch and pause buttons — all fingers at once. Keyboard and mouse also work (desktop build). The emulator job drives the real controls and checks the numbers the app logs, so a dead button or a dead look drag fails CI instead of shipping. |
 | **Platforms** | Android (`minSdk 24`, arm64 + armv7 + x86_64) and a desktop launcher used for development and screenshots. |
@@ -32,6 +33,10 @@ Rendered by CI on software OpenGL (llvmpipe), 1280×720, seed 20241027:
 A pit in the carpet, the only thing that interrupts the level's flat floor:
 
 ![A hole in the floor](screenshots/hole/shot0.png)
+
+And the thing in the corridor (`-Dbackrooms.entity=1`):
+
+![The entity](screenshots/entity/shot1.png)
 
 Captured by CI from the real Android build on an API 30 emulator (touch controls):
 
@@ -83,6 +88,7 @@ Handy system properties for the desktop run:
 | `-Dbackrooms.hud=1` | show the performance readout |
 | `-Dbackrooms.vhs=0` | render the raw frame without the camcorder pass |
 | `-Dbackrooms.pit=1` | spawn on the rim of the nearest floor pit |
+| `-Dbackrooms.entity=1` | put the entity in the corridor in front of you (`0` removes it entirely) |
 | `-Dbackrooms.capture=dir -Dbackrooms.frames=270` | render `frames` frames, dump PNGs into `dir`, quit |
 
 ### Tests
@@ -91,10 +97,12 @@ Handy system properties for the desktop run:
 ./gradlew :core:test
 ```
 
-17 unit tests cover the generator (determinism, seeds, wall density, stair grid, chunk seams),
-the mesher (winding, index bounds, bounds, lightmap), the light baker (occlusion, blockages) and the
-player physics (landing, thin-wall collision, 1200 steps of random walking without ever clipping
-through a wall or sinking through the floor), plus a streaming test that builds and releases chunks.
+38 unit tests cover the generator (determinism, seeds, wall density, stair grid, chunk seams),
+the mesher (winding, index bounds, bounds, lightmap), the light baker (occlusion, blockages),
+the player physics (landing, thin-wall collision, 1200 steps of random walking without ever
+clipping through a wall or sinking through the floor), the streaming that builds and releases
+chunks, the shader rules that only bite on GLES2, the camcorder's 5x7 glyph table, and the entity's
+encounter rules (it spawns out of sight, escalates when it can see you, and leaves when it cannot).
 
 ### CI
 
@@ -127,7 +135,11 @@ core/src/main/java/com/backrooms/gdx
 ├── render/WorldRenderer.java  one shader, 6 tiled textures, one draw call per chunk
 ├── player/Player.java         first person movement, thin-wall capsule collision
 ├── input/TouchControls.java   floating stick, drag look, buttons, keyboard
-├── audio/AudioManager.java    footsteps, buzz that follows the nearest tube, room tone
+├── entity/EntityController    the encounter: stalking, hunting, losing the player (no GL)
+├── entity/EntityRenderer      rigged glTF model if supplied, otherwise a placeholder body
+├── render/VhsEffect.java      offscreen buffer + the tape shader
+├── ui/VhsOsd.java             camcorder OSD drawn from a 5x7 character generator
+├── audio/AudioManager.java    footsteps, buzz that follows the nearest tube, room tone, tape hiss
 └── ui/Hud.java, screens/…     title screen, HUD, pause menu
 ```
 
@@ -192,12 +204,18 @@ if your device needs it.
 | `TEXELS_PER_METER` | `LightBaker` | lightmap resolution (2) |
 | `WALK_SPEED`, `SPRINT_SPEED`, `GRAVITY`, `JUMP_SPEED` | `Player` | movement feel |
 | `fogDensity`, `exposure` | `PlayScreen` | haze and exposure |
+| `STALK_SPEED`, `HUNT_SPEED`, `LUNGE_SPEED` | `EntityController` | how fast it closes in, and how hard it is to outrun |
+| `STALK_TO_HUNT`, `LOSE_TIME` | `EntityController` | seconds of being seen before it hunts, seconds of being unseen before it gives up |
+| `scale` | `VhsEffect` | resolution of the tape buffer (0.85 of the screen by default) |
+| `u_scanline`, `u_intensity` | `VhsEffect` | how heavy the camcorder look is |
 
 ## Assets
 
 * Textures: [amini-allight/backrooms-textures](https://github.com/amini-allight/backrooms-textures),
   CC0 1.0 — created and/or modified by Amini Allight.
 * Everything else (audio, icons, font atlas) is generated by `tools/make_assets.py`.
+* [gdx-gltf](https://github.com/mgsx-dev/gdx-gltf) (Apache-2.0) loads the rigged glTF model; it is
+  the project's only third-party runtime dependency.
 * See `assets/CREDITS.md`.
 
 ## Known limitations / next steps
@@ -210,6 +228,10 @@ if your device needs it.
   enforced by `ShaderPrecisionTest`, because a violation only shows up on the device.
 * The second device-only trap is `mediump`: anything the fragment shader interpolates has to stay
   small, which is why chunk geometry is chunk-local. `ChunkMesherTest` guards it.
-* Entities (the occasional something in the corridors) are not implemented.
+* The entity ships with a placeholder body built from boxes, because a rigged model is not in the
+  repository yet. Drop a `.glb` at `assets/models/entity.glb` (Y-up, metres, one armature, clips
+  named `idle` and `walk`, under ~2 MB) and `EntityRenderer` loads it, animates it from its own
+  clips and lights it with the torch; without the file, or if it fails to load, the placeholder is
+  used. See `assets/models/README.md` for the requirements.
 * The desktop build is a development tool, not a shipped target.
 * Multi-threaded chunk building uses up to 2 workers; a job system would scale to more cores.
