@@ -36,6 +36,27 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
+      # One-off probe: which glTF loader coordinates actually resolve. libGDX core has no glTF
+      # support (only G3D/OBJ), and the entity is a rigged .glb, so the loader has to be a real
+      # dependency. Results are committed to docs/ci/gltf-probe.md.
+      - name: Probe glTF loader availability
+        continue-on-error: true
+        run: |
+          : > gltf-probe.txt
+          probe() {
+            echo "== $1" >> gltf-probe.txt
+            code=$(curl -s -o /tmp/body -w '%{http_code}' --max-time 20 "$1" || echo "000")
+            echo "http $code" >> gltf-probe.txt
+            head -c 800 /tmp/body >> gltf-probe.txt 2>/dev/null || true
+            echo >> gltf-probe.txt
+            echo >> gltf-probe.txt
+          }
+          probe https://repo1.maven.org/maven2/com/github/mgsx-dev/gdx-gltf/gdx-gltf/maven-metadata.xml
+          probe https://repo1.maven.org/maven2/net/mgsx/gdx-gltf/gdx-gltf/maven-metadata.xml
+          probe https://repo1.maven.org/maven2/com/badlogicgames/gdx/gdx-gltf/maven-metadata.xml
+          probe https://jitpack.io/com/github/mgsx-dev/gdx-gltf/maven-metadata.xml
+          cat gltf-probe.txt
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -109,8 +130,18 @@ jobs:
             cat apk-check.log 2>/dev/null || echo "(no log)"
             echo '```'
           } > docs/ci/apk-check.md
+          if [ -s gltf-probe.txt ]; then
+            {
+              echo "# glTF loader probe"
+              echo
+              echo '```'
+              cat gltf-probe.txt
+              echo '```'
+            } > docs/ci/gltf-probe.md
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f docs/ci/gltf-probe.md 2>/dev/null || true
           git add -f docs/ci/apk-check.md
           git diff --cached --quiet || git commit -m "chore: APK check log [skip ci]"
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
