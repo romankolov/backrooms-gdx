@@ -21,12 +21,12 @@ void main() {
     // Square panels, so the distance to the edge is the larger of the two axes.
     float edge = max(abs(v_local.x), abs(v_local.y));
 
-    // Even light across the diffuser, softening only at the very edge.
-    float face = 1.0 - smoothstep(u_panelHalf * 0.72, u_panelHalf * 1.02, edge);
+    // Even light across the whole diffuser, softening only in the last fraction before its edge.
+    float face = 1.0 - smoothstep(u_panelHalf * 0.86, u_panelHalf * 1.04, edge);
     // The spill onto the surrounding tiles: a short, square falloff, not a halo.
     float spill = exp(-max(edge - u_panelHalf, 0.0) * 7.0) * 0.45;
 
-    float amount = (face * 0.70 + spill) * v_strength;
+    float amount = (face * 0.55 + spill * 0.9) * v_strength;
     if (amount < 0.002) {
         discard;
     }

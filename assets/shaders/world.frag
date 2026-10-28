@@ -92,8 +92,10 @@ void main() {
         albedo = mix(vec3(0.62, 0.62, 0.60), vec3(0.94, 0.93, 0.86), frame);
         nmap = vec3(0.5, 0.5, 1.0);
         irr = lm.rgb * u_lightRange * 0.30;
+        // Left just under the point where ACES clips, so the tube stripes still read through the
+        // glow instead of the panel becoming a plain white rectangle.
         emission = vec3(1.0, 0.985, 0.90) * (0.35 + 0.65 * frame) * tubes * diffuser
-                 * v_emit * 3.2;
+                 * v_emit * 2.0;
     }
 
     // ---- normal mapping (surfaces are axis aligned, so the tangent frame is cheap) ----
