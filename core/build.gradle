@@ -20,10 +20,11 @@ dependencies {
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
     // libGDX core can load OBJ and G3D models but not glTF. The rigged entity needs glTF, so this is
     // the one third-party runtime dependency in the project.
-    // transitive = false is deliberate: the JitPack POM of this multi-module project also pulls in
-    // its desktop/IBL tooling, which bundles LWJGL 2 and clashes with the Android build's classes.
-    // The core jar only needs libGDX, which is already here.
-    api("com.github.mgsx-dev:gdx-gltf:2.3.0") { transitive = false }
+    // gdx-gltf is a multi-module project and only published through JitPack, where the modules
+    // become separate artifacts. `gdx-gltf` itself is the aggregator (its jar is empty); the runtime
+    // code is in `gltf`. transitive = false keeps the desktop/IBL siblings out, which bundle LWJGL 2
+    // and collide with the Android build.
+    api("com.github.mgsx-dev.gdx-gltf:gltf:2.3.0") { transitive = false }
 
     testImplementation "junit:junit:4.13.2"
     testImplementation "com.badlogicgames.gdx:gdx:$gdxVersion"

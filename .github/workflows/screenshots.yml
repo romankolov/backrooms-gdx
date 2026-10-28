@@ -51,6 +51,9 @@ jobs:
           MESA_GL_VERSION_OVERRIDE: '4.5'
         run: |
           chmod +x gradlew
+          # Start from nothing: otherwise a failed build leaves the previous run's PNGs in place and
+          # every check below happily validates stale evidence.
+          rm -rf screenshots
           mkdir -p screenshots
           xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
             -Dbackrooms.autostart=1 -Dbackrooms.spin=1 -Dbackrooms.seed=20241027 -Dbackrooms.pitch=-7 -Dbackrooms.debug=0 -Dbackrooms.hud=0 \
@@ -77,6 +80,10 @@ jobs:
           # A failed shader link leaves a frame of pure clear colour: no geometry, and a PNG that
           # compresses to a few KB. Never publish (or commit) that.
           fail=0
+          if grep -qa "BUILD FAILED\|error:\|SHADER FAILED" render.log; then
+            echo "the desktop build or the render itself failed:"; grep -a "error:\|BUILD FAILED\|SHADER FAILED" render.log | head -5
+            fail=1
+          fi
           if grep -qa "SHADER FAILED" render.log; then
             echo "the world shader did not compile:"; grep -a "SHADER FAILED" render.log
             fail=1
