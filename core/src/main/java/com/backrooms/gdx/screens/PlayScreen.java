@@ -88,6 +88,7 @@ public final class PlayScreen extends ScreenAdapter {
                 && System.getProperty("backrooms.entity").trim().matches("0|false|no|off")) {
             settings.entity = false;
         }
+        entity.setEnabled(settings.entity);
         // -Dbackrooms.vhs=0 renders the raw frame, which is what a screenshot wants when the
         // effect itself is being worked on.
         String vhsFlag = System.getProperty("backrooms.vhs");
@@ -324,8 +325,8 @@ public final class PlayScreen extends ScreenAdapter {
             if (player.grounded && player.position.y < FALL_DEPTH) {
                 startFallThrough();
             }
-            if (settings.entity) {
-                entity.update(delta, player.position);
+            entity.update(delta, player.position);
+            if (entity.isEnabled()) {
                 if (entity.consumeCapture()) {
                     // It reached you. The tape cuts to somewhere else: same effect as a pit.
                     Gdx.app.log("Entity", "caught the player at "
@@ -334,8 +335,6 @@ public final class PlayScreen extends ScreenAdapter {
                     vhs.setGlitch(1f);
                     startFallThrough();
                 }
-            } else {
-                entity.vanish(1e9f);
             }
             if (teleporting) {
                 fade = Math.min(1f, fade + delta * 3.2f);
@@ -515,9 +514,7 @@ public final class PlayScreen extends ScreenAdapter {
                 break;
             case Hud.BTN_ENTITY:
                 settings.entity = !settings.entity;
-                if (!settings.entity) {
-                    entity.vanish(1e9f);
-                }
+                entity.setEnabled(settings.entity);
                 settings.save();
                 hud.refreshLabels(settings);
                 break;

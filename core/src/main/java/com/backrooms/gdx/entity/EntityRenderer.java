@@ -134,7 +134,10 @@ public final class EntityRenderer implements Disposable {
             }
             updateClip();
             scenes.setCamera(camera);
+            // The delta is handed out once per frame: when the game is paused PlayScreen stops
+            // calling update(), so the animation freezes instead of looping on the last step.
             scenes.update(pendingDelta);
+            pendingDelta = 0f;
             scenes.render();
             return;
         }
@@ -146,6 +149,7 @@ public final class EntityRenderer implements Disposable {
 
         instance.transform.setToTranslation(x, y, z);
         instance.transform.rotate(Vector3.Y, yawDegrees);
+        pendingDelta = 0f;
         batch.begin(camera);
         batch.render(instance, lights);
         batch.end();

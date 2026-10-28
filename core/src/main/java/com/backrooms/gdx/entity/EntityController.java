@@ -71,6 +71,7 @@ public final class EntityController {
     public float yaw;
 
     private State state = State.ABSENT;
+    private boolean enabled = true;
     private float dormant;
     private float stalkTime;
     private float lostTime;
@@ -162,6 +163,15 @@ public final class EntityController {
     public void update(float delta, Vector3 player) {
         speedNow = 0f;
         float dist = distance(player);
+
+        if (!enabled) {
+            // Still let the picture calm down after a toggle: the tape should not stay torn
+            // because the player switched the encounter off mid-scare.
+            if (presence > 0.001f) {
+                presence += (0f - presence) * Math.min(1f, delta * 2.5f);
+            }
+            return;
+        }
 
         switch (state) {
             case ABSENT:
