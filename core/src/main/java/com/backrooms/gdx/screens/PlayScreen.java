@@ -72,6 +72,23 @@ public final class PlayScreen extends ScreenAdapter {
 
         float[] spawn = new float[3];
         world.gen().findSpawn(spawn);
+        // Screenshots and debugging: -Dbackrooms.spawn=x,z drops the player at a known cell.
+        String at = System.getProperty("backrooms.spawn");
+        if (at != null) {
+            String[] parts = at.trim().split(",");
+            if (parts.length == 2) {
+                try {
+                    float x = Float.parseFloat(parts[0].trim());
+                    float z = Float.parseFloat(parts[1].trim());
+                    spawn[0] = x;
+                    spawn[1] = world.gen().floorY(com.backrooms.gdx.util.Hash.floorInt(x),
+                            com.backrooms.gdx.util.Hash.floorInt(z));
+                    spawn[2] = z;
+                } catch (NumberFormatException ignored) {
+                    // keep the generated spawn
+                }
+            }
+        }
         player.spawn(spawn[0], spawn[1], spawn[2]);
         player.torchOn = settings.torch;
         String yaw = System.getProperty("backrooms.yaw");

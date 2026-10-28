@@ -28,7 +28,11 @@ Rendered by CI on software OpenGL (llvmpipe), 1280×720, seed 20241027:
 
 ![A corridor](screenshots/shot1.png)
 
-Captured by CI from the real Android build on an API 30 emulator (portrait, touch controls):
+A pit in the carpet, the only thing that interrupts the level's flat floor:
+
+![A hole in the floor](screenshots/hole/shot0.png)
+
+Captured by CI from the real Android build on an API 30 emulator (touch controls):
 
 ![Running on Android](screenshots/android/ingame.png)
 
@@ -73,6 +77,7 @@ Handy system properties for the desktop run:
 | `-Dbackrooms.seed=1234` | force a world seed |
 | `-Dbackrooms.spin=1` | slowly rotate the view (used by the screenshot job) |
 | `-Dbackrooms.yaw=45 -Dbackrooms.pitch=-7` | starting heading / pitch in degrees |
+| `-Dbackrooms.spawn=0.5,-29.5` | drop the player at a known position (screenshots, debugging) |
 | `-Dbackrooms.debug=1` | material colour view, magenta = hole in the geometry |
 | `-Dbackrooms.hud=1` | show the performance readout |
 | `-Dbackrooms.capture=dir -Dbackrooms.frames=270` | render `frames` frames, dump PNGs into `dir`, quit |
