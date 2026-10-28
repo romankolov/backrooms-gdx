@@ -198,9 +198,9 @@ public final class EntityController {
         walked = 0f;
         roarTimer = ROAR_MIN * 0.5f + random.nextFloat() * ROAR_MIN;
         // Walk away from the cell it was given, so a forced pass also travels.
-        double heading = random.nextDouble() * Math.PI * 2.0;
-        goalX = MathUtils.floor(x + Math.cos(heading) * PASS_MIN);
-        goalZ = MathUtils.floor(z + Math.sin(heading) * PASS_MIN);
+        float heading = random.nextFloat() * MathUtils.PI2;
+        goalX = MathUtils.floor(x + MathUtils.cos(heading) * PASS_MIN);
+        goalZ = MathUtils.floor(z + MathUtils.sin(heading) * PASS_MIN);
     }
 
     /** Removes it from the world and sets how long until it may come back. */
