@@ -7,23 +7,23 @@ import com.badlogic.gdx.math.Vector3;
 import com.backrooms.gdx.world.WorldGen;
 
 /**
- * The thing in the corridors: where it is, what it is doing, and how the player escapes it.
+ * The thing in the corridors: where it is, what it is doing, and why you only ever half see it.
  *
  * <p>This class is pure logic - it never touches a GL context, which is what makes it testable. The
  * visuals live in {@code EntityRenderer}.
  *
- * <p>It works in three beats, and the beats are what make it frightening rather than merely
- * annoying:
+ * <p>It is a stalker and nothing else. There is no chase, no lunge and no way to be caught: the
+ * whole point of it is the moment of doubt, not a game over. Each appearance is one pass:
  *
  * <ol>
- *   <li><b>Absent.</b> Most of the time there is nothing. The level is empty, and the emptiness is
- *       the point.</li>
- *   <li><b>Stalking.</b> It appears a few rooms away, out of sight, and closes slowly - slower than
- *       the player walks. It does not need to catch up yet. It only needs to keep finding you, and
- *       every second it can see you it gets a little bolder. This phase is the warning.</li>
- *   <li><b>Hunting.</b> Once it has watched you for long enough it stops being patient: it comes at
- *       a run, faster than a walk and slower than a sprint. It cannot track you through walls, so
- *       breaking line of sight for a few seconds loses it - and losing it is the only way out.</li>
+ *   <li><b>Nothing.</b> Most of the time the level is empty, and the emptiness is the point. It
+ *       waits between thirty seconds and a minute and a half.</li>
+ *   <li><b>Out of sight.</b> It appears ten to eighteen metres ahead of where you are looking, on
+ *       the far side of a wall, so it is never seen arriving.</li>
+ *   <li><b>The pass.</b> It walks across the corridor ahead of you at a stroll, either looking at
+ *       you or looking where it is going, and it never speeds up.</li>
+ *   <li><b>The wall.</b> It keeps walking until something solid takes it out of your sight. Only
+ *       then does it go - it does not blink out while you are watching it.</li>
  * </ol>
  *
  * <p>Everything spatial is done on the generator's cell grid, so the AI never needs the streamed
@@ -34,39 +34,40 @@ public final class EntityController {
     public enum State {
         /** Not in the world right now. */
         ABSENT,
-        /** Drifting toward the player, keeping quiet. */
-        STALK,
-        /** Coming straight at the player; must be lost. */
-        HUNT
+        /** Walking its one pass across the player's view. */
+        STALK
     }
 
-    /** How close it gets before it is allowed to start stalking. */
-    private static final float SPAWN_MIN = 12f;
-    private static final float SPAWN_MAX = 26f;
-    /** Beyond this it gives up and forgets where the player is. */
-    private static final float ABANDON_RANGE = 40f;
-    /** Seconds of being seen before stalking escalates into a hunt. */
-    private static final float STALK_TO_HUNT = 18f;
-    /** Seeing the player counts less while stalking: it has to get close to learn enough. */
-    private static final float STALK_LEARN_RANGE = 17f;
-    /** Seconds out of sight, while hunted, before it loses the trail and leaves. */
-    private static final float LOSE_TIME = 5.5f;
-    /** Distance at which it grabs the player. */
-    private static final float CAPTURE_DISTANCE = 0.9f;
+    /** How far ahead of the player it appears. */
+    private static final float SPAWN_MIN = 10f;
+    private static final float SPAWN_MAX = 18f;
+    /** How far it walks across the view, in total. */
+    private static final float PASS_MIN = 9f;
+    private static final float PASS_MAX = 16f;
+    /** Seconds of nothing between appearances. */
+    private static final float GONE_MIN = 28f;
+    private static final float GONE_MAX = 85f;
+
+    public static final float STALK_SPEED = 1.15f;
+
     /** One step per stride, in metres. Long legs. */
     private static final float STRIDE = 1.15f;
-    /** While hunting, it vocalises about this often. */
-    private static final float ROAR_INTERVAL_MIN = 5.5f;
-    private static final float ROAR_INTERVAL_MAX = 11f;
-    /** Stalking, it keeps quiet - but not completely silent. */
-    private static final float STALK_GROWL_MIN = 14f;
-    private static final float STALK_GROWL_MAX = 26f;
+    /** Beyond this it is lost in the haze and might as well be gone. */
+    private static final float SIGHT_RANGE = 30f;
+    /** It has to be out of sight for this long - not just flicker behind a doorway. */
+    private static final float HIDDEN_TO_VANISH = 0.5f;
+    /** And it has to have actually walked somewhere before it can leave. */
+    private static final float MIN_TRAVEL = 2f;
+    /** A pass that has not shown itself by now went the wrong way: drop it. */
+    private static final float NO_SHOW_TIMEOUT = 22f;
+    /** Hard cap, so a pass can never become furniture. */
+    private static final float MAX_PASS_TIME = 45f;
+    /** If it is this far away, whatever it is doing no longer matters. */
+    private static final float ABANDON_RANGE = 60f;
 
-    public static final float STALK_SPEED = 1.25f;
-    public static final float HUNT_SPEED = 3.95f;
-    /** A short burst when it is nearly on top of the player, so standing still is not safe. */
-    public static final float LUNGE_SPEED = 4.6f;
-    private static final float LUNGE_RANGE = 5.5f;
+    /** A rare, distant vocalisation while it walks. */
+    private static final float ROAR_MIN = 14f;
+    private static final float ROAR_MAX = 34f;
 
     private static final int WINDOW = 40;              // cells searched in each direction
     private static final int SIDE = WINDOW * 2 + 1;
@@ -80,18 +81,23 @@ public final class EntityController {
 
     private State state = State.ABSENT;
     private boolean enabled = true;
-    /** Set for screenshots: it stands where it was put instead of walking at the camera. */
+    /** Set for screenshots: it stands where it was put instead of walking. */
     private boolean frozen;
     private float dormant;
-    private float stalkTime;
-    private float lostTime;
+    private float passTime;
+    private float hiddenFor;
+    private float travelled;
+    private boolean seenEver;
     private float bobPhase;
     private float walked;
     private float roarTimer;
     private boolean roarPending;
     private float speedNow;
-    private boolean captured;
     private float presence;
+
+    // Where this pass is walking to, on the cell grid.
+    private int goalX;
+    private int goalZ;
 
     // Breadth-first search scratch space. Allocated once: this runs on the render thread.
     private final int[] frontier = new int[SIDE * SIDE];
@@ -105,7 +111,7 @@ public final class EntityController {
     public EntityController(WorldGen gen, long randomSeed) {
         this.gen = gen;
         this.random = new Random(randomSeed);
-        this.dormant = 22f + random.nextFloat() * 26f;
+        this.dormant = 20f + random.nextFloat() * 30f;
     }
 
     public State state() {
@@ -122,14 +128,9 @@ public final class EntityController {
         return speedNow;
     }
 
-    /** Seconds of stalking accumulated, for the HUD/debug line. */
+    /** Seconds this appearance has lasted, for the debug line. */
     public float stalkTime() {
-        return stalkTime;
-    }
-
-    /** Seconds since it last saw the player while hunting. */
-    public float lostTime() {
-        return lostTime;
+        return passTime;
     }
 
     /** Turns the whole encounter on or off without losing the cooldown state. */
@@ -150,23 +151,16 @@ public final class EntityController {
     }
 
     /**
-     * 0..1: how much of a presence it is right now, by distance and by intent. The camera uses this
-     * to start tearing the tape long before the thing is visible.
+     * 0..1: how much of a presence it is right now, by distance. The camera uses this to start
+     * tearing the tape long before the thing is visible.
      */
     public float presence() {
         return presence;
     }
 
-    /** Set for exactly one update when it reaches the player. The caller is expected to react. */
-    public boolean consumeCapture() {
-        boolean was = captured;
-        captured = false;
-        return was;
-    }
-
     /**
      * True when a foot has landed since the last call. The caller plays the sound: a step every
-     * stride, which is about a metre for legs this long. Frozen entities do not step.
+     * stride. A frozen entity does not step.
      */
     public boolean takeFootstep() {
         if (state == State.ABSENT || frozen || speedNow <= 0.01f) {
@@ -179,28 +173,34 @@ public final class EntityController {
         return true;
     }
 
-    /**
-     * True when it should roar: once when it decides to hunt, once when it catches the player, and
-     * every so often while it is chasing. The caller plays it from the entity's position.
-     */
+    /** True when it vocalises - a distant, quiet sound while it walks. */
     public boolean consumeRoar() {
         boolean was = roarPending;
         roarPending = false;
         return was;
     }
 
-    /** Puts it into the world at a given spot - used by tests and by the screenshot job. */
-    public void forceSpawn(float x, float z, State newState) {
-        position.set(x, gen.floorY(MathUtils.floor(x), MathUtils.floor(z)), z);
-        state = newState;
+    /**
+     * Puts it into the world at a given spot, walking a fixed line - used by tests and by the
+     * screenshot job. The scripted pass is planned as if the camera were looking at it.
+     */
+    public void forceSpawn(float x, float z) {
+        position.set(x, groundAt(x, z), z);
+        state = State.STALK;
         dormant = 0f;
-        stalkTime = newState == State.HUNT ? STALK_TO_HUNT : 0f;
-        lostTime = 0f;
+        passTime = 0f;
+        hiddenFor = 0f;
+        travelled = 0f;
+        seenEver = false;
         pathLength = 0;
         pathIndex = 0;
         repathTimer = 0f;
         walked = 0f;
-        roarTimer = STALK_GROWL_MIN * 0.5f + random.nextFloat() * STALK_GROWL_MIN;
+        roarTimer = ROAR_MIN * 0.5f + random.nextFloat() * ROAR_MIN;
+        // Walk away from the cell it was given, so a forced pass also travels.
+        double heading = random.nextDouble() * Math.PI * 2.0;
+        goalX = MathUtils.floor(x + Math.cos(heading) * PASS_MIN);
+        goalZ = MathUtils.floor(z + Math.sin(heading) * PASS_MIN);
     }
 
     /** Removes it from the world and sets how long until it may come back. */
@@ -211,22 +211,29 @@ public final class EntityController {
         pathIndex = 0;
         speedNow = 0f;
         walked = 0f;
+        travelled = 0f;
         roarPending = false;
         roarTimer = 0f;
         // presence is left alone: the tape should keep tearing for a moment after it is gone.
     }
 
+    /** @param delta seconds; @param player the player's feet position */
+    public void update(float delta, Vector3 player) {
+        update(delta, player, 0f);
+    }
+
     /**
      * @param delta  seconds
      * @param player the player's feet position
+     * @param yaw    the player's heading in radians, so it appears out of sight *in front*
      */
-    public void update(float delta, Vector3 player) {
+    public void update(float delta, Vector3 player, float yaw) {
         speedNow = 0f;
         float dist = distance(player);
 
         if (!enabled) {
-            // Still let the picture calm down after a toggle: the tape should not stay torn
-            // because the player switched the encounter off mid-scare.
+            // Still let the picture calm down after a toggle: the tape should not stay torn because
+            // the player switched the encounter off mid-pass.
             if (presence > 0.001f) {
                 presence += (0f - presence) * Math.min(1f, delta * 2.5f);
             }
@@ -236,70 +243,43 @@ public final class EntityController {
         switch (state) {
             case ABSENT:
                 dormant -= delta;
-                if (dormant <= 0f && !spawn(player)) {
+                if (dormant <= 0f && !planPass(player, yaw)) {
                     dormant = 2f;                  // nowhere good to appear yet; try again shortly
                 }
                 break;
 
             case STALK: {
-                if (dist > ABANDON_RANGE) {
-                    vanish(18f + random.nextFloat() * 25f);
-                    break;
+                passTime += delta;
+                boolean visible = dist < SIGHT_RANGE && hasLineOfSight(player);
+                if (visible) {
+                    seenEver = true;
+                    hiddenFor = 0f;
+                } else {
+                    hiddenFor += delta;
                 }
-                boolean seen = dist < STALK_LEARN_RANGE && hasLineOfSight(player);
-                // Being seen teaches it quickly; merely being close teaches it slowly. Either way
-                // the clock is running, which is what makes the quiet phase feel like a countdown.
-                stalkTime += delta * (seen ? 1f : 0.22f);
-                if (stalkTime >= STALK_TO_HUNT) {
-                    state = State.HUNT;
-                    lostTime = 0f;
-                    // The moment it stops being patient is the moment you hear it.
-                    roarPending = true;
-                    roarTimer = ROAR_INTERVAL_MIN;
-                    break;
-                }
-                if (!frozen) {
-                    roarTimer -= delta;
-                    if (roarTimer <= 0f) {
-                        roarPending = true;
-                        roarTimer = STALK_GROWL_MIN
-                                + random.nextFloat() * (STALK_GROWL_MAX - STALK_GROWL_MIN);
-                    }
-                }
-                if (!frozen) {
-                    walkToward(player, STALK_SPEED, delta);
-                }
-                break;
-            }
 
-            case HUNT: {
-                boolean seen = hasLineOfSight(player);
-                lostTime = seen ? 0f : lostTime + delta;
-                if (lostTime >= LOSE_TIME) {
-                    vanish(14f + random.nextFloat() * 22f);
-                    break;
-                }
-                if (dist > ABANDON_RANGE * 1.6f) {
-                    vanish(20f + random.nextFloat() * 25f);
-                    break;
-                }
-                if (frozen) {
-                    break;
-                }
                 if (!frozen) {
+                    walk(STALK_SPEED, delta);
                     roarTimer -= delta;
                     if (roarTimer <= 0f) {
                         roarPending = true;
-                        roarTimer = ROAR_INTERVAL_MIN
-                                + random.nextFloat() * (ROAR_INTERVAL_MAX - ROAR_INTERVAL_MIN);
+                        roarTimer = ROAR_MIN + random.nextFloat() * (ROAR_MAX - ROAR_MIN);
                     }
                 }
-                float speed = dist < LUNGE_RANGE && seen ? LUNGE_SPEED : HUNT_SPEED;
-                walkToward(player, speed, delta);
-                if (distance(player) < CAPTURE_DISTANCE) {
-                    captured = true;
-                    roarPending = true;
-                    vanish(28f + random.nextFloat() * 30f);
+
+                // The whole trick: it only leaves once a wall has taken it away from the player.
+                if (frozen) {
+                    break;                         // posed for a screenshot: stays where it was put
+                }
+                if (seenEver && hiddenFor >= HIDDEN_TO_VANISH && travelled >= MIN_TRAVEL) {
+                    vanish(GONE_MIN + random.nextFloat() * (GONE_MAX - GONE_MIN));
+                } else if (dist > ABANDON_RANGE) {
+                    vanish(GONE_MIN * 0.5f + random.nextFloat() * GONE_MIN);
+                } else if (!seenEver && passTime > NO_SHOW_TIMEOUT) {
+                    // It walked the whole way without ever coming into view. Nothing happened.
+                    vanish(12f + random.nextFloat() * 20f);
+                } else if (passTime > MAX_PASS_TIME) {
+                    vanish(GONE_MIN + random.nextFloat() * (GONE_MAX - GONE_MIN));
                 }
                 break;
             }
@@ -309,7 +289,6 @@ public final class EntityController {
         }
 
         if (active()) {
-            walked += speedNow * delta;
             position.y = groundAt(position.x, position.z);
             // The whole body sways as it walks. Cheap, but it reads as movement at a distance.
             bobPhase += delta * (2.4f + speedNow * 1.6f);
@@ -318,7 +297,7 @@ public final class EntityController {
         float wanted = 0f;
         if (active()) {
             float near = MathUtils.clamp(1f - dist / 22f, 0f, 1f);
-            wanted = near * (state == State.HUNT ? 1f : 0.55f);
+            wanted = near * 0.55f;
         }
         // Ease so a disappearance does not snap the tape back to clean.
         presence += (wanted - presence) * Math.min(1f, delta * 2.5f);
@@ -329,80 +308,135 @@ public final class EntityController {
     }
 
     // ---------------------------------------------------------------------------------------------
-    // placement
+    // the pass
     // ---------------------------------------------------------------------------------------------
 
-    /** Tries to place it out of sight, a few rooms away. Returns false if nowhere suitable. */
-    private boolean spawn(Vector3 player) {
-        int px = MathUtils.floor(player.x);
-        int pz = MathUtils.floor(player.z);
-        for (int attempt = 0; attempt < 90; attempt++) {
-            double angle = random.nextDouble() * Math.PI * 2.0;
-            float dist = SPAWN_MIN + random.nextFloat() * (SPAWN_MAX - SPAWN_MIN);
-            int cx = px + Math.round((float) Math.cos(angle) * dist);
-            int cz = pz + Math.round((float) Math.sin(angle) * dist);
-            if (!standable(cx, cz) || blocksSight(cx + 0.5f, cz + 0.5f)) {
+    /**
+     * Plans one appearance: it starts behind a wall in front of the player, and walks across the
+     * view to a cell that is behind another wall. Returns false if the level has no room for that
+     * here, in which case the caller simply tries again later.
+     */
+    private boolean planPass(Vector3 player, float yaw) {
+        // The player's forward, in the same convention as the camera: yaw 0 looks down -Z.
+        float forwardX = -MathUtils.sin(yaw);
+        float forwardZ = -MathUtils.cos(yaw);
+
+        for (int attempt = 0; attempt < 70; attempt++) {
+            // A direction a little off the centre of the view, so it crosses the corridor ahead
+            // rather than walking straight at the player.
+            float offset = (0.5f + random.nextFloat() * 0.9f)
+                    * (random.nextBoolean() ? 1f : -1f);
+            float cos = MathUtils.cos(offset);
+            float sin = MathUtils.sin(offset);
+            float dirX = forwardX * cos - forwardZ * sin;
+            float dirZ = forwardX * sin + forwardZ * cos;
+
+            float distance = SPAWN_MIN + random.nextFloat() * (SPAWN_MAX - SPAWN_MIN);
+            float stageX = player.x + dirX * distance;
+            float stageZ = player.z + dirZ * distance;
+
+            // The pass runs across the line of sight, so the player sees it side-on.
+            float toStageX = stageX - player.x;
+            float toStageZ = stageZ - player.z;
+            float sideX = -toStageZ;
+            float sideZ = toStageX;
+            float sideLength = (float) Math.sqrt(sideX * sideX + sideZ * sideZ);
+            if (sideLength < 0.001f) {
                 continue;
             }
-            // It should not materialise in front of the player: on the first few attempts insist on
-            // a broken line of sight, later attempts only refuse a body-on-the-player spawn.
-            if (attempt < 70 && hasLineOfSight(player, cx + 0.5f, cz + 0.5f)) {
+            sideX /= sideLength;
+            sideZ /= sideLength;
+            if (random.nextBoolean()) {
+                sideX = -sideX;
+                sideZ = -sideZ;
+            }
+
+            float half = (PASS_MIN + random.nextFloat() * (PASS_MAX - PASS_MIN)) * 0.5f;
+            float startX = stageX - sideX * half;
+            float startZ = stageZ - sideZ * half;
+            float endX = stageX + sideX * half;
+            float endZ = stageZ + sideZ * half;
+
+            int startCellX = MathUtils.floor(startX);
+            int startCellZ = MathUtils.floor(startZ);
+            int endCellX = MathUtils.floor(endX);
+            int endCellZ = MathUtils.floor(endZ);
+            int midCellX = MathUtils.floor(stageX);
+            int midCellZ = MathUtils.floor(stageZ);
+
+            if (!standable(startCellX, startCellZ) || !standable(endCellX, endCellZ)
+                    || !standable(midCellX, midCellZ)) {
                 continue;
             }
-            forceSpawn(cx + 0.5f, cz + 0.5f, State.STALK);
+            if (gen.hasLineOfSight(startX, startZ, player.x, player.z)
+                    || gen.hasLineOfSight(endX, endZ, player.x, player.z)) {
+                continue;                          // it would be seen arriving or leaving
+            }
+            if (!gen.hasLineOfSight(stageX, stageZ, player.x, player.z)) {
+                continue;                          // ...and never seen in between: pointless
+            }
+
+            // Plan the walk from where it would appear, and make sure that walk really does come
+            // out into the open: the route has to go round the walls, and one that stays hidden the
+            // whole way is not worth walking.
+            position.set(startCellX + 0.5f, gen.floorY(startCellX, startCellZ), startCellZ + 0.5f);
+            pathLength = 0;
+            pathIndex = 0;
+            planPath(endCellX, endCellZ);
+            if (!pathCrossesView(player)) {
+                continue;
+            }
+
+            goalX = endCellX;
+            goalZ = endCellZ;
+            state = State.STALK;
+            passTime = 0f;
+            hiddenFor = 0f;
+            travelled = 0f;
+            seenEver = false;
+            walked = 0f;
+            pathIndex = 0;
+            repathTimer = 0.8f;
+            roarTimer = ROAR_MIN + random.nextFloat() * (ROAR_MAX - ROAR_MIN);
             return true;
         }
         return false;
     }
 
-    private boolean standable(int cx, int cz) {
-        return gen.isOpenSpace(cx, cz) && gen.isSolidGround(cx, cz) && !gen.isHole(cx, cz);
-    }
-
-    private float groundAt(float x, float z) {
-        return gen.floorY(MathUtils.floor(x), MathUtils.floor(z));
-    }
-
-    public float distance(Vector3 player) {
-        float dx = player.x - position.x;
-        float dz = player.z - position.z;
-        return (float) Math.sqrt(dx * dx + dz * dz);
-    }
-
-    /** Straight-line test on the cell grid: walls are thin, so this only needs the wall planes. */
-    public boolean hasLineOfSight(Vector3 player) {
-        return hasLineOfSight(player, position.x, position.z);
-    }
-
-    /**
-     * Would something standing at {@code x,z} see the player? Only the horizontal plane matters:
-     * the level is one storey and a pit is shallow, so the eyes see over anything that is not a
-     * wall. The audio uses exactly the same test, which is why it lives on the generator.
-     */
-    public boolean hasLineOfSight(Vector3 player, float x, float z) {
-        return gen.hasLineOfSight(x, z, player.x, player.z);
-    }
-
-    /** True if a point sits inside a wall slab. */
-    public boolean blocksSight(float x, float z) {
-        return gen.blocksSight(x, z);
+    /** True if the planned route comes out from behind the walls at some point. */
+    private boolean pathCrossesView(Vector3 player) {
+        for (int i = 0; i < pathLength; i++) {
+            if (gen.hasLineOfSight(pathX[i] + 0.5f, pathZ[i] + 0.5f, player.x, player.z)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ---------------------------------------------------------------------------------------------
     // movement
     // ---------------------------------------------------------------------------------------------
 
-    private void walkToward(Vector3 player, float speed, float delta) {
-        speedNow = speed;
-        repathTimer -= delta;
-        if (repathTimer <= 0f || pathLength == 0) {
-            planPath(MathUtils.floor(player.x), MathUtils.floor(player.z));
-            repathTimer = 0.4f + random.nextFloat() * 0.2f;
+    private void walk(float speed, float delta) {
+        if (pathIndex >= pathLength) {
+            repathTimer -= delta;
+            if (repathTimer <= 0f) {
+                planPath(goalX, goalZ);
+                repathTimer = 0.8f;
+            }
+            if (pathIndex >= pathLength) {
+                return;                            // arrived at the far side: it just stops walking
+            }
         }
-        followPath(speed * delta, delta);
+        speedNow = speed;
+        float beforeX = position.x;
+        float beforeZ = position.z;
+        followPath(speed * delta);
+        travelled += (float) Math.hypot(position.x - beforeX, position.z - beforeZ);
+        walked += speed * delta;
     }
 
-    private void followPath(float step, float delta) {
+    private void followPath(float step) {
         int guard = 0;
         while (pathIndex < pathLength && guard++ < 8) {
             float tx = pathX[pathIndex] + 0.5f;
@@ -428,24 +462,23 @@ public final class EntityController {
             }
             return;
         }
-        // Out of waypoints: face the player, which keeps it looking at you while it closes the gap.
         speedNow *= 0.5f;
     }
 
     /**
-     * Breadth-first search over the cell grid, from the entity's cell to (as close as it can get
-     * to) the player's. The search is bounded, which is fine: the entity is never more than a
-     * couple of rooms behind, and an unbounded search of an infinite level would not terminate.
+     * Breadth-first search over the cell grid, from the entity's cell to the goal. The search is
+     * bounded, which is fine: the goal is never more than a couple of rooms away, and an unbounded
+     * search of an infinite level would not terminate.
      */
-    private void planPath(int goalX, int goalZ) {
+    private void planPath(int goalCellX, int goalCellZ) {
         pathLength = 0;
         pathIndex = 0;
 
         int startX = MathUtils.floor(position.x);
         int startZ = MathUtils.floor(position.z);
 
-        int gx = MathUtils.clamp(goalX - startX, -WINDOW + 1, WINDOW - 1);
-        int gz = MathUtils.clamp(goalZ - startZ, -WINDOW + 1, WINDOW - 1);
+        int gx = MathUtils.clamp(goalCellX - startX, -WINDOW + 1, WINDOW - 1);
+        int gz = MathUtils.clamp(goalCellZ - startZ, -WINDOW + 1, WINDOW - 1);
 
         java.util.Arrays.fill(cameFrom, -1);
         int head = 0;
@@ -510,6 +543,35 @@ public final class EntityController {
             pathZ[pathLength] = startZ + cellZ(c);
             pathLength++;
         }
+    }
+
+    private boolean standable(int cx, int cz) {
+        return gen.isOpenSpace(cx, cz) && gen.isSolidGround(cx, cz) && !gen.isHole(cx, cz);
+    }
+
+    private float groundAt(float x, float z) {
+        return gen.floorY(MathUtils.floor(x), MathUtils.floor(z));
+    }
+
+    public float distance(Vector3 player) {
+        float dx = player.x - position.x;
+        float dz = player.z - position.z;
+        return (float) Math.sqrt(dx * dx + dz * dz);
+    }
+
+    /** Straight-line test on the cell grid, from where it is standing. */
+    public boolean hasLineOfSight(Vector3 player) {
+        return gen.hasLineOfSight(position.x, position.z, player.x, player.z);
+    }
+
+    /** Would something standing at {@code x,z} see the player? */
+    public boolean hasLineOfSight(Vector3 player, float x, float z) {
+        return gen.hasLineOfSight(x, z, player.x, player.z);
+    }
+
+    /** True if a point sits inside a wall slab. */
+    public boolean blocksSight(float x, float z) {
+        return gen.blocksSight(x, z);
     }
 
     /** True if the step between two neighbouring cells is not blocked by a wall. */

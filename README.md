@@ -19,8 +19,8 @@ thrown away behind you, so the map never ends and memory never grows.
 | **Materials** | The CC0 wallpaper, carpet and ceiling tile sets with their normal maps (normal-mapped, specular, parallax-free), plus procedural fluorescent panels that flicker: a diffuser gradient across the panel, and an additive halo pass that blooms the light past the tube so it reads as a light rather than a white rectangle. |
 | **Lighting model** | Warm fluorescent tubes, a handheld torch cone, distance haze, ACES tone mapping, vignette and a touch of sensor grain. |
 | **VHS camcorder** | The whole frame goes through an offscreen pass that emulates tape: drum curvature, head-switch tear along the bottom edge, chroma smear from the low chroma bandwidth, a tracking band that drifts up the frame, dropout speckles, scanlines, grain and a warm washed-out grade. Plus a camcorder OSD (REC lamp, SP, date, tape counter) drawn from a hand-built 5x7 character generator, and synthesised tape hiss. Toggle it in the pause menu (`VHS LOOK`) or with `-Dbackrooms.vhs=0`. |
-| **The presence** | Something else is in here. It stays away most of the time; eventually it appears a few rooms off, out of sight, and starts closing in - slowly at first, then not at all slowly. It navigates the level on the same cell grid the generator uses, cannot see through walls, and can be lost by breaking line of sight. Getting caught is survivable: the tape cuts and you wake up somewhere else. Toggle it in the pause menu (`THE PRESENCE`). |
-| **Audio** | Everything is synthesised in `tools/make_assets.py`; no third-party samples. Footsteps pick a sample at random, then *echo off the room they happen in*: eight rays measure the walls around you, the nearest two surfaces become early reflections (delayed by distance and panned to the side they came from) and the average distance sets a diffuse tail, so a corridor snaps and a hall rings. The entity's steps are placed, panned, muffled through walls and echo the same way, and it roars when it decides to hunt you. The fluorescent buzz fades in with the nearest working tube, over a low room tone, with tape hiss tied to the camcorder. |
+| **The presence** | Something else is in here. Most of the time there is nothing at all. Eventually a figure appears ten to eighteen metres ahead of where you are looking, on the far side of a wall so you never see it arrive; it walks across the corridor ahead of you at a stroll, and keeps walking until another wall takes it out of your sight - only then does it go, and not again for half a minute or more. It never runs, never chases and cannot catch you: it is a silhouette in the shape of a person, solid black and featureless, and what it does is make you doubt what you saw. Toggle it in the pause menu (`THE PRESENCE`). |
+| **Audio** | Everything is synthesised in `tools/make_assets.py`; no third-party samples. Footsteps pick a sample at random, then *echo off the room they happen in*: eight rays measure the walls around you, the nearest two surfaces become early reflections (delayed by distance and panned to the side they came from) and the average distance sets a diffuse tail, so a corridor snaps and a hall rings. The entity's steps are placed, panned, muffled through walls and echo the same way, and every so often it makes a sound you cannot place. The fluorescent buzz fades in with the nearest working tube, over a low room tone, with tape hiss tied to the camcorder. |
 | **Controls** | Touch: floating stick on the left, drag-to-look anywhere on the right, run (hold), jump, torch and pause buttons — all fingers at once. Keyboard and mouse also work (desktop build). The emulator job drives the real controls and checks the numbers the app logs, so a dead button or a dead look drag fails CI instead of shipping. |
 | **Platforms** | Android (`minSdk 24`, arm64 + armv7 + x86_64) and a desktop launcher used for development and screenshots. |
 
@@ -135,7 +135,7 @@ core/src/main/java/com/backrooms/gdx
 ├── render/WorldRenderer.java  one shader, 6 tiled textures, one draw call per chunk
 ├── player/Player.java         first person movement, thin-wall capsule collision
 ├── input/TouchControls.java   floating stick, drag look, buttons, keyboard
-├── entity/EntityController    the encounter: stalking, hunting, losing the player (no GL)
+├── entity/EntityController    the pass-by: where it appears, where it walks, when it goes (no GL)
 ├── entity/EntityRenderer      the rigged creature: clips, torch lighting, placeholder fallback
 ├── render/VhsEffect.java      offscreen buffer + the tape shader
 ├── ui/VhsOsd.java             camcorder OSD drawn from a 5x7 character generator
@@ -205,8 +205,10 @@ if your device needs it.
 | `TEXELS_PER_METER` | `LightBaker` | lightmap resolution (2) |
 | `WALK_SPEED`, `SPRINT_SPEED`, `GRAVITY`, `JUMP_SPEED` | `Player` | movement feel |
 | `fogDensity`, `exposure` | `PlayScreen` | haze and exposure |
-| `STALK_SPEED`, `HUNT_SPEED`, `LUNGE_SPEED` | `EntityController` | how fast it closes in, and how hard it is to outrun |
-| `STALK_TO_HUNT`, `LOSE_TIME` | `EntityController` | seconds of being seen before it hunts, seconds of being unseen before it gives up |
+| `SPAWN_MIN`, `SPAWN_MAX` | `EntityController` | how far ahead of the player it appears |
+| `PASS_MIN`, `PASS_MAX` | `EntityController` | how far it walks across the view before a wall takes it |
+| `STALK_SPEED` | `EntityController` | its walking pace — it never speeds up |
+| `HIDDEN_TO_VANISH`, `GONE_MIN`, `GONE_MAX` | `EntityController` | seconds out of sight before it leaves, and how long it stays away |
 | `scale` | `VhsEffect` | resolution of the tape buffer (0.85 of the screen by default) |
 | `u_scanline`, `u_intensity` | `VhsEffect` | how heavy the camcorder look is |
 

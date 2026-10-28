@@ -3,16 +3,14 @@ package com.backrooms.gdx.entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.VertexAttributes;
-import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.environment.PointLight;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Animation;
 import com.badlogic.gdx.graphics.g3d.utils.AnimationController;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
@@ -28,34 +26,35 @@ import net.mgsx.gltf.scene3d.scene.SceneAsset;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
 
 /**
- * Draws whatever is walking around out there.
+ * Draws the thing in the corridors.
  *
- * <p>The body is a rigged glTF model ({@link #GLB_PATH}) loaded through gdx-gltf: the "Accurate
- * Backrooms Bacteria v2 with Animations" by Unschooling with Fin (CC-BY-4.0, see
- * {@code assets/models/entity-LICENSE.txt}). It has five clips and none of them are called "walk",
- * so the clips are chosen by what they are: the hostile one (JUMPSCARE) for the lunge, the longest
- * one for locomotion, and a held pose for standing. A model that is missing or fails to load falls
- * back to the procedural figure, so the encounter never depends on the asset being there.
+ * <p>It is deliberately featureless: a solid black silhouette, no texture, no detail, nothing for
+ * the eye to lock onto. Against the lit wallpaper that reads as a person-shaped absence rather than
+ * a monster, which is the whole trick - the imagination does the rest. The mesh is the "Accurate
+ * Backrooms Bacteria v2 with Animations" model by Unschooling with Fin (CC-BY-4.0, see
+ * {@code assets/models/entity-LICENSE.txt}), with its material forced to black; the rig is what
+ * gives the silhouette its long-limbed, hunched shape and its walk.
  *
  * <p>The asset is normalised by {@code tools/prepare_entity_model.sh}: metres, Y up, feet at the
  * origin, 2.1 m tall, facing -Z. That cannot be worked out at run time - a skinned mesh's bounds are
  * not the bounds it draws, because the skinning matrices decide the size - so the conversion
  * measures it where the skin can be evaluated.
+ *
+ * <p>A missing or unloadable file falls back to a figure built from boxes, also black, so the
+ * encounter never depends on the asset.
  */
 public final class EntityRenderer implements Disposable {
 
     /** Where the rigged model is picked up. */
     public static final String GLB_PATH = "models/entity.glb";
 
-    /** How tall the creature should stand, in metres. The corridors are 3 m. */
+    /** How tall the creature stands, in metres. The corridors are 3 m. */
     private static final float TARGET_HEIGHT = 2.1f;
     /**
      * The model's own forward, in degrees around the vertical, measured from the game's forward.
      * A rig that was authored facing +Z instead of -Z needs a half turn here.
      */
     private static final float FACING_DEGREES = 0f;
-
-    private static final Color TORCH_COLOR = new Color(1f, 0.93f, 0.78f, 1f);
 
     private final EntityController entity;
 
@@ -64,10 +63,8 @@ public final class EntityRenderer implements Disposable {
     private SceneAsset asset;
     private Scene scene;
     private AnimationController animation;
-    private PointLight torchLight;
     private String walkClip;
     private String idleClip;
-    private String scareClip;
     private String currentClip;
     private float clipTimeScale = 1f;
     private final Matrix4 transform = new Matrix4();
@@ -76,8 +73,6 @@ public final class EntityRenderer implements Disposable {
     private float facingOffset = FACING_DEGREES;
 
     // --- procedural fallback ---------------------------------------------------------------------
-    private final Environment lights = new Environment();
-    private final PointLight torch = new PointLight();
     private ModelBatch batch;
     private Model model;
     private ModelInstance instance;
@@ -85,8 +80,6 @@ public final class EntityRenderer implements Disposable {
     private boolean ready;
     private boolean modelLoaded;
     private float pendingDelta;
-    private float flickerPhase;
-    private float scareLock;
 
     public EntityRenderer(EntityController entity) {
         this.entity = entity;
@@ -111,26 +104,12 @@ public final class EntityRenderer implements Disposable {
         if (!modelLoaded) {
             return "placeholder";
         }
-        return "idle=" + idleClip + " walk=" + walkClip + " scare=" + scareClip
-                + " playing=" + currentClip;
+        return "idle=" + idleClip + " walk=" + walkClip + " playing=" + currentClip;
     }
 
     /** Animation update. Kept separate from drawing so a paused game does not animate. */
     public void update(float delta) {
         pendingDelta = delta;
-        flickerPhase += delta * 7.3f;
-        if (scareLock > 0f) {
-            scareLock = Math.max(0f, scareLock - delta);
-        }
-    }
-
-    /** Plays the lunge once, then falls back to whatever it was doing. */
-    public void lunge() {
-        if (modelLoaded && animation != null && scareClip != null) {
-            animation.animate(scareClip, 0.12f);
-            currentClip = scareClip;
-            scareLock = 1.6f;
-        }
     }
 
     /**
@@ -139,7 +118,7 @@ public final class EntityRenderer implements Disposable {
      * @param width  render target width
      * @param height render target height
      */
-    public void render(Camera camera, int width, int height, Vector3 torchPos, float torchOn) {
+    public void render(Camera camera, int width, int height) {
         if (!ready || !entity.active()) {
             return;
         }
@@ -158,21 +137,13 @@ public final class EntityRenderer implements Disposable {
         float x = entity.position.x;
         float y = entity.position.y + entity.bob();
         float z = entity.position.z;
-        // The torch is not steady: a dying battery and a cheap filament, so it breathes.
-        float flicker = 0.88f + 0.12f * MathUtils.sin(flickerPhase)
-                + 0.04f * MathUtils.sin(flickerPhase * 3.7f);
 
         if (modelLoaded) {
             updateClip();
-            // Placement: yaw about the vertical axis, then the model's own scale/offset fix-up.
             transform.setToTranslation(x, y, z)
                     .rotate(Vector3.Y, entity.yaw * MathUtils.radiansToDegrees + facingOffset)
                     .scale(baseScale, baseScale, baseScale);
             scene.modelInstance.transform.set(transform);
-            // Inverse-square falloff: a point light this bright reads at three or four metres,
-            // which is exactly how close you want the thing to get before it is lit.
-            torchLight.position.set(torchPos);
-            torchLight.intensity = 34f * flicker * torchOn;
             scenes.setCamera(camera);
             scenes.update(pendingDelta);
             pendingDelta = 0f;
@@ -180,15 +151,10 @@ public final class EntityRenderer implements Disposable {
             return;
         }
 
-        lights.clear();
-        lights.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.055f, 0.052f, 0.045f, 1f));
-        torch.set(TORCH_COLOR.r, TORCH_COLOR.g, TORCH_COLOR.b, torchPos, 9f * flicker * torchOn);
-        lights.add(torch);
-
         instance.transform.setToTranslation(x, y, z);
         instance.transform.rotate(Vector3.Y, entity.yaw * MathUtils.radiansToDegrees);
         batch.begin(camera);
-        batch.render(instance, lights);
+        batch.render(instance);            // no lights: a black body stays black
         batch.end();
         pendingDelta = 0f;
     }
@@ -226,13 +192,9 @@ public final class EntityRenderer implements Disposable {
             animation = scene.animationController;
             pickClips(asset.animations);
             checkModel();
-            // The torch is the only light that matters in here; the flat ambient stands in for the
-            // fluorescent wash from the ceiling fixtures above.
-            scenes.environment.set(new ColorAttribute(ColorAttribute.AmbientLight,
-                    0.20f, 0.20f, 0.21f, 1f));
-            torchLight = new PointLight();
-            torchLight.set(TORCH_COLOR, new Vector3(), 0f);
-            scenes.environment.add(torchLight);
+            blacken(scene.modelInstance.materials);
+            // No lights in the environment on purpose: the body is black, so every light in the
+            // scene would multiply into nothing anyway. Leaving them out saves a shader branch.
             if (idleClip != null) {
                 animation.animate(idleClip, -1, 1f, null, 0f);
                 currentClip = idleClip;
@@ -251,6 +213,25 @@ public final class EntityRenderer implements Disposable {
     }
 
     /**
+     * Forces every material to solid black and drops any texture it may carry: the silhouette is
+     * the whole design, and a model shipped with a skin should still come out as a shadow.
+     */
+    private static void blacken(Array<Material> materials) {
+        if (materials == null) {
+            return;
+        }
+        for (Material material : materials) {
+            material.set(ColorAttribute.createDiffuse(0f, 0f, 0f, 1f));
+            material.set(ColorAttribute.createAmbient(0f, 0f, 0f, 1f));
+            material.set(ColorAttribute.createSpecular(0f, 0f, 0f, 1f));
+            material.set(ColorAttribute.createEmissive(0f, 0f, 0f, 1f));
+            material.remove(TextureAttribute.Diffuse);
+            material.remove(TextureAttribute.Emissive);
+            material.remove(TextureAttribute.Normal);
+        }
+    }
+
+    /**
      * Checks the model against the contract the pipeline promises, and remembers the yaw fix-up.
      *
      * <p>The file is normalised by {@code tools/prepare_entity_model.sh}: metres, Y up, the feet at
@@ -262,13 +243,10 @@ public final class EntityRenderer implements Disposable {
      */
     private void checkModel() {
         facingOffset = property("backrooms.entityyaw", FACING_DEGREES);
-        float scale = property("backrooms.entityscale", 1f);
-        baseScale = scale;
-        if (!scene.modelInstance.materials.isEmpty()) {
-            Gdx.app.log("Entity", "model ready: " + GLB_PATH + " expecting " + TARGET_HEIGHT
-                    + " m (scale x" + scale + ", yaw +" + facingOffset + " deg), clips: "
-                    + clipLine());
-        }
+        baseScale = property("backrooms.entityscale", 1f);
+        Gdx.app.log("Entity", "model ready: " + GLB_PATH + " expecting " + TARGET_HEIGHT
+                + " m (scale x" + baseScale + ", yaw +" + facingOffset + " deg), clips: "
+                + clipLine());
     }
 
     /** Reads a float system property, falling back when it is absent or malformed. */
@@ -298,10 +276,6 @@ public final class EntityRenderer implements Disposable {
                 longest = a;
             }
             String id = lower(a.id);
-            if (scareClip == null && (id.contains("jump") || id.contains("scare")
-                    || id.contains("attack") || id.contains("roar") || id.contains("lunge"))) {
-                scareClip = a.id;
-            }
             if (idleClip == null && (id.contains("stalk") || id.contains("idle")
                     || id.contains("stand") || id.contains("breath"))) {
                 idleClip = a.id;
@@ -321,21 +295,19 @@ public final class EntityRenderer implements Disposable {
         if (animation == null || walkClip == null) {
             return;
         }
-        if (scareLock > 0f) {
-            return;                                    // the lunge owns the body while it plays
-        }
-        boolean moving = entity.speed() > 0.6f;
+        boolean moving = entity.speed() > 0.3f;
         String wanted = moving ? walkClip : idleClip;
-        // The animation speed follows the creature: a hunt reads as urgent, a stalk as deliberate.
+        // It walks slowly and it does not hurry: the animation runs at the creature's own pace,
+        // never faster.
         float wantedSpeed = moving
-                ? MathUtils.clamp(entity.speed() / 2.2f, 0.8f, 2.0f)
+                ? MathUtils.clamp(entity.speed() / 1.6f, 0.55f, 1.15f)
                 : 1f;
         if (!wanted.equals(currentClip)) {
-            animation.animate(wanted, 1, wantedSpeed, null, 0.3f);
+            animation.animate(wanted, 1, wantedSpeed, null, 0.4f);
             currentClip = wanted;
             clipTimeScale = wantedSpeed;
-        } else if (Math.abs(wantedSpeed - clipTimeScale) > 0.15f) {
-            animation.animate(wanted, -1, wantedSpeed, null, 0.25f);
+        } else if (Math.abs(wantedSpeed - clipTimeScale) > 0.12f) {
+            animation.animate(wanted, -1, wantedSpeed, null, 0.3f);
             clipTimeScale = wantedSpeed;
         }
     }
@@ -357,19 +329,16 @@ public final class EntityRenderer implements Disposable {
     }
 
     /**
-     * A tall figure, built out of a dozen boxes: long arms, narrow torso, a head that is slightly
-     * too small for the shoulders. Flat shaded and very dark on purpose.
+     * A tall figure, built out of boxes: long arms, narrow torso, a head that is slightly too small
+     * for the shoulders. Solid black, like the model, so it reads as the same absence.
      */
     private static Model buildFigure() {
         ModelBuilder builder = new ModelBuilder();
         builder.begin();
 
-        Material skin = new Material(ColorAttribute.createDiffuse(0.030f, 0.028f, 0.028f, 1f),
-                ColorAttribute.createSpecular(0.02f, 0.02f, 0.02f, 1f),
-                new com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute(
-                        com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute.Shininess, 6f));
-        Material eyes = new Material(ColorAttribute.createDiffuse(0.02f, 0.01f, 0.01f, 1f),
-                ColorAttribute.createEmissive(0.85f, 0.10f, 0.05f, 1f));
+        Material skin = new Material(ColorAttribute.createDiffuse(0f, 0f, 0f, 1f),
+                ColorAttribute.createAmbient(0f, 0f, 0f, 1f),
+                ColorAttribute.createSpecular(0f, 0f, 0f, 1f));
 
         long attrs = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
         int id = 0;
@@ -391,10 +360,6 @@ public final class EntityRenderer implements Disposable {
                 .box(-0.05f, 1.66f, -0.14f, 0.10f, 0.12f, 0.10f);
         builder.part("head" + id++, GL20.GL_TRIANGLES, attrs, skin)
                 .box(-0.10f, 1.77f, -0.19f, 0.20f, 0.23f, 0.21f);
-        builder.part("eyeL" + id++, GL20.GL_TRIANGLES, attrs, eyes)
-                .box(-0.065f, 1.87f, -0.20f, 0.035f, 0.022f, 0.012f);
-        builder.part("eyeR" + id++, GL20.GL_TRIANGLES, attrs, eyes)
-                .box(0.030f, 1.87f, -0.20f, 0.035f, 0.022f, 0.012f);
 
         return builder.end();
     }

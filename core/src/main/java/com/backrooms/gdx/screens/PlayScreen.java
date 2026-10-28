@@ -156,7 +156,7 @@ public final class PlayScreen extends ScreenAdapter {
             // Stalking and frozen: the screenshot harness runs for far longer in game time than the
             // frame count suggests (software OpenGL), so anything that walks ends up standing on
             // the camera - or catches the player and fades the shot to black.
-            entity.forceSpawn(fx, fz, EntityController.State.STALK);
+            entity.forceSpawn(fx, fz);
             entity.setFrozen(true);
             Gdx.app.log("BackroomsInput", String.format(java.util.Locale.US,
                     "entity at %.1f,%.1f (%.1f m ahead)", fx, fz, ahead));
@@ -329,32 +329,23 @@ public final class PlayScreen extends ScreenAdapter {
             if (player.grounded && player.position.y < FALL_DEPTH) {
                 startFallThrough();
             }
-            entity.update(delta, player.position);
+            // The heading matters: it appears out of sight *in front of the player*, not behind.
+            entity.update(delta, player.position, player.yaw);
             if (entity.isEnabled()) {
                 // Its steps are placed in the level: panned, muffled by walls, and echoing off
                 // whatever room it is walking through.
                 if (entity.takeFootstep()) {
-                    audio.entityStep(entity.position.x, entity.position.z,
-                            entity.state() == EntityController.State.HUNT);
+                    audio.entityStep(entity.position.x, entity.position.z, false);
                 }
                 if (entity.consumeRoar()) {
                     boolean facing = entity.hasLineOfSight(player.position);
                     float distance = entity.distance(player.position);
-                    float volume = facing ? MathUtils.clamp(1.1f - distance / 30f, 0.15f, 1f) : 0.35f;
-                    // It is bigger than the player and its voice is lower: play the roar flat.
+                    // Quiet, and further away than it sounds: the point of the sound is that the
+                    // player cannot tell which room it came from.
+                    float volume = facing
+                            ? MathUtils.clamp(0.75f - distance / 45f, 0.12f, 0.75f)
+                            : 0.25f;
                     audio.roar(volume, 0.92f + random.nextFloat() * 0.12f);
-                    if (entity.state() == EntityController.State.HUNT && distance < 7f) {
-                        // Close enough to see: it throws itself at you as it screams.
-                        entityView.lunge();
-                    }
-                }
-                if (entity.consumeCapture()) {
-                    // It reached you. The tape cuts to somewhere else: same effect as a pit.
-                    Gdx.app.log("Entity", "caught the player at "
-                            + String.format(java.util.Locale.US, "%.1f,%.1f",
-                            player.position.x, player.position.z));
-                    vhs.setGlitch(1f);
-                    startFallThrough();
                 }
             }
             if (teleporting) {
@@ -448,8 +439,7 @@ public final class PlayScreen extends ScreenAdapter {
         // has to be behind whatever is in front of it.
         glow.render(camera, world.gen(), time, targetWidth, targetHeight);
         entityView.update(delta);
-        entityView.render(camera, targetWidth, targetHeight, torchPos,
-                player.torchOn ? 1f : 0.35f);
+        entityView.render(camera, targetWidth, targetHeight);
 
         if (tape) {
             vhs.end(time);

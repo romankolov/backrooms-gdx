@@ -116,15 +116,21 @@ const root = doc.getRoot();
   }
 }
 
-// ---------------------------------------------------------------- make the skin visible
-// The source material is almost black - base colour 0.013, which under the game's single torch
-// reads as a hole in the dark rather than as a creature, and hides every bone of the rig. Pale,
-// slightly wet-looking skin is what the series describes, and it is what a light can shape.
+// ---------------------------------------------------------------- make it a silhouette
+// The entity is meant to read as a person-shaped absence, so it ships without any surface at all:
+// no base colour, no texture coordinates, no maps. Black albedo also means it needs no lighting,
+// which is why the renderer draws it with an empty environment.
 for (const material of root.listMaterials()) {
-  material.setBaseColorFactor([0.24, 0.23, 0.205, 1]);
-  material.setRoughnessFactor(0.38);
+  material.setBaseColorFactor([0, 0, 0, 1]);
   material.setMetallicFactor(0);
-  console.log(`material ${material.getName()} -> pale skin, roughness 0.38`);
+  material.setRoughnessFactor(0.9);
+  material.setEmissiveFactor([0, 0, 0]);
+  material.setBaseColorTexture(null);
+  material.setEmissiveTexture(null);
+  material.setNormalTexture(null);
+  material.setOcclusionTexture(null);
+  material.setMetallicRoughnessTexture(null);
+  console.log(`material ${material.getName()} -> solid black, no textures`);
 }
 
 // ---------------------------------------------------------------- measure joint usage

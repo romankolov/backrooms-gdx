@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.backrooms.gdx.audio.Acoustics;
-import com.backrooms.gdx.entity.EntityController;
 import com.backrooms.gdx.world.WorldGen;
 
 import org.junit.Test;
@@ -72,7 +71,6 @@ public class AcousticsTest {
         WorldGen gen = new WorldGen(SEED);
         float[] spawn = new float[3];
         gen.findSpawn(spawn);
-        EntityController entity = new EntityController(gen, 5L);
 
         Acoustics here = Acoustics.probe(gen, spawn[0], spawn[2], new Acoustics());
         float smallest = Float.MAX_VALUE;
@@ -89,7 +87,6 @@ public class AcousticsTest {
                 smallest = Math.min(smallest, space.openness);
                 largest = Math.max(largest, space.openness);
                 assertTrue("probe must not be NaN", !Float.isNaN(space.tailDelay()));
-                entity.forceSpawn(cx + 0.5f, cz + 0.5f, EntityController.State.STALK);
             }
         }
         assertTrue("the level is all one size - the echo would never change",
