@@ -91,15 +91,15 @@ void main() {
     // ---------------------------------------------------------------- 3. chroma smear
     // Chroma bandwidth is a fraction of luma's, so colour is dragged sideways (never vertically,
     // never radially - the delay line only runs one way) and softened.
-    float smear = (0.0026 + 0.0035 * band + 0.0025 * streak + 0.004 * glitch) * strength;
+    float smear = (0.0011 + 0.0016 * band + 0.0012 * streak + 0.0022 * glitch) * strength;
     float cr = texture2D(u_tex, uv + vec2(smear, 0.0)).r;
     float cg = texture2D(u_tex, uv).g;
     float cb = texture2D(u_tex, uv - vec2(smear, 0.0)).b;
 
     // Soften the colour a little further with a two-tap average; luma (the green channel) stays
     // sharp, which is what gives the picture its crisp edges and soft, bleeding colours.
-    cr = (cr + texture2D(u_tex, uv + vec2(smear * 2.5, 0.0)).r) * 0.5;
-    cb = (cb + texture2D(u_tex, uv - vec2(smear * 2.5, 0.0)).b) * 0.5;
+    cr = cr * 0.65 + texture2D(u_tex, uv + vec2(smear * 1.8, 0.0)).r * 0.35;
+    cb = cb * 0.65 + texture2D(u_tex, uv - vec2(smear * 1.8, 0.0)).b * 0.35;
 
     vec3 color = vec3(cr, cg, cb);
 

@@ -76,6 +76,7 @@ public final class VhsOsd implements Disposable {
     private static final byte[][] GLYPH_BITS = buildFont();
     private Texture white;
     private final Color tint = new Color();
+    private final Color saved = new Color();
     private final Calendar calendar = Calendar.getInstance();
 
     public VhsOsd() {
@@ -135,27 +136,30 @@ public final class VhsOsd implements Disposable {
         // Whole-pixel cells: 5 px glyphs at this scale look like a character generator.
         int scale = Math.max(2, Math.round(screenHeight / 240f));
         int pad = scale * 6;
-        float blink = 0.55f + 0.45f * (float) Math.sin(time * 6.0);
-        boolean dotOn = (time % 1.6f) < 0.9f;
+        // Only the REC caption blinks - on a real camcorder the rest of the display is steady, and
+        // fading the whole overlay makes it look like a UI animation instead of a character
+        // generator burning into the corner of the frame.
+        boolean recVisible = (time % 1.6f) < 0.9f;
 
         // The whole OSD jitters a little when the tape is unhappy.
         int jitter = glitch > 0.05f && ((int) (time * 30f) % 3 == 0) ? scale : 0;
-        float flicker = glitch > 0.05f ? 0.55f + 0.45f * (float) Math.sin(time * 43.0) : 1f;
-
-        batch.setColor(0.92f, 0.92f, 0.88f, 0.85f * blink * flicker);
+        float flicker = glitch > 0.05f ? 0.6f + 0.4f * (float) Math.sin(time * 43.0) : 1f;
+        float alpha = 0.95f * flicker;
 
         // top left: REC and its lamp
         float x = pad + jitter;
         float y = screenHeight - pad - GLYPH_H * scale;
-        if (dotOn) {
-            tint.set(0.85f, 0.16f, 0.12f, 0.95f * flicker);
+        if (recVisible) {
+            tint.set(0.85f, 0.16f, 0.12f, alpha);
             batch.setColor(tint);
             batch.draw(white, x, y + scale, scale * 3, scale * 3);
-            batch.setColor(0.92f, 0.92f, 0.88f, 0.85f * blink * flicker);
+            tint.set(0.94f, 0.94f, 0.90f, alpha);
+            batch.setColor(tint);
+            text(batch, "REC", x + scale * 5, y, scale);
         }
-        text(batch, "REC", x + scale * 5, y, scale);
 
         // top right: tape speed
+        batch.setColor(0.94f, 0.94f, 0.90f, alpha);
         String speed = "SP";
         text(batch, speed, screenWidth - pad - width(speed, scale), y, scale);
 
@@ -183,7 +187,19 @@ public final class VhsOsd implements Disposable {
     private static final String[] MONTHS = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG",
             "SEP", "OCT", "NOV", "DEC"};
 
+    /**
+     * Draws a string with a one-cell black drop shadow. Without it the white glyphs disappear
+     * against the wallpaper, which in this level is almost as bright as they are.
+     */
     private void text(SpriteBatch batch, String text, float x, float y, int scale) {
+        saved.set(batch.getColor());
+        batch.setColor(0f, 0f, 0f, saved.a * 0.65f);
+        glyphs(batch, text, x + scale, y - scale, scale);
+        batch.setColor(saved);
+        glyphs(batch, text, x, y, scale);
+    }
+
+    private void glyphs(SpriteBatch batch, String text, float x, float y, int scale) {
         for (int i = 0; i < text.length(); i++) {
             char c = Character.toUpperCase(text.charAt(i));
             byte[] bits = VhsOsd.bits(c);
