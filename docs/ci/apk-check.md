@@ -1,6 +1,6 @@
 # APK sanity check
 
-Commit: 9b833b638111fd2f3cac6874f36f4c6c542aff47
+Commit: 1c6b53ad5ae662a7c9bdc535d2f56910de79b1bd
 
 ```
 ANDROID_HOME=/usr/local/lib/android/sdk ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
