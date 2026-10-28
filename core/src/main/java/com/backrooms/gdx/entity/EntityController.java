@@ -53,6 +53,14 @@ public final class EntityController {
     private static final float LOSE_TIME = 5.5f;
     /** Distance at which it grabs the player. */
     private static final float CAPTURE_DISTANCE = 0.9f;
+    /** One step per stride, in metres. Long legs. */
+    private static final float STRIDE = 1.15f;
+    /** While hunting, it vocalises about this often. */
+    private static final float ROAR_INTERVAL_MIN = 5.5f;
+    private static final float ROAR_INTERVAL_MAX = 11f;
+    /** Stalking, it keeps quiet - but not completely silent. */
+    private static final float STALK_GROWL_MIN = 14f;
+    private static final float STALK_GROWL_MAX = 26f;
 
     public static final float STALK_SPEED = 1.25f;
     public static final float HUNT_SPEED = 3.95f;
@@ -78,6 +86,9 @@ public final class EntityController {
     private float stalkTime;
     private float lostTime;
     private float bobPhase;
+    private float walked;
+    private float roarTimer;
+    private boolean roarPending;
     private float speedNow;
     private boolean captured;
     private float presence;
@@ -153,6 +164,31 @@ public final class EntityController {
         return was;
     }
 
+    /**
+     * True when a foot has landed since the last call. The caller plays the sound: a step every
+     * stride, which is about a metre for legs this long. Frozen entities do not step.
+     */
+    public boolean takeFootstep() {
+        if (state == State.ABSENT || frozen || speedNow <= 0.01f) {
+            return false;
+        }
+        if (walked < STRIDE) {
+            return false;
+        }
+        walked -= STRIDE;
+        return true;
+    }
+
+    /**
+     * True when it should roar: once when it decides to hunt, once when it catches the player, and
+     * every so often while it is chasing. The caller plays it from the entity's position.
+     */
+    public boolean consumeRoar() {
+        boolean was = roarPending;
+        roarPending = false;
+        return was;
+    }
+
     /** Puts it into the world at a given spot - used by tests and by the screenshot job. */
     public void forceSpawn(float x, float z, State newState) {
         position.set(x, gen.floorY(MathUtils.floor(x), MathUtils.floor(z)), z);
@@ -163,6 +199,8 @@ public final class EntityController {
         pathLength = 0;
         pathIndex = 0;
         repathTimer = 0f;
+        walked = 0f;
+        roarTimer = STALK_GROWL_MIN * 0.5f + random.nextFloat() * STALK_GROWL_MIN;
     }
 
     /** Removes it from the world and sets how long until it may come back. */
@@ -172,6 +210,9 @@ public final class EntityController {
         pathLength = 0;
         pathIndex = 0;
         speedNow = 0f;
+        walked = 0f;
+        roarPending = false;
+        roarTimer = 0f;
         // presence is left alone: the tape should keep tearing for a moment after it is gone.
     }
 
@@ -212,7 +253,18 @@ public final class EntityController {
                 if (stalkTime >= STALK_TO_HUNT) {
                     state = State.HUNT;
                     lostTime = 0f;
+                    // The moment it stops being patient is the moment you hear it.
+                    roarPending = true;
+                    roarTimer = ROAR_INTERVAL_MIN;
                     break;
+                }
+                if (!frozen) {
+                    roarTimer -= delta;
+                    if (roarTimer <= 0f) {
+                        roarPending = true;
+                        roarTimer = STALK_GROWL_MIN
+                                + random.nextFloat() * (STALK_GROWL_MAX - STALK_GROWL_MIN);
+                    }
                 }
                 if (!frozen) {
                     walkToward(player, STALK_SPEED, delta);
@@ -234,10 +286,19 @@ public final class EntityController {
                 if (frozen) {
                     break;
                 }
+                if (!frozen) {
+                    roarTimer -= delta;
+                    if (roarTimer <= 0f) {
+                        roarPending = true;
+                        roarTimer = ROAR_INTERVAL_MIN
+                                + random.nextFloat() * (ROAR_INTERVAL_MAX - ROAR_INTERVAL_MIN);
+                    }
+                }
                 float speed = dist < LUNGE_RANGE && seen ? LUNGE_SPEED : HUNT_SPEED;
                 walkToward(player, speed, delta);
                 if (distance(player) < CAPTURE_DISTANCE) {
                     captured = true;
+                    roarPending = true;
                     vanish(28f + random.nextFloat() * 30f);
                 }
                 break;
@@ -248,6 +309,7 @@ public final class EntityController {
         }
 
         if (active()) {
+            walked += speedNow * delta;
             position.y = groundAt(position.x, position.z);
             // The whole body sways as it walks. Cheap, but it reads as movement at a distance.
             bobPhase += delta * (2.4f + speedNow * 1.6f);
@@ -312,43 +374,18 @@ public final class EntityController {
         return hasLineOfSight(player, position.x, position.z);
     }
 
-    /** Would something standing at {@code x,z} see the player? */
+    /**
+     * Would something standing at {@code x,z} see the player? Only the horizontal plane matters:
+     * the level is one storey and a pit is shallow, so the eyes see over anything that is not a
+     * wall. The audio uses exactly the same test, which is why it lives on the generator.
+     */
     public boolean hasLineOfSight(Vector3 player, float x, float z) {
-        // Only the horizontal plane matters: the level is one storey and a pit is shallow, so the
-        // eyes see over anything that is not a wall.
-        float dx = player.x - x;
-        float dz = player.z - z;
-        float dist = (float) Math.sqrt(dx * dx + dz * dz);
-        if (dist < 0.001f) {
-            return true;
-        }
-        int steps = Math.max(2, Math.round(dist / 0.18f));
-        for (int i = 1; i < steps; i++) {
-            float t = i / (float) steps;
-            if (blocksSight(x + dx * t, z + dz * t)) {
-                return false;
-            }
-        }
-        return true;
+        return gen.hasLineOfSight(x, z, player.x, player.z);
     }
 
     /** True if a point sits inside a wall slab. */
     public boolean blocksSight(float x, float z) {
-        int cx = MathUtils.floor(x);
-        int cz = MathUtils.floor(z);
-        float fx = x - cx;
-        float fz = z - cz;
-        float t = WorldGen.WALL_HALF_THICKNESS * 1.2f;
-        if (fx <= t && gen.vWall(cx, cz)) {
-            return true;
-        }
-        if (fx >= 1f - t && gen.vWall(cx + 1, cz)) {
-            return true;
-        }
-        if (fz <= t && gen.hWall(cx, cz)) {
-            return true;
-        }
-        return fz >= 1f - t && gen.hWall(cx, cz + 1);
+        return gen.blocksSight(x, z);
     }
 
     // ---------------------------------------------------------------------------------------------

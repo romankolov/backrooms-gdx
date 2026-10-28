@@ -8,10 +8,19 @@ import com.backrooms.gdx.Assets;
 import com.backrooms.gdx.world.WorldGen;
 
 /**
- * Footsteps on carpet plus the two ambience loops: the fluorescent buzz of the nearest tube and a
- * low room tone. Both loops are mixed live from the player's distance to the nearest fixture.
+ * Everything that makes a noise.
+ *
+ * <p>Three things are happening here. The ambience loops (the fluorescent buzz of the nearest tube,
+ * the low room tone, the tape hiss) are mixed from live distances. Footsteps - the player's and the
+ * entity's - are played with the position they came from, so a step behind you is on the right. And
+ * every step throws an echo whose timing is measured from the walls around it (see
+ * {@link Acoustics}): in a tight corridor the slap-back is a few tens of milliseconds behind the
+ * step, in a hall the tail arrives later, quieter and longer. Same sample, different room.
  */
 public final class AudioManager implements Disposable {
+
+    /** Echo taps waiting to be played. A footstep queues at most a handful. */
+    private static final int MAX_PENDING = 32;
 
     private final Assets assets;
     private final WorldGen gen;
@@ -22,7 +31,21 @@ public final class AudioManager implements Disposable {
     private float buzzVolume;
     private float targetBuzz;
     private boolean enabled = true;
-    private java.util.Random random = new java.util.Random(7);
+    private final java.util.Random random = new java.util.Random(7);
+
+    // The echo queue: a sound, and when it is due and how it should be played.
+    private final Sound[] pendingSound = new Sound[MAX_PENDING];
+    private final float[] pendingDelay = new float[MAX_PENDING];
+    private final float[] pendingVolume = new float[MAX_PENDING];
+    private final float[] pendingPitch = new float[MAX_PENDING];
+    private final float[] pendingPan = new float[MAX_PENDING];
+    private int pending;
+
+    private final Acoustics probe = new Acoustics();
+    private float listenerX;
+    private float listenerZ;
+    private float rightX = 1f;
+    private float rightZ;
 
     public AudioManager(Assets assets, WorldGen gen) {
         this.assets = assets;
@@ -69,7 +92,16 @@ public final class AudioManager implements Disposable {
         assets.tapeHiss.setVolume(tapeId, MathUtils.clamp(0.10f + 0.18f * glitch, 0f, 0.6f) * level);
     }
 
-    public void update(float delta, float x, float z) {
+    /**
+     * @param yaw the listener's heading, radians (the same convention as {@code Player.yaw})
+     */
+    public void update(float delta, float x, float z, float yaw) {
+        listenerX = x;
+        listenerZ = z;
+        // The player's right-hand vector, for panning.
+        rightX = MathUtils.cos(yaw);
+        rightZ = -MathUtils.sin(yaw);
+        updateEchoes(delta);
         if (!enabled) {
             return;
         }
@@ -90,6 +122,11 @@ public final class AudioManager implements Disposable {
                 }
             }
         }
+    }
+
+    /** Backwards-compatible overload for callers that do not track a heading. */
+    public void update(float delta, float x, float z) {
+        update(delta, x, z, 0f);
     }
 
     /** Distance to the closest working ceiling fixture, or -1 when there is none nearby. */
@@ -117,7 +154,12 @@ public final class AudioManager implements Disposable {
         return best;
     }
 
-    public void footstep(boolean sprint) {
+    // ---------------------------------------------------------------------------------------------
+    // footsteps
+    // ---------------------------------------------------------------------------------------------
+
+    /** The player's own step: centred, with the room's answer behind it. */
+    public void footstep(boolean sprint, float x, float z) {
         if (!enabled) {
             return;
         }
@@ -129,13 +171,177 @@ public final class AudioManager implements Disposable {
         float pitch = 0.92f + random.nextFloat() * 0.16f;
         float pan = (random.nextFloat() - 0.5f) * 0.35f;
         sound.play(volume, pitch, pan);
+        // The player is standing in the space that answers, so probe where the step landed.
+        scheduleEchoes(sound, probeAt(x, z), volume * 0.5f, pitch * 0.94f, pan, 3);
+    }
+
+    /**
+     * A step from the thing in the corridors: placed in the level, panned to where it is, muffled
+     * when there is a wall in the way, and echoing off the walls around it.
+     */
+    public void entityStep(float x, float z, boolean hunting) {
+        if (!enabled || assets.entitySteps == null || assets.entitySteps.length == 0) {
+            return;
+        }
+        float dx = x - listenerX;
+        float dz = z - listenerZ;
+        float distance = (float) Math.sqrt(dx * dx + dz * dz);
+        if (distance > 34f) {
+            return;
+        }
+        boolean visible = gen.hasLineOfSight(listenerX, listenerZ, x, z);
+        float attenuation = 1f / (1f + (distance / 4.5f) * (distance / 4.5f));
+        float volume = (hunting ? 0.85f : 0.55f) * attenuation;
+        if (!visible) {
+            volume *= 0.42f;                 // through a wall, and duller
+        }
+        if (volume < 0.012f) {
+            return;
+        }
+        Sound sound = assets.entitySteps[random.nextInt(assets.entitySteps.length)];
+        if (sound == null) {
+            return;
+        }
+        float pitch = (0.9f + random.nextFloat() * 0.14f) * (visible ? 1f : 0.94f);
+        float pan = panFor(dx, dz, distance);
+        sound.play(volume, pitch, pan);
+        // Echoes are heard from the entity's position, so they pan the same way.
+        scheduleEchoes(sound, probeAt(x, z), volume * 0.7f, pitch * 0.92f, pan, 4);
+    }
+
+    /** The roar. Loud, low, and it fills whatever room it happens in. */
+    public void roar(float volume, float pitch) {
+        if (!enabled || assets.roar == null) {
+            return;
+        }
+        assets.roar.play(MathUtils.clamp(volume, 0f, 1f), pitch, 0f);
+        Acoustics space = probeAt(listenerX, listenerZ);
+        scheduleEchoes(assets.roar, space, volume * 0.55f, pitch * 0.9f, 0f, 5);
     }
 
     public void landing(float strength) {
         if (enabled && assets.footsteps.length > 0) {
             Sound sound = assets.footsteps[0];
             sound.play(MathUtils.clamp(0.5f * strength + 0.15f, 0f, 1f), 0.72f, 0f);
+            scheduleEchoes(sound, probeAt(listenerX, listenerZ), 0.35f * strength, 0.7f, 0f, 4);
         }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // echoes
+    // ---------------------------------------------------------------------------------------------
+
+    private Acoustics probeAt(float x, float z) {
+        return Acoustics.probe(gen, x, z, probe);
+    }
+
+    /**
+     * Queues the room's answer: a couple of discrete early reflections off the nearest walls, then a
+     * diffuse tail whose length is the size of the space. Everything is scheduled, not sampled -
+     * libGDX cannot delay a Sound, but it can start one a few milliseconds later.
+     */
+    private void scheduleEchoes(Sound sound, Acoustics space, float volume, float pitch, float pan,
+                                int maxTaps) {
+        if (sound == null || volume < 0.006f) {
+            return;
+        }
+        int taps = 0;
+
+        // Early reflections: the two closest surfaces, panned to the side they are on.
+        int first = -1;
+        int second = -1;
+        float firstDistance = Float.MAX_VALUE;
+        float secondDistance = Float.MAX_VALUE;
+        for (int i = 0; i < Acoustics.RAYS; i++) {
+            float d = space.distance[i];
+            if (d < firstDistance) {
+                secondDistance = firstDistance;
+                second = first;
+                firstDistance = d;
+                first = i;
+            } else if (d < secondDistance) {
+                secondDistance = d;
+                second = i;
+            }
+        }
+        if (first >= 0 && maxTaps > 0) {
+            queueRay(sound, space, first, volume, pitch, 1f);
+            taps++;
+        }
+        if (second >= 0 && taps < maxTaps && secondDistance < Acoustics.MAX_RANGE) {
+            queueRay(sound, space, second, volume, pitch, 0.6f);
+            taps++;
+        }
+
+        // The diffuse tail: the room ringing, later and darker the bigger it is.
+        float tail = space.tailDelay();
+        float tailGain = space.tailGain() * volume;
+        queue(sound, tail, tailGain, pitch * 0.82f, pan * 0.5f);
+        taps++;
+        if (taps < maxTaps && tailGain > 0.02f) {
+            queue(sound, tail * 1.9f, tailGain * 0.55f, pitch * 0.72f, pan * 0.3f);
+            taps++;
+        }
+        if (taps < maxTaps && tailGain > 0.05f) {
+            queue(sound, tail * 3.1f, tailGain * 0.3f, pitch * 0.64f, 0f);
+        }
+    }
+
+    /** Queues the reflection of one ray: delayed by its two-way path, panned to its side. */
+    private void queueRay(Sound sound, Acoustics space, int ray, float volume, float pitch,
+                          float loudness) {
+        float metres = space.distance[ray];
+        if (metres >= Acoustics.MAX_RANGE) {
+            return;
+        }
+        float delay = MathUtils.clamp(Acoustics.echoDelay(metres), 0.010f, 0.14f);
+        float gain = volume * loudness * 0.55f / (1f + metres * 0.35f);
+        float side = Acoustics.dirX(ray) * rightX + Acoustics.dirZ(ray) * rightZ;
+        queue(sound, delay, gain, pitch, MathUtils.clamp(side * 0.8f, -0.85f, 0.85f));
+    }
+
+    private void queue(Sound sound, float delay, float volume, float pitch, float pan) {
+        if (pending >= MAX_PENDING || volume < 0.004f) {
+            return;
+        }
+        int slot = pending++;
+        pendingSound[slot] = sound;
+        pendingDelay[slot] = delay;
+        pendingVolume[slot] = volume;
+        pendingPitch[slot] = pitch;
+        pendingPan[slot] = pan;
+    }
+
+    private void updateEchoes(float delta) {
+        for (int i = pending - 1; i >= 0; i--) {
+            pendingDelay[i] -= delta;
+            if (pendingDelay[i] > 0f) {
+                continue;
+            }
+            if (enabled) {
+                pendingSound[i].play(MathUtils.clamp(pendingVolume[i], 0f, 1f),
+                        pendingPitch[i], pendingPan[i]);
+            }
+            pending--;
+            pendingSound[i] = pendingSound[pending];
+            pendingDelay[i] = pendingDelay[pending];
+            pendingVolume[i] = pendingVolume[pending];
+            pendingPitch[i] = pendingPitch[pending];
+            pendingPan[i] = pendingPan[pending];
+        }
+    }
+
+    /** Number of taps waiting to play; exposed for the tests and the perf line. */
+    public int pendingEchoes() {
+        return pending;
+    }
+
+    private float panFor(float dx, float dz, float distance) {
+        if (distance < 0.001f) {
+            return 0f;
+        }
+        float side = (dx * rightX + dz * rightZ) / distance;
+        return MathUtils.clamp(side * 0.9f, -1f, 1f);
     }
 
     private void stopLoops() {
@@ -148,6 +354,7 @@ public final class AudioManager implements Disposable {
             toneId = -1;
         }
         stopTape();
+        pending = 0;
     }
 
     @Override

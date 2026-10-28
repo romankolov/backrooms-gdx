@@ -21,13 +21,12 @@ tasks.register("run", JavaExec) {
     mainClass = "com.backrooms.gdx.desktop.DesktopLauncher"
     classpath = sourceSets.main.runtimeClasspath
     workingDir = rootProject.file("assets")
-    ["backrooms.capture", "backrooms.frames", "backrooms.autostart", "backrooms.seed",
-     "backrooms.spin", "backrooms.yaw", "backrooms.pitch", "backrooms.debug", "backrooms.hud",
-     "backrooms.title", "backrooms.spawn", "backrooms.pit", "backrooms.vhs",
-     "backrooms.entity"].each { key ->
-        def value = System.getProperty(key)
-        if (value != null) {
-            systemProperty key, value
+    // Forward every -Dbackrooms.* property to the game. Listing them by hand meant that a new
+    // switch (a model rotation, an experiment) silently did nothing in the desktop run until
+    // somebody remembered to add it here as well.
+    System.properties.each { key, value ->
+        if (key.toString().startsWith("backrooms.")) {
+            systemProperty key.toString(), value.toString()
         }
     }
 }

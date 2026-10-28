@@ -18,6 +18,7 @@ import com.backrooms.gdx.entity.EntityController;
 import com.backrooms.gdx.entity.EntityRenderer;
 import com.backrooms.gdx.input.TouchControls;
 import com.backrooms.gdx.player.Player;
+import com.backrooms.gdx.render.LightGlow;
 import com.backrooms.gdx.render.VhsEffect;
 import com.backrooms.gdx.render.WorldRenderer;
 import com.backrooms.gdx.ui.Hud;
@@ -40,6 +41,7 @@ public final class PlayScreen extends ScreenAdapter {
     private final Hud hud;
     private final VhsEffect vhs;
     private final VhsOsd osd;
+    private final LightGlow glow;
     private final EntityController entity;
     private final EntityRenderer entityView;
     private final PerspectiveCamera camera = new PerspectiveCamera(74f, 1, 1);
@@ -81,6 +83,7 @@ public final class PlayScreen extends ScreenAdapter {
         this.hud = new Hud(assets);
         this.vhs = new VhsEffect(1f);
         this.osd = new VhsOsd();
+        this.glow = new LightGlow();
         this.entity = new EntityController(world.gen(), seed * 0x9e3779b97f4a7c15L);
         this.entityView = new EntityRenderer(entity);
         this.vhsOn = settings.vhs;
@@ -316,9 +319,9 @@ public final class PlayScreen extends ScreenAdapter {
 
         if (!paused) {
             world.update(player.position.x, player.position.z, 2);
-            audio.update(delta, player.position.x, player.position.z);
+            audio.update(delta, player.position.x, player.position.z, player.yaw);
             if (player.takeFootstep(controls.sprint)) {
-                audio.footstep(controls.sprint);
+                audio.footstep(controls.sprint, player.position.x, player.position.z);
             }
             if (player.landingImpact > 0.18f) {
                 audio.landing(player.landingImpact);
@@ -328,6 +331,23 @@ public final class PlayScreen extends ScreenAdapter {
             }
             entity.update(delta, player.position);
             if (entity.isEnabled()) {
+                // Its steps are placed in the level: panned, muffled by walls, and echoing off
+                // whatever room it is walking through.
+                if (entity.takeFootstep()) {
+                    audio.entityStep(entity.position.x, entity.position.z,
+                            entity.state() == EntityController.State.HUNT);
+                }
+                if (entity.consumeRoar()) {
+                    boolean facing = entity.hasLineOfSight(player.position);
+                    float distance = entity.distance(player.position);
+                    float volume = facing ? MathUtils.clamp(1.1f - distance / 30f, 0.15f, 1f) : 0.35f;
+                    // It is bigger than the player and its voice is lower: play the roar flat.
+                    audio.roar(volume, 0.92f + random.nextFloat() * 0.12f);
+                    if (entity.state() == EntityController.State.HUNT && distance < 7f) {
+                        // Close enough to see: it throws itself at you as it screams.
+                        entityView.lunge();
+                    }
+                }
                 if (entity.consumeCapture()) {
                     // It reached you. The tape cuts to somewhere else: same effect as a pit.
                     Gdx.app.log("Entity", "caught the player at "
@@ -424,6 +444,9 @@ public final class PlayScreen extends ScreenAdapter {
 
         int targetWidth = tape ? vhs.renderWidth() : Gdx.graphics.getWidth();
         int targetHeight = tape ? vhs.renderHeight() : Gdx.graphics.getHeight();
+        // The light haloes go on the world before anything solid is drawn over them: additive light
+        // has to be behind whatever is in front of it.
+        glow.render(camera, world.gen(), time, targetWidth, targetHeight);
         entityView.update(delta);
         entityView.render(camera, targetWidth, targetHeight, torchPos,
                 player.torchOn ? 1f : 0.35f);
@@ -568,6 +591,7 @@ public final class PlayScreen extends ScreenAdapter {
         world.dispose();
         vhs.dispose();
         osd.dispose();
+        glow.dispose();
         entityView.dispose();
         if (Gdx.input.getInputProcessor() == input) {
             Gdx.input.setInputProcessor(null);

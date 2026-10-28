@@ -172,6 +172,61 @@ public class EntityControllerTest {
         assertEquals(EntityController.State.ABSENT, entity.state());
     }
 
+
+    @Test
+    public void itStepsAndRoars() {
+        WorldGen gen = new WorldGen(SEED);
+        EntityController entity = new EntityController(gen, 23L);
+        Vector3 player = spawnPoint(gen);
+        float[] start = cellNear(gen, player, 10f, 18f);
+        entity.forceSpawn(start[0], start[1], EntityController.State.STALK);
+        entity.update(0.05f, player);
+        assertFalse("it should not roar the instant it appears", entity.consumeRoar());
+
+        // Walk for ten seconds and count the steps it took: a step per stride, and it moves at
+        // 1.25 m/s, so there must be several.
+        int steps = 0;
+        for (int i = 0; i < 200; i++) {
+            entity.update(0.05f, player);
+            if (entity.takeFootstep()) {
+                steps++;
+            }
+        }
+        assertTrue("it walked ten metres without a single step", steps >= 4);
+
+        // A frozen entity is a posed entity: it must not make any noise at all.
+        entity.setFrozen(true);
+        int frozenSteps = 0;
+        for (int i = 0; i < 60; i++) {
+            entity.update(0.05f, player);
+            if (entity.takeFootstep()) {
+                frozenSteps++;
+            }
+        }
+        assertEquals("a frozen entity should not be walking", 0, frozenSteps);
+    }
+
+    @Test
+    public void escalatingToAHuntMakesItRoar() {
+        WorldGen gen = new WorldGen(SEED);
+        EntityController entity = new EntityController(gen, 29L);
+        Vector3 player = spawnPoint(gen);
+        float[] spot = visibleCell(gen, player, 6f);
+        entity.forceSpawn(spot[0], spot[1], EntityController.State.STALK);
+
+        boolean roared = false;
+        for (int i = 0; i < 600 && !roared; i++) {
+            entity.update(0.05f, player);
+            if (entity.consumeCapture()) {
+                break;
+            }
+            if (entity.consumeRoar()) {
+                roared = entity.state() == EntityController.State.HUNT;
+            }
+        }
+        assertTrue("it went from stalking to hunting without a sound", roared);
+    }
+
     @Test
     public void presenceIsOnlyFeltWhenItIsNear() {
         WorldGen gen = new WorldGen(SEED);

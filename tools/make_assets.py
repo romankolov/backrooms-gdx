@@ -9,8 +9,8 @@ They are downscaled/re-encoded here so the APK stays small:
     single PNG so the shader only needs one sampler for it.
 
 Audio is synthesised from scratch (no third-party samples): muffled carpet
-footsteps, a fluorescent tube buzz loop, a low room tone loop and the tape hiss
-of the VHS camcorder.
+footsteps, a fluorescent tube buzz loop, a low room tone loop, the tape hiss of
+the VHS camcorder, and the wet steps and roar of the thing in the corridors.
 
 Usage:  python3 tools/make_assets.py [path/to/backrooms-textures]
 """
@@ -291,6 +291,122 @@ def make_tape_hiss(duration=6.0):
     return signal
 
 
+def one_pole_highpass(x, cutoff):
+    return x - one_pole_lowpass(x, cutoff)
+
+
+def soft_clip(x, drive=2.0):
+    """tanh saturation: what makes a growl sound like it is tearing out of a throat."""
+    return np.tanh(x * drive) / np.tanh(drive)
+
+
+def reverb(x, decay=0.45, size=0.075):
+    """
+    Cheap Schroeder reverb: four parallel comb filters, then scaled to a fixed fraction of the dry
+    signal's level. Not a real impulse response, but it turns a dry animal noise into something
+    happening in a big tiled room, which is the whole point of the roar. Scaling to the dry level
+    (rather than hand-tuning the feedback gains) keeps it predictable: a comb bank has a resonant
+    gain of its own, and guessing at it once produced a tail a hundred times louder than the roar.
+    """
+    n = len(x)
+    out = np.zeros(n)
+    for delay_seconds, gain in ((size, 0.82), (size * 1.31, 0.79), (size * 1.73, 0.76),
+                                (size * 2.13, 0.72)):
+        d = int(SR * delay_seconds)
+        if d < 8:
+            continue
+        buf = np.zeros(n)
+        for i in range(n):
+            buf[i] = x[i] + (buf[i - d] * gain if i >= d else 0.0)
+        out += buf
+    out /= 4.0
+    dry = float(np.sqrt(np.mean(x * x))) + 1e-9
+    wet = float(np.sqrt(np.mean(out * out))) + 1e-9
+    return out * (decay * dry / wet)
+
+
+def make_entity_step(rng, tone=1.0, duration=0.9):
+    """
+    A step from something that is not a person: much heavier than the player's, and wet - the
+    Backrooms lifeforms are described as finding you by sound, so the step has to carry.
+    """
+    n = int(SR * duration)
+    t = np.arange(n) / SR
+
+    # Sub-bass impact: a short downward sweep, the weight of the thing landing.
+    sweep = 46.0 * tone
+    phase = 2 * np.pi * (sweep * t - 14.0 * t * t)
+    impact = np.sin(phase) * np.exp(-t * 7.0)
+
+    # The body: a low resonance that rings a little longer.
+    body = (np.sin(2 * np.pi * 71.0 * tone * t) * np.exp(-t * 5.0) * 0.5
+            + np.sin(2 * np.pi * 113.0 * tone * t + 0.7) * np.exp(-t * 6.5) * 0.3)
+
+    # Wetness: filtered noise that squelches as it lands, with a resonant edge.
+    noise = rng.uniform(-1.0, 1.0, n)
+    squelch = one_pole_lowpass(noise, 900.0) * np.exp(-t * 9.0)
+    squelch += one_pole_highpass(one_pole_lowpass(noise, 2600.0), 700.0) * np.exp(-t * 16.0) * 0.4
+
+    # A gurgle under it, so it reads as organic rather than as a door slamming.
+    gurgle = np.sin(2 * np.pi * (150.0 + 40.0 * np.sin(2 * np.pi * 7.0 * t)) * t) * np.exp(-t * 8.0) * 0.12
+
+    signal = impact * 0.9 + body * 0.5 + squelch * 0.55 + gurgle
+    return soft_clip(signal * 1.3, 1.4)
+
+
+def make_entity_roar(duration=3.6):
+    """
+    The roar, built the way the series implies it: something enormous and wet, with a human voice
+    buried underneath. Three layers - a sub-bass body, a growling sawtooth throat, and a breathy
+    rasp with moving formants - saturated, then thrown into a big room.
+    """
+    n = int(SR * duration)
+    t = np.arange(n) / SR
+    rng = np.random.default_rng(23)
+
+    # The throat pitches up as it inhales and falls away as it runs out of air.
+    rise = np.clip(t / 0.45, 0.0, 1.0)
+    fall = np.clip((duration - t) / 1.6, 0.0, 1.0)
+    pitch = (70.0 + 55.0 * rise) * (0.55 + 0.45 * fall)
+    # A slow irregular wobble: a voice this big is never steady.
+    pitch *= 1.0 + 0.06 * np.sin(2 * np.pi * 3.1 * t) + 0.03 * np.sin(2 * np.pi * 11.7 * t + 1.1)
+    phase = 2 * np.pi * np.cumsum(pitch) / SR
+
+    # 1. the body: sine plus its octave, with the growl amplitude modulation on top.
+    growl_rate = 27.0 + 9.0 * np.sin(2 * np.pi * 1.7 * t)
+    growl = 0.5 + 0.5 * np.sin(2 * np.pi * np.cumsum(growl_rate) / SR)
+    body = np.sin(phase) * 0.55 + np.sin(phase * 2.0) * 0.28 + np.sin(phase * 0.5) * 0.22
+    body *= 0.55 + 0.45 * growl
+
+    # 2. the throat: a band-limited sawtooth, harsh and tearing.
+    sawtooth = 2.0 * (phase / (2 * np.pi) % 1.0) - 1.0
+    throat = sawtooth - one_pole_lowpass(sawtooth, 1800.0)   # keep the rasp, drop the fizz
+    throat *= 0.35 + 0.3 * growl
+
+    # 3. breath and spit: noise pushed through two sliding formants.
+    noise = rng.uniform(-1.0, 1.0, n)
+    formant1 = 320.0 + 260.0 * np.clip(t / duration, 0.0, 1.0)
+    breath = one_pole_lowpass(noise, 2600.0) - one_pole_lowpass(noise, 300.0)
+    # A cheap formant: ring-modulate the noise band with the formant frequency.
+    breath *= 0.25 + 0.5 * np.abs(np.sin(2 * np.pi * formant1 * t))
+    breath *= 0.55
+
+    signal = body + throat * 0.8 + breath * 0.5
+
+    # The envelope: slammed into it, held while it grinds, then dying away.
+    attack = np.clip(t / 0.12, 0.0, 1.0)
+    release = np.clip((duration - t) / 1.5, 0.0, 1.0) ** 1.6
+    signal *= attack * release
+
+    signal = soft_clip(signal * 2.2, 2.0)
+    # A wet bubbled edge, like something forcing air through liquid.
+    bubble = 1.0 + 0.16 * np.sin(2 * np.pi * np.cumsum(13.0 + 5.0 * np.sin(2 * np.pi * 0.9 * t)) / SR)
+    signal *= bubble
+
+    tail = reverb(signal, decay=0.45, size=0.085)
+    return signal + tail * 0.6
+
+
 def build_audio():
     rng = np.random.default_rng(3)
     for i in range(4):
@@ -299,6 +415,10 @@ def build_audio():
     write_ogg(os.path.join(SFX_OUT, "light_buzz.ogg"), make_buzz(), loop=True)
     write_ogg(os.path.join(SFX_OUT, "room_tone.ogg"), make_room_tone(), loop=True)
     write_ogg(os.path.join(SFX_OUT, "tape_hiss.ogg"), make_tape_hiss(), loop=True)
+    for i in range(3):
+        step = make_entity_step(np.random.default_rng(200 + i), tone=0.92 + 0.07 * i)
+        write_ogg(os.path.join(SFX_OUT, "entity_step_%d.ogg" % (i + 1)), step)
+    write_ogg(os.path.join(SFX_OUT, "entity_roar.ogg"), make_entity_roar())
 
 
 # --------------------------------------------------------------------------

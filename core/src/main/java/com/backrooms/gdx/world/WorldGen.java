@@ -188,6 +188,69 @@ public final class WorldGen {
     }
 
     // ---------------------------------------------------------------------------------------------
+    // visibility and acoustics
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * True if a point sits inside a wall slab. Walls are thin and axis aligned, so a point test is
+     * all the geometry a sight line or a sound path ever needs to check.
+     */
+    public boolean blocksSight(float x, float z) {
+        int cx = Hash.floorInt(x);
+        int cz = Hash.floorInt(z);
+        float fx = x - cx;
+        float fz = z - cz;
+        float t = WALL_HALF_THICKNESS * 1.2f;
+        if (fx <= t && vWall(cx, cz)) {
+            return true;
+        }
+        if (fx >= 1f - t && vWall(cx + 1, cz)) {
+            return true;
+        }
+        if (fz <= t && hWall(cx, cz)) {
+            return true;
+        }
+        return fz >= 1f - t && hWall(cx, cz + 1);
+    }
+
+    /**
+     * Straight-line visibility between two points, sampled along the line. Used by the entity (can it
+     * see the player?) and by the audio (is that footstep around the corner or through the wall?).
+     * Walls are 16 cm thick and the sample step is smaller than that, so nothing is stepped over.
+     */
+    public boolean hasLineOfSight(float x0, float z0, float x1, float z1) {
+        float dx = x1 - x0;
+        float dz = z1 - z0;
+        float distance = (float) Math.sqrt(dx * dx + dz * dz);
+        if (distance < 0.001f) {
+            return true;
+        }
+        int steps = Math.max(2, Math.round(distance / 0.18f));
+        for (int i = 1; i < steps; i++) {
+            float t = i / (float) steps;
+            if (blocksSight(x0 + dx * t, z0 + dz * t)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Distance from a point to the first wall in a direction, or {@code maxDistance} if the ray runs
+     * out of range first. The march is stepped rather than exact: for reverb an approximate distance
+     * to the nearest surfaces is all that is wanted, and this stays allocation free.
+     */
+    public float wallDistance(float x, float z, float dirX, float dirZ, float maxDistance) {
+        float step = 0.35f;
+        for (float d = step; d <= maxDistance; d += step) {
+            if (blocksSight(x + dirX * d, z + dirZ * d)) {
+                return d;
+            }
+        }
+        return maxDistance;
+    }
+
+    // ---------------------------------------------------------------------------------------------
     // lights
     // ---------------------------------------------------------------------------------------------
 

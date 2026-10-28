@@ -64,8 +64,9 @@ void main() {
 
     // ---------------------------------------------------------------- 2. head switching
     // The bottom ~0.8% of a VHS frame is written by the other head while the servo changes over:
-    // a thin torn strip along the bottom edge, and nothing above it.
-    float bottom = smoothstep(0.992, 1.0, uv.y);
+    // a thin torn strip along the bottom edge, and nothing above it. v_uv.y = 0 is the bottom of the
+    // picture, so the strip lives at the low end of the range.
+    float bottom = 1.0 - smoothstep(0.0, 0.008, uv.y);
     float tearNoise = hash(vec2(floor(uv.y * u_resolution.y), floor(u_grainTime * 24.0)));
     uv.x += bottom * (0.004 + 0.012 * tearNoise) * strength;
 

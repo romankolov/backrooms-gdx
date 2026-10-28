@@ -26,7 +26,8 @@ import org.junit.Test;
 public class ShaderPrecisionTest {
 
     /** Every shader that ships, so a new one cannot slip past these rules. */
-    private static final String[] SHADERS = {"world.vert", "world.frag", "vhs.vert", "vhs.frag"};
+    private static final String[] SHADERS = {"world.vert", "world.frag", "vhs.vert", "vhs.frag",
+            "glow.vert", "glow.frag"};
 
     private static final Pattern UNIFORM = Pattern.compile(
             "^\\s*uniform\\s+((?:(?:lowp|mediump|highp)\\s+)?)(\\w+)\\s+(\\w+)\\s*(?:\\[[^\\]]*\\])?\\s*;",
@@ -36,7 +37,8 @@ public class ShaderPrecisionTest {
 
     @Test
     public void sharedUniformsUseTheSamePrecision() throws IOException {
-        String[][] pairs = {{"world.vert", "world.frag"}, {"vhs.vert", "vhs.frag"}};
+        String[][] pairs = {{"world.vert", "world.frag"}, {"vhs.vert", "vhs.frag"},
+                {"glow.vert", "glow.frag"}};
         for (String[] pair : pairs) {
             Map<String, String> v = uniforms(read(pair[0]));
             Map<String, String> f = uniforms(read(pair[1]));
