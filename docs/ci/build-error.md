@@ -1,88 +1,95 @@
 # Last build failure
 
-Commit: 2bcff4a
+Commit: 8d5fed3
 
 ```
-Welcome to Gradle 8.11.1!
-Here are the highlights of this release:
- - Parallel load and store for Configuration Cache
- - Java compilation errors at the end of the build output
- - Consolidated report for warnings and deprecations
-For more details see https://docs.gradle.org/8.11.1/release-notes.html
-To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
-Daemon will be stopped at the end of the build 
-> Task :android:copyAndroidNatives
-Android natives: arm64-v8a/libgdx.so, armeabi-v7a/libgdx.so, x86_64/libgdx.so
-> Task :android:preBuild
-> Task :android:preDebugBuild
-> Task :android:mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :android:javaPreCompileDebug FROM-CACHE
-> Task :android:generateDebugResValues FROM-CACHE
-> Task :android:checkDebugAarMetadata
-> Task :android:mapDebugSourceSetPaths
-> Task :android:generateDebugResources FROM-CACHE
-> Task :android:mergeDebugResources FROM-CACHE
-> Task :android:packageDebugResources FROM-CACHE
-> Task :android:parseDebugLocalResources FROM-CACHE
-> Task :android:createDebugCompatibleScreenManifests
-> Task :android:extractDeepLinksDebug FROM-CACHE
-> Task :android:processDebugMainManifest FROM-CACHE
-> Task :android:processDebugManifest FROM-CACHE
-> Task :android:processDebugManifestForPackage FROM-CACHE
-> Task :android:processDebugResources FROM-CACHE
-> Task :android:mergeDebugShaders
-> Task :android:compileDebugShaders NO-SOURCE
-> Task :android:generateDebugAssets UP-TO-DATE
-> Task :android:mergeDebugAssets
-> Task :android:desugarDebugFileDependencies FROM-CACHE
-> Task :android:processDebugJavaRes NO-SOURCE
-> Task :android:mergeDebugJniLibFolders
-> Task :android:checkDebugDuplicateClasses
-> Task :android:compressDebugAssets
-> Task :core:compileJava
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-> Task :core:processResources NO-SOURCE
-> Task :core:classes
-> Task :core:jar
-> Task :android:validateSigningDebug
-> Task :core:compileTestJava
-> Task :core:processTestResources NO-SOURCE
-> Task :core:testClasses
-> Task :android:compileDebugJavaWithJavac
-Note: /home/runner/work/backrooms-gdx/backrooms-gdx/android/src/main/java/com/backrooms/gdx/android/AndroidLauncher.java uses or overrides a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-> Task :android:dexBuilderDebug FROM-CACHE
-> Task :core:test
-EntityControllerTest > beingSeenLongEnoughEscalatesToHunting FAILED
-    java.lang.AssertionError: expected a clear line of sight at 2.5 m
-        at org.junit.Assert.fail(Assert.java:89)
-        at org.junit.Assert.assertTrue(Assert.java:42)
-        at com.backrooms.gdx.EntityControllerTest.beingSeenLongEnoughEscalatesToHunting(EntityControllerTest.java:104)
-38 tests completed, 1 failed
-> Task :core:test FAILED
-> Task :android:mergeDebugJavaResource
-[Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
-FAILURE: Build failed with an exception.
-* What went wrong:
-Execution failed for task ':core:test'.
-> There were failing tests. See the report at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/core/build/reports/tests/test/index.html
-* Try:
-> Run with --scan to get full insights.
-* Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:test'.
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
-	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:116)
-	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
-	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
-	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
-	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
-	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.GLUmesh found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.GLUtessellatorImpl found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.GLUvertex found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Geom found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Mesh found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Normal found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.PriorityQ found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.PriorityQ$Leq found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.PriorityQ$PQhandleElem found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.PriorityQ$PQnode found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.PriorityQHeap found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.PriorityQSort found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.PriorityQSort$1 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.PriorityQSort$Stack found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Render found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Render$1 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Render$FaceCount found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Render$RenderFan found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Render$RenderStrip found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Render$RenderTriangle found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Render$renderCallBack found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Sweep found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Sweep$1 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.Sweep$2 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.TessMono found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.glu.tessellation.TessState found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.input.ControllerAdapter found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.jinput.KeyMap found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.jinput.LWJGLEnvironmentPlugin found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.jinput.LWJGLKeyboard found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.jinput.LWJGLKeyboard$Key found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.jinput.LWJGLMouse found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.jinput.LWJGLMouse$Axis found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.jinput.LWJGLMouse$Button found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.CacheLinePad found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.CacheLineSize found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.CacheLineSize$1 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.CacheUtil found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedField found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedForeach found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedForeach$1 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedHelper found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObject found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectClassLoader found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectTransformer found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectTransformer$1 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectTransformer$2 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectTransformer$3 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectTransformer$FieldInfo found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectTransformer$MappedSubtypeInfo found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectTransformer$TransformationAdapter found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectTransformer$TransformationAdapter$1 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectTransformer$TransformationAdapter$2 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedObjectUnsafe found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedSet found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedSet2 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedSet3 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedSet4 found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.MappedType found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.mapped.Pointer found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.Matrix found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.Matrix2f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.Matrix3f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.Matrix4f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.Quaternion found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.ReadableVector found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.ReadableVector2f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.ReadableVector3f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.ReadableVector4f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.Vector found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.Vector2f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.Vector3f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.Vector4f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.WritableVector2f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.WritableVector3f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Duplicate class org.lwjgl.util.vector.WritableVector4f found in the following modules: desktop-2.3.0.jar -> desktop-2.3.0 (com.github.mgsx-dev.gdx-gltf:desktop:2.3.0), ibl-composer-2.3.0.jar -> ibl-composer-2.3.0 (com.github.mgsx-dev.gdx-gltf:ibl-composer:2.3.0) and lwjgl_util-2.9.3.jar -> lwjgl_util-2.9.3 (org.lwjgl.lwjgl:lwjgl_util:2.9.3)
+Go to the documentation to learn how to <a href="d.android.com/r/tools/classpath-sync-errors">Fix dependency resolution errors</a>.
+	at com.android.build.gradle.internal.tasks.CheckDuplicateClassesDelegate.run(CheckDuplicateClassesDelegate.kt:65)
+	at com.android.build.gradle.internal.tasks.CheckDuplicatesRunnable.execute(CheckDuplicateClassesDelegate.kt:91)
+	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:63)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:66)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:62)
+	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:100)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:62)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
@@ -90,148 +97,23 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:te
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
-	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-Caused by: org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/core/build/reports/tests/test/index.html
-	at org.gradle.api.tasks.testing.AbstractTestTask.handleTestFailures(AbstractTestTask.java:707)
-	at org.gradle.api.tasks.testing.AbstractTestTask.handleCollectedResults(AbstractTestTask.java:541)
-	at org.gradle.api.tasks.testing.AbstractTestTask.executeTests(AbstractTestTask.java:536)
-	at org.gradle.api.tasks.testing.Test.executeTests(Test.java:731)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
-	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
-	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)
-	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
-	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:244)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:26)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:47)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:229)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:212)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:195)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:162)
-	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:105)
-	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:44)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:59)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:56)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:56)
-	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:44)
-	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
-	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
-	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
-	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:50)
-	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:28)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:67)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:37)
-	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:61)
-	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:26)
-	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
-	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:40)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:29)
-	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
-	at org.gradle.internal.execution.steps.BuildCacheStep.executeAndStoreInCache(BuildCacheStep.java:145)
-	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$executeWithCache$4(BuildCacheStep.java:101)
-	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$executeWithCache$5(BuildCacheStep.java:101)
-	at org.gradle.internal.Try$Success.map(Try.java:175)
-	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithCache(BuildCacheStep.java:85)
-	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$0(BuildCacheStep.java:74)
-	at org.gradle.internal.Either$Left.fold(Either.java:115)
-	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:73)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:48)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:46)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:35)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
-	at org.gradle.internal.execution.steps.ResolveIncrementalCachingStateStep.executeDelegate(ResolveIncrementalCachingStateStep.java:49)
-	at org.gradle.internal.execution.steps.ResolveIncrementalCachingStateStep.executeDelegate(ResolveIncrementalCachingStateStep.java:27)
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:71)
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:39)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:65)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:36)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:107)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:56)
-	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:64)
-	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:43)
-	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.executeWithNonEmptySources(AbstractSkipEmptyWorkStep.java:125)
-	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:61)
-	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:36)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:36)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:23)
-	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.execute(HandleStaleOutputsStep.java:75)
-	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.execute(HandleStaleOutputsStep.java:41)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$execute$0(AssignMutableWorkspaceStep.java:35)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:289)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.execute(AssignMutableWorkspaceStep.java:31)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.execute(AssignMutableWorkspaceStep.java:22)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:48)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:35)
-	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:61)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:127)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:116)
-	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
-	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
-	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
-	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
-	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
-	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 18s
-29 actionable tasks: 16 executed, 13 from cache
+	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:59)
+	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:174)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:194)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:127)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:169)
+	at org.gradle.internal.Factories$1.create(Factories.java:31)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:132)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:164)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:133)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	... 5 more
+==============================================================================
+BUILD FAILED in 14s
+21 actionable tasks: 9 executed, 12 from cache
 ```
