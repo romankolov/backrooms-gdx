@@ -1,6 +1,6 @@
 # APK sanity check
 
-Commit: a51c83a4ed305b3eba23cd38d8a4eefba8d2a7a9
+Commit: 6244b2d0ba493c3cebb3202c7a39cb485561a524
 
 ```
 (no log)
