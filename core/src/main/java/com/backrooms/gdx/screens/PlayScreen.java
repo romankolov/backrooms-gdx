@@ -172,10 +172,11 @@ public final class PlayScreen extends ScreenAdapter {
                     }
                     int cx = fromX + dx;
                     int cz = fromZ + dz;
-                    if (gen.isHole(cx, cz) && !gen.isHole(cx, cz - 1) && !gen.isHole(cx, cz - 2)
+                    // Stand to the south (+Z) of a single pit: the default heading looks down -Z.
+                    if (gen.isHole(cx, cz) && !gen.isHole(cx, cz + 1) && !gen.isHole(cx, cz + 2)
                             && !gen.isHole(cx + 1, cz) && !gen.isHole(cx - 1, cz)
-                            && gen.isOpenSpace(cx, cz - 2) && gen.isOpenSpace(cx, cz - 1)) {
-                        return new float[] {cx + 0.5f, cz - 1.5f};
+                            && gen.isOpenSpace(cx, cz + 1) && gen.isOpenSpace(cx, cz + 2)) {
+                        return new float[] {cx + 0.5f, cz + 1.5f};
                     }
                 }
             }
