@@ -94,14 +94,45 @@ public class EntityControllerTest {
         assertEquals(EntityController.State.STALK, entity.state());
     }
 
+    /** A walkable cell within {@code maxDist} that the player can actually be seen from. */
+    private static float[] visibleCell(WorldGen gen, Vector3 player, float maxDist) {
+        EntityController probe = new EntityController(gen, 0L);
+        for (int ring = 1; ring <= (int) maxDist + 1; ring++) {
+            for (int dz = -ring; dz <= ring; dz++) {
+                for (int dx = -ring; dx <= ring; dx++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) {
+                        continue;
+                    }
+                    int cx = MathUtils.floor(player.x) + dx;
+                    int cz = MathUtils.floor(player.z) + dz;
+                    float d = (float) Math.hypot(cx + 0.5f - player.x, cz + 0.5f - player.z);
+                    if (d > maxDist || d < 1f) {
+                        continue;
+                    }
+                    if (!gen.isOpenSpace(cx, cz) || !gen.isSolidGround(cx, cz)
+                            || gen.isHole(cx, cz)) {
+                        continue;
+                    }
+                    probe.forceSpawn(cx + 0.5f, cz + 0.5f, EntityController.State.STALK);
+                    if (probe.hasLineOfSight(player)) {
+                        return new float[] {cx + 0.5f, cz + 0.5f};
+                    }
+                }
+            }
+        }
+        throw new AssertionError("no cell within " + maxDist + " m has a view of the player");
+    }
+
     @Test
     public void beingSeenLongEnoughEscalatesToHunting() {
         WorldGen gen = new WorldGen(SEED);
         EntityController entity = new EntityController(gen, 11L);
         Vector3 player = spawnPoint(gen);
-        // Directly beside the player, so there is nothing between them: it sees them immediately.
-        entity.forceSpawn(player.x + 2.5f, player.z, EntityController.State.STALK);
-        assertTrue("expected a clear line of sight at 2.5 m", entity.hasLineOfSight(player));
+        // Within sight of the player, so the clock starts immediately.
+        float[] spot = visibleCell(gen, player, 6f);
+        entity.forceSpawn(spot[0], spot[1], EntityController.State.STALK);
+        assertTrue("expected a clear line of sight from the chosen cell",
+                entity.hasLineOfSight(player));
 
         boolean hunted = false;
         for (int i = 0; i < 500 && !hunted; i++) {   // at most 25 seconds
