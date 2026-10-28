@@ -60,6 +60,73 @@ const io = new NodeIO();
 const doc = await io.read(input);
 const root = doc.getRoot();
 
+// ---------------------------------------------------------------- drop stray geometry
+// The Sketchfab scene is not only the creature: it also contains a chunk of staging prop a long way
+// off, skinned to the root joint. Left in place it dominates the bounding box, so the game measures
+// the model as 245 units long, scales it to 2.1 m on that axis, and the creature itself ends up
+// four centimetres tall. The body is one connected lump of geometry and the staging is not, so the
+// parts that overlap each other are kept and anything floating on its own is thrown away.
+{
+  const prims = [];
+  for (const mesh of root.listMeshes()) {
+    for (const prim of mesh.listPrimitives()) {
+      const position = prim.getAttribute('POSITION');
+      if (!position) continue;
+      prims.push({
+        mesh,
+        prim,
+        count: position.getCount(),
+        min: position.getMin([]),
+        max: position.getMax([]),
+      });
+    }
+  }
+
+  const overlaps = (a, b) => [0, 1, 2].every((axis) => {
+    const pad = (a.max[axis] - a.min[axis] + b.max[axis] - b.min[axis]) * 0.05;
+    return a.max[axis] >= b.min[axis] - pad && a.min[axis] <= b.max[axis] + pad;
+  });
+
+  // Union-find over "touches", then keep the cluster with the most vertices in it.
+  const parent = prims.map((_, i) => i);
+  const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  for (let i = 0; i < prims.length; i++) {
+    for (let j = i + 1; j < prims.length; j++) {
+      if (overlaps(prims[i], prims[j])) parent[find(i)] = find(j);
+    }
+  }
+  const weight = new Map();
+  for (const [i, p] of prims.entries()) {
+    const rootIndex = find(i);
+    weight.set(rootIndex, (weight.get(rootIndex) || 0) + p.count);
+  }
+  let bestRoot = 0;
+  for (const [rootIndex, count] of weight) {
+    if (count > (weight.get(bestRoot) || 0)) bestRoot = rootIndex;
+  }
+  for (const [i, p] of prims.entries()) {
+    if (find(i) === bestRoot) continue;
+    console.log(`dropped stray geometry ${p.mesh.getName()}: ${p.count} vertices`
+      + ` at ${p.min.map((v) => v.toFixed(1)).join(',')}`
+      + `..${p.max.map((v) => v.toFixed(1)).join(',')}`);
+    p.mesh.removePrimitive(p.prim);
+  }
+  for (const mesh of root.listMeshes()) {
+    if (mesh.listPrimitives().length === 0) mesh.dispose();
+  }
+}
+
+// ---------------------------------------------------------------- make the skin visible
+// The source material is almost black - base colour 0.013, which under the game's single torch
+// reads as a hole in the dark rather than as a creature, and hides every bone of the rig. Pale,
+// slightly wet-looking skin is what the series describes, and it is what a light can shape.
+for (const material of root.listMaterials()) {
+  material.setBaseColorFactor([0.24, 0.23, 0.205, 1]);
+  material.setRoughnessFactor(0.38);
+  material.setMetallicFactor(0);
+  console.log(`material ${material.getName()} -> pale skin, roughness 0.38`);
+}
+
 // ---------------------------------------------------------------- measure joint usage
 const skins = root.listSkins();
 if (skins.length !== 1) {

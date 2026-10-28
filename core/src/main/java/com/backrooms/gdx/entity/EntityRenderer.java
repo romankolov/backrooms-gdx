@@ -50,10 +50,10 @@ public final class EntityRenderer implements Disposable {
     /** How tall the creature should stand, in metres. The corridors are 3 m. */
     private static final float TARGET_HEIGHT = 2.1f;
     /**
-     * The model is authored Z-up (it comes from an FBX), so it is tipped upright on load. If a
-     * different model replaces it this is the one knob to change.
+     * The model's own forward, in degrees around the vertical, measured from the game's forward.
+     * A rig that was authored facing +Z instead of -Z needs a half turn here.
      */
-    private static final float UPRIGHT_X_DEGREES = -90f;
+    private static final float FACING_DEGREES = 0f;
 
     private static final Color TORCH_COLOR = new Color(1f, 0.93f, 0.78f, 1f);
 
@@ -74,6 +74,8 @@ public final class EntityRenderer implements Disposable {
     private final Matrix4 modelSpace = new Matrix4();
     private final Matrix4 transform = new Matrix4();
     private float baseScale = 1f;
+    /** Which way the model faces relative to the game's forward: see {@link #FACING_DEGREES}. */
+    private float facingOffset = FACING_DEGREES;
 
     // --- procedural fallback ---------------------------------------------------------------------
     private final Environment lights = new Environment();
@@ -91,6 +93,7 @@ public final class EntityRenderer implements Disposable {
     public EntityRenderer(EntityController entity) {
         this.entity = entity;
         modelLoaded = loadModel();
+        // loadModel sets the flag itself when it succeeds; if it did not, there is no model.
         if (!modelLoaded) {
             buildFallback();
         }
@@ -165,7 +168,7 @@ public final class EntityRenderer implements Disposable {
             updateClip();
             // Placement: yaw about the vertical axis, then the model's own scale/offset fix-up.
             transform.setToTranslation(x, y, z)
-                    .rotate(Vector3.Y, entity.yaw * MathUtils.radiansToDegrees)
+                    .rotate(Vector3.Y, entity.yaw * MathUtils.radiansToDegrees + facingOffset)
                     .mul(modelSpace);
             scene.modelInstance.transform.set(transform);
             // Inverse-square falloff: a point light this bright reads at three or four metres,
@@ -237,6 +240,7 @@ public final class EntityRenderer implements Disposable {
                 currentClip = idleClip;
             }
             ready = true;
+            modelLoaded = true;
             Gdx.app.log("Entity", "model loaded: " + GLB_PATH + " scale=" + baseScale
                     + " clips: " + clipLine());
             return true;
@@ -254,11 +258,14 @@ public final class EntityRenderer implements Disposable {
      * Measures the model and builds the matrix that stands it on the floor at the right height,
      * centred on its own feet. Everything after this is translation and yaw.
      *
-     * <p>Sketchfab exports its own units and its own idea of which way is up (this one comes from
-     * an FBX and is Z-up), so rather than hard-code numbers the model is measured and normalised:
-     * upright, 2.1 m tall, feet at y = 0. Two system properties exist for the awkward cases -
-     * {@code -Dbackrooms.entityrot=x,y,z} (degrees) and {@code -Dbackrooms.entityscale=1.0} - so a
-     * replacement model can be stood up without editing code.
+     * <p>Sketchfab exports carry their own units and their own idea of which way is up - this one
+     * arrives lying on its back, 27 units long along Z, because the export keeps the FBX's own
+     * orientation. So nothing is hard-coded: the longest side of the model is taken to be the
+     * creature standing up, it is rotated onto the vertical axis, scaled to {@link
+     * #TARGET_HEIGHT}, and dropped so its feet are at y = 0. A model whose author picked a
+     * different axis therefore still stands correctly, which matters if this asset is ever
+     * replaced. {@code -Dbackrooms.entityrot=deg} and {@code -Dbackrooms.entityyaw=deg} correct the
+     * two things that cannot be measured - which end is the head, and which way it faces.
      */
     private void fitModel() {
         scene.modelInstance.calculateTransforms();
@@ -267,27 +274,42 @@ public final class EntityRenderer implements Disposable {
         float sizeX = Math.max(0.0001f, bounds.max.x - bounds.min.x);
         float sizeY = Math.max(0.0001f, bounds.max.y - bounds.min.y);
         float sizeZ = Math.max(0.0001f, bounds.max.z - bounds.min.z);
-        Gdx.app.log("Entity", String.format(java.util.Locale.US,
-                "model bounds %.2f x %.2f x %.2f (min %.2f,%.2f,%.2f)",
-                sizeX, sizeY, sizeZ, bounds.min.x, bounds.min.y, bounds.min.z));
 
-        float rotationX = property("backrooms.entityrot", UPRIGHT_X_DEGREES);
-        float scaleOverride = property("backrooms.entityscale", 1f);
-
-        // Height is the largest extent: a creature is longer than it is wide, whichever axis its
-        // author happened to call up.
         float tallest = Math.max(sizeX, Math.max(sizeY, sizeZ));
-        baseScale = tallest > 0.001f ? TARGET_HEIGHT / tallest : 1f;
-        baseScale = MathUtils.clamp(baseScale, 0.0005f, 200f) * scaleOverride;
+        baseScale = MathUtils.clamp(TARGET_HEIGHT / tallest, 0.0005f, 200f)
+                * property("backrooms.entityscale", 1f);
 
-        // Rotating -90 degrees about X maps the model's +Z (its "up") to world +Y. The translation
-        // is expressed in model space because it is applied before the rotation.
+        // The extra rotation stands the model up (see above), then this tips it onto its feet:
+        // +90 about X maps the model's long axis to +Y. Which of the three axes is "the long one"
+        // decides which way that has to happen.
+        facingOffset = property("backrooms.entityyaw", FACING_DEGREES);
+        float extra = property("backrooms.entityrot", 0f);
+        float standing = 0f;
+        Vector3 axis = Vector3.Y;
+        if (sizeZ >= sizeX && sizeZ >= sizeY) {
+            axis = Vector3.X;
+            standing = 90f;
+        } else if (sizeX >= sizeY) {
+            axis = Vector3.Z;
+            standing = 90f;
+        }
+
+        float centreX = (bounds.min.x + bounds.max.x) * 0.5f;
+        float centreY = (bounds.min.y + bounds.max.y) * 0.5f;
+        float centreZ = (bounds.min.z + bounds.max.z) * 0.5f;
+
+        // Applied to a scene vertex p: p -> R * s * (p - centre) + (0, height/2, 0). Matrix4's
+        // transforms post-multiply, so the operations read bottom-up here.
         modelSpace.idt()
-                .rotate(Vector3.X, rotationX)
-                .translate(-(bounds.min.x + bounds.max.x) * 0.5f,
-                        -(bounds.min.y + bounds.max.y) * 0.5f,
-                        -bounds.min.z)
-                .scale(baseScale, baseScale, baseScale);
+                .translate(0f, TARGET_HEIGHT * 0.5f, 0f)
+                .rotate(axis, standing + extra)
+                .scale(baseScale, baseScale, baseScale)
+                .translate(-centreX, -centreY, -centreZ);
+
+        Gdx.app.log("Entity", String.format(java.util.Locale.US,
+                "model measured %.2f x %.2f x %.2f (scene units), standing %.0f deg about %s,"
+                        + " scale %.4f, %.2f m tall",
+                sizeX, sizeY, sizeZ, standing + extra, axis, baseScale, TARGET_HEIGHT));
     }
 
     /** Reads a float system property, falling back when it is absent or malformed. */
