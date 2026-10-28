@@ -21,8 +21,9 @@ public final class Hud {
     public static final int BTN_DISTANCE = 3;
     public static final int BTN_SENSITIVITY = 4;
     public static final int BTN_VHS = 5;
-    public static final int BTN_QUIT = 6;
-    public static final int BTN_COUNT = 7;
+    public static final int BTN_ENTITY = 6;
+    public static final int BTN_QUIT = 7;
+    public static final int BTN_COUNT = 8;
 
     private static final Color PANEL = new Color(0.06f, 0.055f, 0.04f, 0.86f);
     private static final Color PANEL_EDGE = new Color(0.85f, 0.80f, 0.55f, 0.55f);
@@ -66,6 +67,7 @@ public final class Hud {
         labels[BTN_SENSITIVITY] = "SENSITIVITY: "
                 + String.format(java.util.Locale.US, "%.1f", settings.sensitivity);
         labels[BTN_VHS] = "VHS LOOK: " + (settings.vhs ? "ON" : "OFF");
+        labels[BTN_ENTITY] = "THE PRESENCE: " + (settings.entity ? "ON" : "OFF");
         labels[BTN_QUIT] = "QUIT";
     }
 

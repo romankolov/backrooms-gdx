@@ -14,6 +14,8 @@ import com.backrooms.gdx.Assets;
 import com.backrooms.gdx.BackroomsGame;
 import com.backrooms.gdx.GameSettings;
 import com.backrooms.gdx.audio.AudioManager;
+import com.backrooms.gdx.entity.EntityController;
+import com.backrooms.gdx.entity.EntityRenderer;
 import com.backrooms.gdx.input.TouchControls;
 import com.backrooms.gdx.player.Player;
 import com.backrooms.gdx.render.VhsEffect;
@@ -38,6 +40,8 @@ public final class PlayScreen extends ScreenAdapter {
     private final Hud hud;
     private final VhsEffect vhs;
     private final VhsOsd osd;
+    private final EntityController entity;
+    private final EntityRenderer entityView;
     private final PerspectiveCamera camera = new PerspectiveCamera(74f, 1, 1);
     private final InputAdapter menuInput;
     private final InputMultiplexer input;
@@ -77,7 +81,13 @@ public final class PlayScreen extends ScreenAdapter {
         this.hud = new Hud(assets);
         this.vhs = new VhsEffect(1f);
         this.osd = new VhsOsd();
+        this.entity = new EntityController(world.gen(), seed * 0x9e3779b97f4a7c15L);
+        this.entityView = new EntityRenderer(entity);
         this.vhsOn = settings.vhs;
+        if (System.getProperty("backrooms.entity") != null
+                && System.getProperty("backrooms.entity").trim().matches("0|false|no|off")) {
+            settings.entity = false;
+        }
         // -Dbackrooms.vhs=0 renders the raw frame, which is what a screenshot wants when the
         // effect itself is being worked on.
         String vhsFlag = System.getProperty("backrooms.vhs");
@@ -118,6 +128,15 @@ public final class PlayScreen extends ScreenAdapter {
         }
         player.spawn(spawn[0], spawn[1], spawn[2]);
         player.torchOn = settings.torch;
+        // -Dbackrooms.entity=1 puts it in front of the camera, hunting, so a screenshot can show it.
+        String entityFlag = System.getProperty("backrooms.entity");
+        if (entityFlag != null && entityFlag.trim().matches("1|true|yes|on")) {
+            float fx = player.position.x - MathUtils.sin(player.yaw) * 8.5f;
+            float fz = player.position.z - MathUtils.cos(player.yaw) * 8.5f;
+            entity.forceSpawn(fx, fz, EntityController.State.HUNT);
+            Gdx.app.log("BackroomsInput", String.format(java.util.Locale.US,
+                    "entity at %.1f,%.1f", fx, fz));
+        }
         String yaw = System.getProperty("backrooms.yaw");
         if (yaw != null) {
             try {
@@ -286,6 +305,19 @@ public final class PlayScreen extends ScreenAdapter {
             if (player.grounded && player.position.y < FALL_DEPTH) {
                 startFallThrough();
             }
+            if (settings.entity) {
+                entity.update(delta, player.position);
+                if (entity.consumeCapture()) {
+                    // It reached you. The tape cuts to somewhere else: same effect as a pit.
+                    Gdx.app.log("Entity", "caught the player at "
+                            + String.format(java.util.Locale.US, "%.1f,%.1f",
+                            player.position.x, player.position.z));
+                    vhs.setGlitch(1f);
+                    startFallThrough();
+                }
+            } else {
+                entity.vanish(1e9f);
+            }
             if (teleporting) {
                 fade = Math.min(1f, fade + delta * 3.2f);
                 if (fade >= 0.999f) {
@@ -310,8 +342,12 @@ public final class PlayScreen extends ScreenAdapter {
         boolean tape = vhsOn && vhs.isReady() && !debugView;
         if (tape) {
             // An old tape is never quite clean: every so often the tracking slips for a moment.
+            float glitch = entity.presence() * 0.85f;
             if (!paused && random.nextFloat() < delta * 0.10f) {
-                vhs.setGlitch(0.35f + random.nextFloat() * 0.25f);
+                glitch = Math.max(glitch, 0.35f + random.nextFloat() * 0.25f);
+            }
+            if (glitch > 0.001f) {
+                vhs.setGlitch(glitch);
             }
             vhs.update(delta);
             audio.setTapeLevel(1f, vhs.glitch());
@@ -366,6 +402,12 @@ public final class PlayScreen extends ScreenAdapter {
 
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDisable(GL20.GL_CULL_FACE);
+
+        int targetWidth = tape ? vhs.renderWidth() : Gdx.graphics.getWidth();
+        int targetHeight = tape ? vhs.renderHeight() : Gdx.graphics.getHeight();
+        entityView.update(delta);
+        entityView.render(camera, targetWidth, targetHeight, torchPos,
+                player.torchOn ? 1f : 0.35f);
 
         if (tape) {
             vhs.end(time);
@@ -452,6 +494,14 @@ public final class PlayScreen extends ScreenAdapter {
                 settings.save();
                 hud.refreshLabels(settings);
                 break;
+            case Hud.BTN_ENTITY:
+                settings.entity = !settings.entity;
+                if (!settings.entity) {
+                    entity.vanish(1e9f);
+                }
+                settings.save();
+                hud.refreshLabels(settings);
+                break;
             case Hud.BTN_QUIT:
                 game.showTitle();
                 break;
@@ -501,6 +551,7 @@ public final class PlayScreen extends ScreenAdapter {
         world.dispose();
         vhs.dispose();
         osd.dispose();
+        entityView.dispose();
         if (Gdx.input.getInputProcessor() == input) {
             Gdx.input.setInputProcessor(null);
         }
