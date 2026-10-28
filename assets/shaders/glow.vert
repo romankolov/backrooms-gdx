@@ -1,8 +1,12 @@
-// Additive light billboards (GLSL ES 1.00).
+// Additive light for the fluorescent ceiling panels (GLSL ES 1.00).
 //
-// One quad per ceiling fixture, expanded on the CPU into camera-facing corners, so the glow always
-// faces the viewer and costs no geometry. Everything that makes it look like a light rather than a
-// disc lives in the fragment shader.
+// This is not a sprite and not a billboard: it is the panel's own rectangle, lying in the ceiling
+// plane, a millimetre under the geometry. Expanding it in the horizontal plane is what makes the
+// light read as a lit fitting - it is foreshortened exactly like the panel it belongs to, it sits at
+// the panel's height, and it goes with the ceiling when you look up at it.
+//
+// The glow is a little wider than the panel so the spill has somewhere to go; the fragment shader
+// knows how wide the panel itself is and keeps the core flat across it.
 #ifdef GL_ES
 precision highp float;
 #endif
@@ -13,15 +17,13 @@ attribute float a_size;
 attribute float a_strength;
 
 uniform mat4 u_projView;
-uniform vec3 u_right;
-uniform vec3 u_up;
 
-varying vec2 v_corner;
+varying vec2 v_local;        // metres from the centre of the panel, in the ceiling plane
 varying float v_strength;
 
 void main() {
-    vec3 world = a_center + (u_right * a_corner.x + u_up * a_corner.y) * a_size;
-    v_corner = a_corner;
+    vec3 world = a_center + vec3(a_corner.x * a_size, 0.0, a_corner.y * a_size);
+    v_local = a_corner * a_size;
     v_strength = a_strength;
     gl_Position = u_projView * vec4(world, 1.0);
 }

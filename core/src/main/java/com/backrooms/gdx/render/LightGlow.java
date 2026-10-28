@@ -16,10 +16,11 @@ import com.backrooms.gdx.world.WorldGen;
 /**
  * The glow around the ceiling tubes.
  *
- * <p>The world shader draws the panel itself as a bright emissive rectangle, but a rectangle is not
- * what a light looks like: what sells it is the spill - a hot core that blooms past the tube and a
- * halo that fades into the room and brightens the ceiling around it. That is a separate additive
- * pass of camera-facing quads, one per nearby fixture, which is cheap (a few dozen quads, one draw
+ * <p>The world shader draws the panel itself as an emissive rectangle, but emission alone reads as
+ * white card rather than a light. What sells it is the spill: the diffuser lit evenly across its
+ * whole face, its edges softening, and a short falloff onto the tiles around it. That is a separate
+ * additive pass, one quad per nearby fixture, lying in the ceiling plane at the panel's own height
+ * and slightly oversized so the spill has somewhere to go. It is cheap (a few dozen quads, one draw
  * call) and needs no blur pass, no extra framebuffer and no dynamic lights in the world shader.
  *
  * <p>Fixtures that flicker use the same flicker curve as the panel geometry, so the halo breathes
@@ -29,8 +30,10 @@ public final class LightGlow implements Disposable {
 
     /** How far the glow is drawn. Beyond this the fog has eaten the fixture anyway. */
     private static final float RANGE = 30f;
-    /** The halo is about three times the width of the tube it comes from. */
-    private static final float HALO_SIZE = 1.05f;
+    /** Half the width of the diffuser geometry, in metres (see {@code ChunkMesher}). */
+    private static final float PANEL_HALF = 0.46f;
+    /** The glow quad is this much wider than the panel, so the spill has room to fade. */
+    private static final float GLOW_SCALE = 1.75f;
     private static final int MAX_FIXTURES = 96;
     private static final int FLOATS_PER_VERTEX = 7;      // centre(3) + corner(2) + size + strength
     private static final int VERTICES_PER_QUAD = 6;
@@ -44,8 +47,6 @@ public final class LightGlow implements Disposable {
     private final Mesh mesh;
     private final float[] vertices = new float[MAX_FIXTURES * VERTICES_PER_QUAD * FLOATS_PER_VERTEX];
     private final Matrix4 projView = new Matrix4();
-    private final Vector3 right = new Vector3();
-    private final Vector3 up = new Vector3();
     private final Vector3 forward = new Vector3();
     private boolean ready;
     private int quads;
@@ -87,9 +88,6 @@ public final class LightGlow implements Disposable {
         quads = 0;
         camera.update();
         projView.set(camera.projection).mul(camera.view);
-        // Billboard basis: the camera's own right and up vectors.
-        right.set(camera.direction).crs(camera.up).nor();
-        up.set(right).crs(camera.direction).nor();
         forward.set(camera.direction);
 
         int ci = MathUtils.floor(camera.position.x);
@@ -110,9 +108,11 @@ public final class LightGlow implements Disposable {
                     continue;
                 }
                 float x = cx + 0.5f;
-                // A little below the panel: the light is the air under the tube, and the ceiling
-                // itself hides anything above it anyway.
-                float y = WorldGen.fixtureCenterY(gen, cx, cz) - 0.22f;
+                // Flat against the panel, a hair below it so the two do not fight for the same
+                // depth: this is the panel glowing, not a bulb hanging under it.
+                // The panel geometry itself is drawn at ceil - 0.03; five millimetres below that is
+                // close enough to look like the same surface and far enough not to z-fight.
+                float y = gen.ceilY(cx, cz) - 0.035f;
                 float z = cz + 0.5f;
                 float dx = x - camera.position.x;
                 float dy = y - camera.position.y;
@@ -121,9 +121,9 @@ public final class LightGlow implements Disposable {
                 if (distance > RANGE || distance < 0.001f) {
                     continue;
                 }
-                // Behind the camera: the quad would be clipped anyway, and the halo is expensive
-                // fill rate on a phone.
-                if (dx * forward.x + dy * forward.y + dz * forward.z < -HALO_SIZE) {
+                // Behind the camera: the quad would be clipped anyway, and an oversized additive
+                // quad is expensive fill rate on a phone.
+                if (dx * forward.x + dy * forward.y + dz * forward.z < -PANEL_HALF * GLOW_SCALE) {
                     continue;
                 }
                 // A dying tube's panel is dimmed by the same flicker curve in the world shader.
@@ -134,11 +134,12 @@ public final class LightGlow implements Disposable {
                 // Fade with distance so a fixture at the edge of the draw distance does not pop.
                 float fade = MathUtils.clamp(1f - distance / RANGE, 0f, 1f);
                 fade *= fade;
-                // Fog: the halo should not survive where the level itself has faded to haze.
-                float strength = power * fade * 0.75f;
-                // Closer fixtures are subtler per unit area: the halo would otherwise fill the frame.
-                float size = HALO_SIZE * MathUtils.clamp(distance * 0.14f, 0.45f, 1.4f);
-                emit(x, y, z, size, strength);
+                // Fog: the glow should not survive where the level itself has faded to haze.
+                float strength = power * fade * 0.85f;
+                // The quad is the panel's own footprint plus the spill margin. It does not grow with
+                // distance: a rectangle on the ceiling has a fixed size, and letting it swell with
+                // distance is what turned it into a ball hanging under the fitting.
+                emit(x, y, z, PANEL_HALF * GLOW_SCALE, strength);
                 quads++;
             }
         }
@@ -149,7 +150,8 @@ public final class LightGlow implements Disposable {
 
         Gdx.gl.glViewport(0, 0, width, height);
         // Depth test stays on so a light in the next room does not glow through the wall, but nothing
-        // is written: this pass only adds light to what is already there.
+        // is written: this pass only adds light to what is already there. The quad lies almost in
+        // the panel's own plane, so LEQUAL is what lets it win the depth test against it.
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDepthFunc(GL20.GL_LEQUAL);
         Gdx.gl.glDisable(GL20.GL_CULL_FACE);
@@ -159,8 +161,7 @@ public final class LightGlow implements Disposable {
 
         shader.begin();
         shader.setUniformMatrix("u_projView", projView);
-        shader.setUniformf("u_right", right.x, right.y, right.z);
-        shader.setUniformf("u_up", up.x, up.y, up.z);
+        shader.setUniformf("u_panelHalf", PANEL_HALF);
         mesh.setVertices(vertices, 0, quads * VERTICES_PER_QUAD * FLOATS_PER_VERTEX);
         mesh.render(shader, GL20.GL_TRIANGLES, 0, quads * VERTICES_PER_QUAD);
         shader.end();

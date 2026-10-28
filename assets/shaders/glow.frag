@@ -1,25 +1,35 @@
-// Additive glow for the fluorescent fixtures (GLSL ES 1.00).
+// Additive glow for the fluorescent ceiling panels (GLSL ES 1.00).
 //
-// A light is not a bright rectangle: it is the rectangle plus the light spilling off it. The panel
-// itself is already drawn by the world shader; this adds the two things it cannot - a hot core that
-// blooms a little wider than the tube, and a soft halo that fades into the room. Drawn with
-// (GL_ONE, GL_ONE) blending, so whatever is behind it only gets brighter.
+// A fluorescent fitting does not glow as a ball: the whole 0.92 m diffuser is lit, its brightness is
+// even across the face, and the light only spills a little past the edges onto the tiles around it.
+// So the falloff here is rectangular - Chebyshev distance from the panel's centre, not Euclidean -
+// which keeps the glow square, flat against the ceiling, and the same height as the panel it
+// belongs to.
+//
+// Drawn with (GL_ONE, GL_ONE) blending: whatever is behind it only gets brighter.
 #ifdef GL_ES
 precision mediump float;
 #endif
 
-varying vec2 v_corner;
+varying vec2 v_local;
 varying float v_strength;
 
+/** Half the width of the panel itself, in metres, passed in by the renderer. */
+uniform float u_panelHalf;
+
 void main() {
-    float r = length(v_corner);
-    if (r > 1.0) {
+    // Square panels, so the distance to the edge is the larger of the two axes.
+    float edge = max(abs(v_local.x), abs(v_local.y));
+
+    // Even light across the diffuser, softening only at the very edge.
+    float face = 1.0 - smoothstep(u_panelHalf * 0.72, u_panelHalf * 1.02, edge);
+    // The spill onto the surrounding tiles: a short, square falloff, not a halo.
+    float spill = exp(-max(edge - u_panelHalf, 0.0) * 7.0) * 0.45;
+
+    float amount = (face * 0.70 + spill) * v_strength;
+    if (amount < 0.002) {
         discard;
     }
-    // Two falloffs: a long soft one for the room-filling halo, and a short hot one for the tube.
-    float halo = pow(1.0 - r, 2.8);
-    float core = exp(-r * r * 26.0);
-    vec3 color = vec3(1.0, 0.965, 0.88);
-    float amount = (halo * 0.55 + core * 1.35) * v_strength;
-    gl_FragColor = vec4(color * amount, 1.0);
+    vec3 tint = vec3(1.0, 0.975, 0.925);
+    gl_FragColor = vec4(tint * amount, 1.0);
 }
