@@ -87,7 +87,6 @@ public final class EntityRenderer implements Disposable {
     private float pendingDelta;
     private float flickerPhase;
     private float scareLock;
-    private int debugFrames;
 
     public EntityRenderer(EntityController entity) {
         this.entity = entity;
@@ -177,23 +176,7 @@ public final class EntityRenderer implements Disposable {
             scenes.setCamera(camera);
             scenes.update(pendingDelta);
             pendingDelta = 0f;
-            if (debugFrames < 3) {
-                debugFrames++;
-                Vector3 probe = new Vector3(x, y + 1f, z);
-                camera.project(probe);
-                Gdx.app.log("Entity", "draw: entity " + x + "," + y + "," + z
-                        + " cam " + camera.position + " dir " + camera.direction
-                        + " ndc " + probe + " nodes " + scene.modelInstance.nodes.size
-                        + " anims " + scene.modelInstance.animations.size
-                        + " mats " + scene.modelInstance.materials.size);
-            }
             scenes.render();
-            if (debugFrames < 4) {
-                int err = Gdx.gl.glGetError();
-                if (err != 0) {
-                    Gdx.app.error("Entity", "GL error after scene render: 0x" + Integer.toHexString(err));
-                }
-            }
             return;
         }
 

@@ -85,10 +85,15 @@ void main() {
         vec2 p = fract(v_pos.xz + 0.5) * 2.0;
         float frame = step(0.10, p.x) * step(0.10, p.y) * step(p.x, 1.90) * step(p.y, 1.90);
         float tubes = 0.72 + 0.28 * sin(p.y * 26.0);
+        // The diffuser is not flat: it is brightest where the tube is behind it and dimmer towards
+        // the frame, which is what makes it read as something glowing rather than a white sticker.
+        float across = length(p - 1.0);
+        float diffuser = 1.18 - 0.30 * across;
         albedo = mix(vec3(0.62, 0.62, 0.60), vec3(0.94, 0.93, 0.86), frame);
         nmap = vec3(0.5, 0.5, 1.0);
         irr = lm.rgb * u_lightRange * 0.30;
-        emission = vec3(1.0, 0.985, 0.90) * (0.35 + 0.65 * frame) * tubes * v_emit * 3.2;
+        emission = vec3(1.0, 0.985, 0.90) * (0.35 + 0.65 * frame) * tubes * diffuser
+                 * v_emit * 3.2;
     }
 
     // ---- normal mapping (surfaces are axis aligned, so the tangent frame is cheap) ----
