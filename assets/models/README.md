@@ -14,9 +14,10 @@ you the model, never the level.
 | | |
 | --- | --- |
 | Format | binary glTF (`.glb`), one skinned mesh |
-| Up axis | Y, metres, origin between the feet — *anything else is measured and corrected on load* |
-| Facing | `-Z` at rest is treated as "forward" |
-| Height | normalised to 2.1 m; the corridors are 3 m |
+| Up axis | Y |
+| Origin | between the feet, on the floor |
+| Facing | `-Z` |
+| Height | exactly 2.1 m; the corridors are 3 m |
 | Rig | **at most 24 joints** — see below |
 | Animations | at least one. A clip whose name contains `jump`/`scare`/`attack`/`roar` is the lunge, `stalk`/`idle`/`stand`/`breath` is the standing pose, and the longest clip is the locomotion cycle. |
 | Size | keep it under ~3 MB |
@@ -31,13 +32,21 @@ shader past that, which is the right call for a phone. The source rig has 135 jo
 the skin weights; the silhouette survives because a removed joint's weight moves to its nearest
 surviving ancestor.
 
-### Units and orientation
+### Why the conversion normalises the model
 
-Sketchfab exports carry their own units and their own idea of which way is up, so nothing is
-hard-coded: the model is measured after loading (bounding box), rotated upright, centred on its
-feet, and scaled to 2.1 m. If a replacement model needs a different correction, `-Dbackrooms.entityrot=x,y,z`
-(degrees, default `-90,0,0` for this Z-up export) and `-Dbackrooms.entityscale=1.0` override it
-without touching code.
+A skinned mesh does not draw where its node bounds say: the vertices go through the joint matrices,
+so the skeleton's own scale decides the size. This rig's armature scales everything by about a
+sixth, which means the mesh measures 27 units tall on disk and draws 4.6 - and a game that trusts
+the bounding box ends up with a four-centimetre creature. Neither libGDX nor gdx-gltf can measure
+the drawn size for you.
+
+So `tools/prepare_entity_model.mjs` skins the mesh in the rest pose, takes the bounds of *that*,
+rotates the longest axis upright, scales to 2.1 m, and writes the transform onto the scene root. The
+result is a file that is metres, Y up, feet on the origin, facing -Z - and the game places it with
+nothing but a translation and a yaw.
+
+A replacement model that does not follow that contract can be corrected at run time with
+`-Dbackrooms.entityscale=1.0` and `-Dbackrooms.entityyaw=180`, without touching code.
 
 ## Trying it
 
@@ -46,7 +55,7 @@ without touching code.
 ./gradlew :desktop:run -Dbackrooms.entity=1 -Dbackrooms.vhs=0   # judge the model, not the tape
 ```
 
-The run logs `model loaded: models/entity.glb scale=… clips: idle=… walk=… scare=… playing=…` when it
+The run logs `model ready: models/entity.glb expecting 2.1 m … clips: idle=… walk=… scare=…` when it
 picks the file up, and `could not load models/entity.glb: …` plus the placeholder notice when it
 does not.
 

@@ -272,6 +272,188 @@ if (joints.length <= MAX_BONES) {
   console.log(`bones: ${joints.length} -> ${newJoints.length}`);
 }
 
+// ---------------------------------------------------------------- stand it up and size it
+// The game places this file as metres with the feet at the origin and Y up, and it cannot work the
+// size out for itself: a skinned mesh's bounds are not its node bounds. The skinning matrices are
+// what decides how big the creature actually draws - this rig scales everything by about a sixth on
+// the way through the armature - so the measuring is done here, where the skin can be evaluated.
+{
+  const I = () => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  const mul = (a, b) => {
+    const out = new Array(16).fill(0);
+    for (let c = 0; c < 4; c++) {
+      for (let r = 0; r < 4; r++) {
+        let sum = 0;
+        for (let k = 0; k < 4; k++) sum += a[k * 4 + r] * b[c * 4 + k];
+        out[c * 4 + r] = sum;
+      }
+    }
+    return out;
+  };
+  const local = (node) => {
+    const [tx, ty, tz] = node.getTranslation();
+    const [qx, qy, qz, qw] = node.getRotation();
+    const [sx, sy, sz] = node.getScale();
+    const x2 = qx + qx, y2 = qy + qy, z2 = qz + qz;
+    const xx = qx * x2, xy = qx * y2, xz = qx * z2;
+    const yy = qy * y2, yz = qy * z2, zz = qz * z2;
+    const wx = qw * x2, wy = qw * y2, wz = qw * z2;
+    return [
+      (1 - (yy + zz)) * sx, (xy + wz) * sx, (xz - wy) * sx, 0,
+      (xy - wz) * sy, (1 - (xx + zz)) * sy, (yz + wx) * sy, 0,
+      (xz + wy) * sz, (yz - wx) * sz, (1 - (xx + yy)) * sz, 0,
+      tx, ty, tz, 1,
+    ];
+  };
+  const worlds = new Map();
+  const world = (node) => {
+    if (worlds.has(node)) return worlds.get(node);
+    const parent = node.getParentNode();
+    const matrix = parent ? mul(world(parent), local(node)) : local(node);
+    worlds.set(node, matrix);
+    return matrix;
+  };
+  const transform = (m, v) => [
+    m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12],
+    m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13],
+    m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14],
+  ];
+
+  // Skin every vertex in the rest pose and take the bounds of the result.
+  const skin = root.listSkins()[0] || null;
+  const joints = skin ? skin.listJoints() : [];
+  const ibmAccessor = skin ? skin.getInverseBindMatrices() : null;
+  const ibmArray = ibmAccessor ? ibmAccessor.getArray() : null;
+  const boneMatrices = joints.map((joint, i) =>
+    mul(world(joint), Array.from(ibmArray.slice(i * 16, i * 16 + 16))));
+
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  const grow = (v) => {
+    for (let i = 0; i < 3; i++) {
+      min[i] = Math.min(min[i], v[i]);
+      max[i] = Math.max(max[i], v[i]);
+    }
+  };
+  for (const mesh of root.listMeshes()) {
+    for (const prim of mesh.listPrimitives()) {
+      const position = prim.getAttribute('POSITION');
+      if (!position) continue;
+      const pos = position.getArray();
+      const count = position.getCount();
+      const jointsAcc = prim.getAttribute('JOINTS_0');
+      const weightsAcc = prim.getAttribute('WEIGHTS_0');
+      if (jointsAcc && weightsAcc) {
+        const j = jointsAcc.getArray();
+        const w = weightsAcc.getArray();
+        const normalized = weightsAcc.getNormalized();
+        for (let v = 0; v < count; v++) {
+          const p = [pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2]];
+          const out = [0, 0, 0];
+          let weightSum = 0;
+          for (let k = 0; k < 4; k++) {
+            let weight = w[v * 4 + k];
+            if (normalized) weight /= 255;
+            if (!weight) continue;
+            const q = transform(boneMatrices[j[v * 4 + k]], p);
+            out[0] += q[0] * weight;
+            out[1] += q[1] * weight;
+            out[2] += q[2] * weight;
+            weightSum += weight;
+          }
+          grow(weightSum > 0.0001 ? out.map((x) => x / weightSum) : p);
+        }
+      } else {
+        const node = mesh.listPrimitives().length ? null : null;
+        for (let v = 0; v < count; v++) grow([pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2]]);
+      }
+    }
+  }
+
+  const size = [max[0] - min[0], max[1] - min[1], max[2] - min[2]];
+  console.log(`skinned bounds ${size.map((v) => v.toFixed(2)).join(' x ')}`
+    + ` (min ${min.map((v) => v.toFixed(2)).join(',')})`);
+
+  const TARGET_HEIGHT = 2.1;
+  const longest = size.indexOf(Math.max(...size));
+  const scale = TARGET_HEIGHT / size[longest];
+
+  // The rotation that turns the longest axis into the vertical one.
+  let rotation;
+  if (longest === 2) {
+    rotation = [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1];       // -90 about X: +Y from +Z
+  } else if (longest === 0) {
+    rotation = [0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];      // +90 about Z: +Y from +X
+  } else {
+    rotation = I();
+  }
+
+  // Where the eight corners of the box end up after that rotation and the scale.
+  const corners = [];
+  for (let i = 0; i < 8; i++) {
+    const c = transform(rotation, [
+      (i & 1 ? max[0] : min[0]) * scale,
+      (i & 2 ? max[1] : min[1]) * scale,
+      (i & 4 ? max[2] : min[2]) * scale,
+    ]);
+    corners.push(c);
+  }
+  const low = [0, 1, 2].map((i) => Math.min(...corners.map((c) => c[i])));
+  const high = [0, 1, 2].map((i) => Math.max(...corners.map((c) => c[i])));
+  const place = [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    -(low[0] + high[0]) / 2, -low[1], -(low[2] + high[2]) / 2, 1,
+  ];
+
+  const normalise = mul(place, mul(rotation, [
+    scale, 0, 0, 0,
+    0, scale, 0, 0,
+    0, 0, scale, 0,
+    0, 0, 0, 1,
+  ]));
+
+  // Apply it above the whole scene, so the joints inherit it and the skinned vertices follow. The
+  // library stores a node as either a matrix or a translation/rotation/scale triple, and setting one
+  // clears the other, so the combined transform is decomposed back into a triple.
+  const decompose = (m) => {
+    const column = (i) => [m[i * 4], m[i * 4 + 1], m[i * 4 + 2]];
+    const length = (v) => Math.hypot(v[0], v[1], v[2]);
+    const scale = [length(column(0)), length(column(1)), length(column(2))];
+    const basis = [0, 1, 2].map((i) => column(i).map((x) => x / (scale[i] || 1)));
+    // Rotation matrix -> quaternion (the basis is orthonormal, so this is the standard branch).
+    const [r0, r1, r2] = basis;
+    const trace = r0[0] + r1[1] + r2[2];
+    let q;
+    if (trace > 0) {
+      const k = Math.sqrt(trace + 1) * 2;
+      q = [(r1[2] - r2[1]) / k, (r2[0] - r0[2]) / k, (r0[1] - r1[0]) / k, 0.25 * k];
+    } else if (r0[0] > r1[1] && r0[0] > r2[2]) {
+      const k = Math.sqrt(1 + r0[0] - r1[1] - r2[2]) * 2;
+      q = [0.25 * k, (r1[0] + r0[1]) / k, (r2[0] + r0[2]) / k, (r1[2] - r2[1]) / k];
+    } else if (r1[1] > r2[2]) {
+      const k = Math.sqrt(1 + r1[1] - r0[0] - r2[2]) * 2;
+      q = [(r1[0] + r0[1]) / k, 0.25 * k, (r2[1] + r1[2]) / k, (r2[0] - r0[2]) / k];
+    } else {
+      const k = Math.sqrt(1 + r2[2] - r0[0] - r1[1]) * 2;
+      q = [(r2[0] + r0[2]) / k, (r2[1] + r1[2]) / k, 0.25 * k, (r0[1] - r1[0]) / k];
+    }
+    return { translation: [m[12], m[13], m[14]], rotation: q, scale };
+  };
+
+  for (const node of root.listNodes()) {
+    if (node.getParentNode()) continue;
+    if (!node.getMesh() && !node.getSkin() && node.listChildren().length === 0) continue;
+    const combined = decompose(mul(normalise, local(node)));
+    node.setTranslation(combined.translation);
+    node.setRotation(combined.rotation);
+    node.setScale(combined.scale);
+    console.log(`normalised root ${node.getName()}: ${TARGET_HEIGHT} m tall, feet at the origin`
+      + ` (scale ${combined.scale.map((v) => v.toFixed(4)).join(',')})`);
+  }
+}
+
 // ---------------------------------------------------------------- repack
 const glb = await io.writeBinary(doc);
 const { writeFile } = await import('node:fs/promises');
