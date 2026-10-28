@@ -111,16 +111,16 @@ public final class VhsOsd implements Disposable {
         return c < GLYPH_BITS.length && GLYPH_BITS[c] != null;
     }
 
-    /** Rows of lit pixels for a character, or null. Test seam; also used by {@link #text}. */
-    static byte[] bits(char c) {
+    /** Rows of lit pixels for a character, top row first, one byte per pixel; null if absent. */
+    public static byte[] bits(char c) {
         return c < GLYPH_BITS.length ? GLYPH_BITS[c] : null;
     }
 
-    static int glyphWidth() {
+    public static int glyphWidth() {
         return GLYPH_W;
     }
 
-    static int glyphHeight() {
+    public static int glyphHeight() {
         return GLYPH_H;
     }
 
