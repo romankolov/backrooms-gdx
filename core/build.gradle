@@ -18,6 +18,9 @@ sourceSets {
 
 dependencies {
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    // libGDX core can load OBJ and G3D models but not glTF. The rigged entity needs glTF, so this is
+    // the one third-party runtime dependency in the project.
+    api "com.github.mgsx-dev:gdx-gltf:2.3.0"
 
     testImplementation "junit:junit:4.13.2"
     testImplementation "com.badlogicgames.gdx:gdx:$gdxVersion"
