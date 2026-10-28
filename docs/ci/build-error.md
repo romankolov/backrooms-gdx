@@ -1,88 +1,72 @@
 # Last build failure
 
-Commit: 961f27d
+Commit: 6254b4e
 
 ```
-task ':core:compileJava'.
-> Compilation failed; see the compiler output below.
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:24: error: package net.mgsx.gltf.loaders.glb does not exist
-  import net.mgsx.gltf.loaders.glb.GLBLoader;
-                                  ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:25: error: package net.mgsx.gltf.scene3d.lights does not exist
-  import net.mgsx.gltf.scene3d.lights.PointLightEx;
-                                     ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:26: error: package net.mgsx.gltf.scene3d.scene does not exist
-  import net.mgsx.gltf.scene3d.scene.Scene;
-                                    ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:27: error: package net.mgsx.gltf.scene3d.scene does not exist
-  import net.mgsx.gltf.scene3d.scene.SceneAsset;
-                                    ^
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:28: error: package net.mgsx.gltf.scene3d.scene does not exist
-  import net.mgsx.gltf.scene3d.scene.SceneManager;
-                                    ^
-  Note: Recompile with -Xlint:deprecation for details.
-  Note: Some input files use or override a deprecated API.
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:9: error: cannot find symbol
-  import com.badlogic.gdx.graphics.g3d.Animation;
-                                      ^
-    symbol:   class Animation
-    location: package com.badlogic.gdx.graphics.g3d
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:61: error: cannot find symbol
-      private SceneManager scenes;
-              ^
-    symbol:   class SceneManager
-    location: class EntityRenderer
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:62: error: cannot find symbol
-      private SceneAsset asset;
-              ^
-    symbol:   class SceneAsset
-    location: class EntityRenderer
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:63: error: cannot find symbol
-      private Scene scene;
-              ^
-    symbol:   class Scene
-    location: class EntityRenderer
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:65: error: cannot find symbol
-      private PointLightEx modelTorch;
-              ^
-    symbol:   class PointLightEx
-    location: class EntityRenderer
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:208: error: cannot find symbol
-      private void pickClips(Array<Animation> animations) {
-                                   ^
-    symbol:   class Animation
-    location: class EntityRenderer
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:180: error: cannot find symbol
-              asset = new GLBLoader().load(file);
-                          ^
-    symbol:   class GLBLoader
-    location: class EntityRenderer
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:181: error: cannot find symbol
-              scenes = new SceneManager(64);
-                           ^
-    symbol:   class SceneManager
-    location: class EntityRenderer
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:183: error: cannot find symbol
-              scene = new Scene(asset.scene);
-                          ^
-    symbol:   class Scene
-    location: class EntityRenderer
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:187: error: cannot find symbol
-              modelTorch = new PointLightEx().set(TORCH_COLOR, new Vector3(), 0f, 14f);
-                               ^
-    symbol:   class PointLightEx
-    location: class EntityRenderer
-  /home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:212: error: cannot find symbol
-          for (Animation a : animations) {
-               ^
-    symbol:   class Animation
-    location: class EntityRenderer
-  16 errors
+Welcome to Gradle 8.11.1!
+Here are the highlights of this release:
+ - Parallel load and store for Configuration Cache
+ - Java compilation errors at the end of the build output
+ - Consolidated report for warnings and deprecations
+For more details see https://docs.gradle.org/8.11.1/release-notes.html
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :android:copyAndroidNatives
+Android natives: arm64-v8a/libgdx.so, armeabi-v7a/libgdx.so, x86_64/libgdx.so
+> Task :android:preBuild
+> Task :android:preDebugBuild
+> Task :android:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :android:javaPreCompileDebug FROM-CACHE
+> Task :android:generateDebugResValues FROM-CACHE
+> Task :android:checkDebugAarMetadata
+> Task :android:mapDebugSourceSetPaths
+> Task :android:generateDebugResources FROM-CACHE
+> Task :android:mergeDebugResources FROM-CACHE
+> Task :android:packageDebugResources FROM-CACHE
+> Task :android:parseDebugLocalResources FROM-CACHE
+> Task :android:createDebugCompatibleScreenManifests
+> Task :android:extractDeepLinksDebug FROM-CACHE
+> Task :android:processDebugMainManifest FROM-CACHE
+> Task :android:processDebugManifest FROM-CACHE
+> Task :android:processDebugManifestForPackage FROM-CACHE
+> Task :android:processDebugResources FROM-CACHE
+> Task :android:mergeDebugShaders
+> Task :android:compileDebugShaders NO-SOURCE
+> Task :android:generateDebugAssets UP-TO-DATE
+> Task :android:mergeDebugAssets
+> Task :android:desugarDebugFileDependencies FROM-CACHE
+> Task :android:processDebugJavaRes NO-SOURCE
+> Task :android:compressDebugAssets
+> Task :android:mergeDebugJniLibFolders
+> Task :android:checkDebugDuplicateClasses
+> Task :core:compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :android:validateSigningDebug
+> Task :core:jar
+> Task :core:compileTestJava
+> Task :core:processTestResources NO-SOURCE
+> Task :core:testClasses
+> Task :core:test
+EntityControllerTest > beingSeenLongEnoughEscalatesToHunting FAILED
+    java.lang.AssertionError: expected a clear line of sight at 2.5 m
+        at org.junit.Assert.fail(Assert.java:89)
+        at org.junit.Assert.assertTrue(Assert.java:42)
+        at com.backrooms.gdx.EntityControllerTest.beingSeenLongEnoughEscalatesToHunting(EntityControllerTest.java:104)
+38 tests completed, 1 failed
+> Task :core:test FAILED
+> Task :android:mergeExtDexDebug
+[Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
+FAILURE: Build failed with an exception.
+* What went wrong:
+Execution failed for task ':core:test'.
+> There were failing tests. See the report at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/core/build/reports/tests/test/index.html
 * Try:
-> Check your code and dependencies to fix the compilation error(s)
 > Run with --scan to get full insights.
 * Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:compileJava'.
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:test'.
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
@@ -112,101 +96,13 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:co
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:24: error: package net.mgsx.gltf.loaders.glb does not exist
-import net.mgsx.gltf.loaders.glb.GLBLoader;
-                                ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:25: error: package net.mgsx.gltf.scene3d.lights does not exist
-import net.mgsx.gltf.scene3d.lights.PointLightEx;
-                                   ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:26: error: package net.mgsx.gltf.scene3d.scene does not exist
-import net.mgsx.gltf.scene3d.scene.Scene;
-                                  ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:27: error: package net.mgsx.gltf.scene3d.scene does not exist
-import net.mgsx.gltf.scene3d.scene.SceneAsset;
-                                  ^
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:28: error: package net.mgsx.gltf.scene3d.scene does not exist
-import net.mgsx.gltf.scene3d.scene.SceneManager;
-                                  ^
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use or override a deprecated API.
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:9: error: cannot find symbol
-import com.badlogic.gdx.graphics.g3d.Animation;
-                                    ^
-  symbol:   class Animation
-  location: package com.badlogic.gdx.graphics.g3d
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:61: error: cannot find symbol
-    private SceneManager scenes;
-            ^
-  symbol:   class SceneManager
-  location: class EntityRenderer
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:62: error: cannot find symbol
-    private SceneAsset asset;
-            ^
-  symbol:   class SceneAsset
-  location: class EntityRenderer
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:63: error: cannot find symbol
-    private Scene scene;
-            ^
-  symbol:   class Scene
-  location: class EntityRenderer
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:65: error: cannot find symbol
-    private PointLightEx modelTorch;
-            ^
-  symbol:   class PointLightEx
-  location: class EntityRenderer
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:208: error: cannot find symbol
-    private void pickClips(Array<Animation> animations) {
-                                 ^
-  symbol:   class Animation
-  location: class EntityRenderer
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:180: error: cannot find symbol
-            asset = new GLBLoader().load(file);
-                        ^
-  symbol:   class GLBLoader
-  location: class EntityRenderer
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:181: error: cannot find symbol
-            scenes = new SceneManager(64);
-                         ^
-  symbol:   class SceneManager
-  location: class EntityRenderer
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:183: error: cannot find symbol
-            scene = new Scene(asset.scene);
-                        ^
-  symbol:   class Scene
-  location: class EntityRenderer
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:187: error: cannot find symbol
-            modelTorch = new PointLightEx().set(TORCH_COLOR, new Vector3(), 0f, 14f);
-                             ^
-  symbol:   class PointLightEx
-  location: class EntityRenderer
-/home/runner/work/backrooms-gdx/backrooms-gdx/core/src/main/java/com/backrooms/gdx/entity/EntityRenderer.java:212: error: cannot find symbol
-        for (Animation a : animations) {
-             ^
-  symbol:   class Animation
-  location: class EntityRenderer
-16 errors
-	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:84)
-	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:46)
-	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
-	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:52)
-	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:38)
-	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:52)
-	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:38)
-	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:46)
-	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:36)
-	at org.gradle.jvm.toolchain.internal.DefaultToolchainJavaCompiler.execute(DefaultToolchainJavaCompiler.java:57)
-	at org.gradle.api.tasks.compile.JavaCompile.lambda$createToolchainCompiler$3(JavaCompile.java:205)
-	at org.gradle.api.internal.tasks.compile.CleaningJavaCompiler.execute(CleaningJavaCompiler.java:53)
-	at org.gradle.api.internal.tasks.compile.incremental.IncrementalCompilerFactory.lambda$createRebuildAllCompiler$0(IncrementalCompilerFactory.java:52)
-	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:70)
-	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:44)
-	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:66)
-	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:52)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$1.call(CompileJavaBuildOperationReportingCompiler.java:64)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$1.call(CompileJavaBuildOperationReportingCompiler.java:48)
+	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
+	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
@@ -214,17 +110,34 @@ import com.badlogic.gdx.graphics.g3d.Animation;
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler.execute(CompileJavaBuildOperationReportingCompiler.java:48)
-	at org.gradle.api.tasks.compile.JavaCompile.performCompilation(JavaCompile.java:223)
-	at org.gradle.api.tasks.compile.JavaCompile.performIncrementalCompilation(JavaCompile.java:164)
-	at org.gradle.api.tasks.compile.JavaCompile.compile(JavaCompile.java:149)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
+	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
+	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
+	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
+	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
+	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
+	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
+	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
+Caused by: org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/core/build/reports/tests/test/index.html
+	at org.gradle.api.tasks.testing.AbstractTestTask.handleTestFailures(AbstractTestTask.java:707)
+	at org.gradle.api.tasks.testing.AbstractTestTask.handleCollectedResults(AbstractTestTask.java:541)
+	at org.gradle.api.tasks.testing.AbstractTestTask.executeTests(AbstractTestTask.java:536)
+	at org.gradle.api.tasks.testing.Test.executeTests(Test.java:731)
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
 	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
-	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.doExecute(IncrementalTaskAction.java:45)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)
 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
-	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.execute(IncrementalTaskAction.java:26)
 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
 	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:244)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
@@ -342,8 +255,37 @@ import com.badlogic.gdx.graphics.g3d.Animation;
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
+	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
+	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
+	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
+	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
+	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
+	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
+	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
+	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 18s
-23 actionable tasks: 11 executed, 12 from cache
+BUILD FAILED in 26s
+27 actionable tasks: 15 executed, 12 from cache
 ```
