@@ -214,18 +214,22 @@ public class ChunkMesherTest {
     @Test
     public void everyKindOfRoomMeshesAtItsOwnHeight() {
         WorldGen gen = new WorldGen(777);
+        // kind, how far its floor or ceiling sits from zero, the height in centimetres
         int[][] wanted = {
-                {WorldGen.KIND_GRAND, 0, (int) (WorldGen.GRAND_CEIL * 100f)},
-                {WorldGen.KIND_SUNKEN, 1, (int) (WorldGen.TERRACE_STEP * 100f)},
-                {WorldGen.KIND_MAZE, 2, (int) (WorldGen.MAZE_CEIL * 100f)},
+                {WorldGen.KIND_GRAND, 1, (int) (WorldGen.GRAND_CEIL * 100f)},
+                {WorldGen.KIND_SUNKEN, -1, (int) (WorldGen.TERRACE_STEP * 100f)},
+                {WorldGen.KIND_MAZE, 1, (int) (WorldGen.MAZE_CEIL * 100f)},
         };
         boolean[] seen = new boolean[wanted.length];
-        for (int[] target : wanted) {
+        for (int k = 0; k < wanted.length; k++) {
+            int[] target = wanted[k];
+            boolean sunken = target[1] < 0;
             // A sunken room is only a terrace once you are a step inside it.
-            int[] cell = findKind(gen, target[0], target[1] == 1);
+            int[] cell = findKind(gen, target[0], sunken);
             assertTrue(WorldGen.kindName(target[0]) + " must exist near the origin", cell != null);
             float height = target[2] / 100f;
-            float sign = target[1] == 0 ? 1f : -1f;
+            float sign = sunken ? -1f : 1f;
+            int seenAt = k;
             int chunkX = Math.floorDiv(cell[0], WorldGen.CHUNK_CELLS);
             int chunkZ = Math.floorDiv(cell[1], WorldGen.CHUNK_CELLS);
             ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, chunkX, chunkZ));
@@ -233,11 +237,11 @@ public class ChunkMesherTest {
                 float y = build.vertices[v * STRIDE + 1];
                 assertTrue("vertex at an unexpected height: " + y, isLevelHeight(y));
                 if (Math.abs(y - sign * height) < 0.05f) {
-                    seen[target[1]] = true;
+                    seen[seenAt] = true;
                 }
             }
             assertTrue(WorldGen.kindName(target[0]) + " should be meshed at " + (sign * height),
-                    seen[target[1]]);
+                    seen[seenAt]);
         }
     }
 
