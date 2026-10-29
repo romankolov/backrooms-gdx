@@ -412,6 +412,9 @@ public final class PlayScreen extends ScreenAdapter {
                     world.pendingCount(), world.lastBuildMillis(), renderer.drawnVertices() / 1000,
                     camera.position.x, camera.position.y, camera.position.z,
                     player.yaw, player.pitch, player.torchOn ? 1 : 0, renderer.statusLine()));
+            hud.setStats(String.format(java.util.Locale.US,
+                    "%.0f fps   %d chunks drawn   %d queued",
+                    statFrames / statTimer, renderer.drawnChunks(), world.pendingCount()));
             statTimer = 0f;
             statFrames = 0;
             statWorst = 0;

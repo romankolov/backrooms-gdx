@@ -36,12 +36,19 @@ public final class Hud {
     private final GlyphLayout layout = new GlyphLayout();
     private int width = 1;
     private int height = 1;
+    /** Measured a moment ago by the game, shown in the pause menu so a phone can be checked. */
+    private String stats = "";
 
     public Hud(Assets assets) {
         this.assets = assets;
         for (int i = 0; i < BTN_COUNT; i++) {
             menu[i] = new Rectangle();
         }
+    }
+
+    /** One line of numbers under the pause menu, so performance can be read off the device. */
+    public void setStats(String stats) {
+        this.stats = stats == null ? "" : stats;
     }
 
     public void resize(int width, int height) {
@@ -243,6 +250,12 @@ public final class Hud {
                 24f * s, hint);
         assets.font.draw(batch, "Textures: Amini Allight, CC0 1.0  -  built with libGDX",
                 24f * s, hint + 24f * s);
+        if (!stats.isEmpty()) {
+            // Top right of the panel: the numbers a phone should be judged by.
+            layout.setText(assets.font, stats);
+            assets.font.draw(batch, stats, width - layout.width - 24f * s,
+                    menu[0].y + menu[0].height + 70f * s);
+        }
         batch.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
     }
