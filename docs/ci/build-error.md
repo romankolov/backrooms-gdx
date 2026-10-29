@@ -1,6 +1,6 @@
 # Last build failure
 
-Commit: f2a6be7
+Commit: 03fb085
 
 ```
 Welcome to Gradle 8.11.1!
@@ -23,18 +23,18 @@ Android natives: arm64-v8a/libgdx.so, armeabi-v7a/libgdx.so, x86_64/libgdx.so
 > Task :android:generateDebugResources FROM-CACHE
 > Task :android:mergeDebugResources FROM-CACHE
 > Task :android:packageDebugResources FROM-CACHE
-> Task :core:compileJava
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
 > Task :android:parseDebugLocalResources FROM-CACHE
 > Task :android:createDebugCompatibleScreenManifests
 > Task :android:extractDeepLinksDebug FROM-CACHE
+> Task :core:compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
 > Task :core:processResources NO-SOURCE
 > Task :core:classes
 > Task :android:processDebugMainManifest FROM-CACHE
 > Task :android:processDebugManifest FROM-CACHE
-> Task :android:processDebugManifestForPackage FROM-CACHE
 > Task :core:jar
+> Task :android:processDebugManifestForPackage FROM-CACHE
 > Task :android:processDebugResources FROM-CACHE
 > Task :core:compileTestJava
 > Task :core:processTestResources NO-SOURCE
@@ -42,12 +42,6 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :android:compileDebugJavaWithJavac
 Note: /home/runner/work/backrooms-gdx/backrooms-gdx/android/src/main/java/com/backrooms/gdx/android/AndroidLauncher.java uses or overrides a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
-> Task :core:test
-ChunkMesherTest > holesAreCutIntoTheFloor FAILED
-    java.lang.AssertionError: the pit floor must face up, found 3
-        at org.junit.Assert.fail(Assert.java:89)
-        at org.junit.Assert.assertTrue(Assert.java:42)
-        at com.backrooms.gdx.ChunkMesherTest.holesAreCutIntoTheFloor(ChunkMesherTest.java:196)
 > Task :android:mergeDebugShaders
 > Task :android:compileDebugShaders NO-SOURCE
 > Task :android:generateDebugAssets UP-TO-DATE
@@ -56,29 +50,22 @@ ChunkMesherTest > holesAreCutIntoTheFloor FAILED
 > Task :android:desugarDebugFileDependencies FROM-CACHE
 > Task :android:dexBuilderDebug FROM-CACHE
 > Task :android:processDebugJavaRes NO-SOURCE
-> Task :core:test FAILED
-EntityControllerTest > itNeverRunsAtThePlayer FAILED
-    java.lang.AssertionError: it never showed up at all in five minutes
+> Task :core:test
+ChunkMesherTest > everyKindOfRoomMeshesAtItsOwnHeight FAILED
+    java.lang.AssertionError: maze should be meshed at -2.65
         at org.junit.Assert.fail(Assert.java:89)
         at org.junit.Assert.assertTrue(Assert.java:42)
-        at com.backrooms.gdx.EntityControllerTest.itNeverRunsAtThePlayer(EntityControllerTest.java:131)
+        at com.backrooms.gdx.ChunkMesherTest.everyKindOfRoomMeshesAtItsOwnHeight(ChunkMesherTest.java:239)
 EntityControllerTest > itPassesByAndLeavesBehindAWall FAILED
-    java.lang.AssertionError: it never appeared
+    java.lang.AssertionError: it must not appear where the player can see it
         at org.junit.Assert.fail(Assert.java:89)
         at org.junit.Assert.assertTrue(Assert.java:42)
-        at com.backrooms.gdx.EntityControllerTest.itPassesByAndLeavesBehindAWall(EntityControllerTest.java:112)
-WorldGenTest > corridorsRunLongAndSometimesStop FAILED
-    java.lang.AssertionError: corridors should run for a long time somewhere, longest 0
-        at org.junit.Assert.fail(Assert.java:89)
-        at org.junit.Assert.assertTrue(Assert.java:42)
-        at com.backrooms.gdx.WorldGenTest.corridorsRunLongAndSometimesStop(WorldGenTest.java:135)
-WorldGenTest > terracesStepDownByLessThanThePlayersStride FAILED
-    java.lang.AssertionError: steps between terraces: -6.0 to 0.0
-        at org.junit.Assert.fail(Assert.java:89)
-        at org.junit.Assert.assertTrue(Assert.java:42)
-        at com.backrooms.gdx.WorldGenTest.terracesStepDownByLessThanThePlayersStride(WorldGenTest.java:182)
-51 tests completed, 5 failed
+        at org.junit.Assert.assertFalse(Assert.java:65)
+        at com.backrooms.gdx.EntityControllerTest.itPassesByAndLeavesBehindAWall(EntityControllerTest.java:98)
+51 tests completed, 2 failed
 > Task :android:mergeDebugJavaResource
+> Task :core:test FAILED
+> Task :android:checkDebugDuplicateClasses
 [Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
 FAILURE: Build failed with an exception.
 * What went wrong:
@@ -117,35 +104,6 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':core:te
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
-	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
-	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
-	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
-	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
-	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
-	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
-	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
 Caused by: org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/core/build/reports/tests/test/index.html
@@ -276,37 +234,8 @@ Caused by: org.gradle.api.internal.exceptions.MarkedVerificationException: There
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
-	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
-	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
-	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
-	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
-	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
-	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
-	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 21s
-26 actionable tasks: 13 executed, 13 from cache
+BUILD FAILED in 13s
+27 actionable tasks: 14 executed, 13 from cache
 ```
