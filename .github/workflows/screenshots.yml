@@ -1,0 +1,179 @@
+name: Screenshots
+
+# Boots the desktop build on software OpenGL (llvmpipe) inside Xvfb, renders the game, and commits
+# the resulting PNGs so the look of the level can be reviewed from the repository.
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'assets/**'
+      - 'core/src/main/java/**'
+      - 'desktop/**'
+      - '.github/workflows/screenshots.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  render:
+    name: Render frames
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-shots-${{ runner.os }}-${{ hashFiles('**/*.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-shots-${{ runner.os }}-
+
+      - name: Install software GL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb libgl1-mesa-dri libglu1-mesa libgl1 mesa-utils
+
+      - name: Render screenshots
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          GALLIUM_DRIVER: llvmpipe
+          MESA_GL_VERSION_OVERRIDE: '4.5'
+        run: |
+          chmod +x gradlew
+          # Start from nothing: otherwise a failed build leaves the previous run's PNGs in place and
+          # every check below happily validates stale evidence.
+          rm -rf screenshots
+          mkdir -p screenshots
+          xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
+            -Dbackrooms.autostart=1 -Dbackrooms.spin=1 -Dbackrooms.seed=20241027 -Dbackrooms.pitch=-7 -Dbackrooms.debug=0 -Dbackrooms.hud=0 \
+            -Dbackrooms.frames=270 -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots" > render.log 2>&1 || true
+          tail -c 4000 render.log
+          # Title screen, same harness, no autostart.
+          xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
+            -Dbackrooms.title=1 -Dbackrooms.frames=100 \
+            -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/title" >> render.log 2>&1 || true
+          # A pit in the carpet, from a spawn override, so the hole geometry is looked at by eye.
+          xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
+            -Dbackrooms.autostart=1 -Dbackrooms.seed=20241027 -Dbackrooms.pit=1 \
+            -Dbackrooms.yaw=0 -Dbackrooms.pitch=-42 -Dbackrooms.frames=150 \
+            -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/hole" >> render.log 2>&1 || true
+          # The thing in the corridor, posed a few metres ahead.
+          xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
+            -Dbackrooms.autostart=1 -Dbackrooms.seed=20241027 -Dbackrooms.entity=1 \
+            -Dbackrooms.frames=70 \
+            -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/entity" >> render.log 2>&1 || true
+          # The same shot with the camcorder pass off, so the model itself can be judged: whether
+          # it stands upright, the right way up, at the right size, and in the right pose.
+          xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
+            -Dbackrooms.autostart=1 -Dbackrooms.seed=20241027 -Dbackrooms.entity=1 \
+            -Dbackrooms.vhs=0 -Dbackrooms.frames=40 \
+            -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/entity-raw" >> render.log 2>&1 || true
+          ls -la screenshots screenshots/title screenshots/hole screenshots/entity \
+            screenshots/entity-raw 2>/dev/null
+
+      - name: Verify the render is not blank
+        run: |
+          # A failed shader link leaves a frame of pure clear colour: no geometry, and a PNG that
+          # compresses to a few KB. Never publish (or commit) that.
+          fail=0
+          # Note the anchored patterns: the ALSA warnings in the log end with "error: No such file
+          # or directory" and must not be mistaken for a build failure.
+          if grep -qaE "^(FAILURE:|BUILD FAILED)|\.java:[0-9]+: error:|SHADER FAILED" render.log; then
+            echo "the desktop build or the render itself failed:"
+            grep -aE "^(FAILURE:|BUILD FAILED)|\.java:[0-9]+: error:|SHADER FAILED" render.log | head -5
+            fail=1
+          fi
+          if grep -qa "SHADER FAILED" render.log; then
+            echo "the world shader did not compile:"; grep -a "SHADER FAILED" render.log
+            fail=1
+          fi
+          for f in screenshots/shot*.png screenshots/title/shot*.png screenshots/hole/shot*.png \
+                   screenshots/entity/shot*.png screenshots/entity-raw/shot*.png; do
+            [ -f "$f" ] || { echo "missing $f"; fail=1; continue; }
+            size=$(stat -c %s "$f")
+            echo "$f $size bytes"
+            if [ "$size" -lt 30000 ]; then
+              echo "  ^ looks blank (uniform frame)"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Report render log
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "files:"
+            ls -la screenshots screenshots/title screenshots/hole screenshots/entity \
+              screenshots/entity-raw 2>&1 || true
+            echo
+            echo "performance:"
+            grep -a "Perf\|Capture\|Exception\|error" render.log 2>/dev/null | tail -20 || true
+            echo
+            echo "render log tail:"
+            tail -c 4000 render.log 2>/dev/null || echo "(no render.log)"
+          } > report.txt
+          BODY=$(printf 'Screenshot run `%s`\n\n```\n%s\n```\n' "${GITHUB_SHA::7}" "$(cat report.txt)")
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" -f body="$BODY" || true
+          # Also publish the log as a file: the issue comment API is not always reachable, and a
+          # render failure is much easier to read from the repository than from a web page.
+          {
+            echo "# Last screenshot run"
+            echo
+            echo "Commit: ${GITHUB_SHA::7}"
+            echo
+            echo '```'
+            grep -v '^\s*$' report.txt | tail -c 20000
+            echo '```'
+          } > docs/ci/render-log.md
+          git config user.name "backrooms-ci"
+          git config user.email "ci@users.noreply.github.com"
+          git add -f docs/ci/render-log.md
+          git commit -q -m "chore: render log [skip ci]" || true
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" >/dev/null 2>&1 || true
+            git push origin "HEAD:${GITHUB_REF_NAME}" && break
+            sleep 5
+          done
+
+      - name: Commit screenshots
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f screenshots/*.png screenshots/title/*.png screenshots/hole/*.png \
+            screenshots/entity/*.png screenshots/entity-raw/*.png 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "screenshots unchanged"
+          else
+            git commit -m "docs: update rendered screenshots [skip ci]"
+            # The branch moves under this job (the other workflows publish logs to it), so retry:
+            # a lost push here is a silent failure that leaves stale pictures in the repo.
+            for attempt in 1 2 3 4 5; do
+              git pull --rebase --autostash origin "${GITHUB_REF_NAME}" >/dev/null 2>&1 || true
+              if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+                echo "screenshots published on attempt $attempt"
+                break
+              fi
+              sleep 5
+            done
+          fi
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v5
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: warn

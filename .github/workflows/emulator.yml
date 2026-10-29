@@ -1,0 +1,146 @@
+name: Android emulator smoke test
+
+# Installs the debug APK on a real Android image and checks that it starts, renders and keeps
+# running. This is the only way to catch launch-time crashes (missing natives, bad manifest,
+# shader compile failures) before shipping.
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  emulator:
+    name: Launch on emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Cache Gradle
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-emu-${{ runner.os }}-${{ hashFiles('**/*.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-emu-${{ runner.os }}-
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :android:assembleDebug --no-daemon --console=plain
+
+      - name: Boot emulator, install and launch
+        id: smoke
+        shell: bash
+        continue-on-error: true
+        run: |
+          chmod +x .github/scripts/emulator-smoke.sh
+          ./.github/scripts/emulator-smoke.sh 2>&1 | tee emulator-shots.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload emulator artifacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: emulator-shots
+          path: emulator-shots
+          if-no-files-found: warn
+
+      - name: Report result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Emulator smoke test for \`${GITHUB_SHA::7}\` — outcome: ${{ steps.smoke.outcome }}"
+            echo '```'
+            ls -la emulator-shots 2>/dev/null || true
+            echo "--- env"
+            cat emulator-shots/env.txt 2>/dev/null || true
+            echo "--- emulator.log (tail)"
+            tail -15 emulator-shots/emulator.log 2>/dev/null || true
+            echo "--- logcat (filtered)"
+            grep -aE "AndroidRuntime|FATAL|UnsatisfiedLink|GLSL|libGDX|Backrooms|Perf|GL_INVALID|E/" \
+              emulator-shots/logcat.txt 2>/dev/null | tail -40 || echo "(no logcat)"
+            echo '```'
+          } > report.txt
+          echo "----- report -----"
+          cat report.txt
+          gh issue comment 1 --body-file report.txt || gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/1/comments" -F body=@report.txt || true
+
+      - name: Commit emulator screenshots
+        if: steps.smoke.outcome == 'success'
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p screenshots/android
+          cp emulator-shots/*.png screenshots/android/ 2>/dev/null || true
+          git add -f screenshots/android/*.png 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "no new screenshots"
+          else
+            git commit -m "docs: emulator screenshots [skip ci]"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: Commit diagnostics
+        if: always()
+        continue-on-error: true
+        run: |
+          mkdir -p docs/ci
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p docs/ci
+          {
+            echo "# Emulator smoke test diagnostics"
+            echo
+            echo "Commit: ${GITHUB_SHA}"
+            echo "Outcome: ${{ steps.smoke.outcome }}"
+            echo
+            echo '## Environment'
+            echo '```'
+            cat emulator-shots/env.txt 2>/dev/null || true
+            echo '```'
+            echo '## Emulator log'
+            echo '```'
+            tail -30 emulator-shots/emulator.log 2>/dev/null || true
+            echo '```'
+            echo '## Logcat (filtered)'
+            echo '```'
+            grep -aE "AndroidRuntime|FATAL|UnsatisfiedLink|GLSL|libGDX|Backrooms|Perf|ActivityManager|am_proc|E/" \
+              emulator-shots/logcat.txt 2>/dev/null | tail -60 || true
+            echo '```'
+            echo '## Step log'
+            echo '```'
+            tail -c 8000 emulator-shots.log 2>/dev/null || true
+            echo '```'
+          } > docs/ci/emulator-report.md
+          git add -f docs/ci/emulator-report.md
+          git diff --cached --quiet || git commit -m "chore: emulator diagnostics [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}" || true
+
+      - name: Fail the job when the app did not stay alive
+        if: steps.smoke.outcome != 'success'
+        run: |
+          echo "The app did not start or did not stay alive on the emulator."
+          echo "--- filtered logcat ---"
+          grep -aE "AndroidRuntime|FATAL|UnsatisfiedLink|GLSL|libGDX|Backrooms|Perf|ActivityManager|am_proc" \
+            emulator-shots/logcat.txt 2>/dev/null | tail -60 || true
+          exit 1

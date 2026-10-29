@@ -1,0 +1,36 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+        gradlePluginPortal()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.7.3"
+    }
+}
+
+allprojects {
+    apply plugin: "eclipse"
+
+    repositories {
+        mavenCentral()
+        google()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        // gdx-gltf (the rigged-model loader) is only published through JitPack.
+        maven { url "https://jitpack.io" }
+    }
+}
+
+ext {
+    // libGDX release used by every module.
+    gdxVersion = "1.13.1"
+    appName = "Backrooms"
+    appPackage = "com.backrooms.gdx"
+    appVersionCode = 1
+    appVersionName = "1.0.0"
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}

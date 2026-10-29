@@ -1,0 +1,45 @@
+plugins {
+    id "java-library"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ["src/main/java"]
+    }
+    test {
+        java.srcDirs = ["src/test/java"]
+    }
+}
+
+dependencies {
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    // libGDX core can load OBJ and G3D models but not glTF. The rigged entity needs glTF, so this is
+    // the one third-party runtime dependency in the project.
+    // gdx-gltf is a multi-module project and only published through JitPack, where the modules
+    // become separate artifacts. `gdx-gltf` itself is the aggregator (its jar is empty); the runtime
+    // code is in `gltf`. transitive = false keeps the desktop/IBL siblings out, which bundle LWJGL 2
+    // and collide with the Android build.
+    api("com.github.mgsx-dev.gdx-gltf:gltf:2.3.0") { transitive = false }
+
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+}
+
+tasks.named('test') {
+    testLogging {
+        events "failed", "skipped"
+        exceptionFormat "full"
+        showCauses = true
+        showStackTraces = true
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-Xlint:-options"
+}

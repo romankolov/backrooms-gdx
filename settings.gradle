@@ -1,0 +1,3 @@
+rootProject.name = "backrooms-gdx"
+
+include "core", "android", "desktop"

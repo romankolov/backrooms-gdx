@@ -1,0 +1,235 @@
+name: Android CI
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build:
+    name: Build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Cache Gradle
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      # One-off probe: which glTF loader coordinates actually resolve. libGDX core has no glTF
+      # support (only G3D/OBJ), and the entity is a rigged .glb, so the loader has to be a real
+      # dependency. Results are committed to docs/ci/gltf-probe.md.
+      - name: Probe glTF loader availability
+        continue-on-error: true
+        run: |
+          : > gltf-probe.txt
+          probe() {
+            echo "== $1" >> gltf-probe.txt
+            code=$(curl -s -o /tmp/body -w '%{http_code}' --max-time 20 "$1" || echo "000")
+            echo "http $code" >> gltf-probe.txt
+            head -c 800 /tmp/body >> gltf-probe.txt 2>/dev/null || true
+            echo >> gltf-probe.txt
+            echo >> gltf-probe.txt
+          }
+          probe https://repo1.maven.org/maven2/com/github/mgsx-dev/gdx-gltf/gdx-gltf/maven-metadata.xml
+          probe https://repo1.maven.org/maven2/net/mgsx/gdx-gltf/gdx-gltf/maven-metadata.xml
+          probe https://repo1.maven.org/maven2/com/badlogicgames/gdx/gdx-gltf/maven-metadata.xml
+          probe https://jitpack.io/com/github/mgsx-dev/gdx-gltf/maven-metadata.xml
+          cat gltf-probe.txt
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build (unit tests + debug APK + release APK)
+        id: build
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew :core:test :android:assembleDebug :android:assembleRelease \
+            --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
+
+      - name: Check the APK can actually start
+        shell: bash
+        run: |
+          exec > >(tee apk-check.log) 2>&1
+          echo "ANDROID_HOME=${ANDROID_HOME:-unset} ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          echo "build-tools present:"; ls "$SDK/build-tools" 2>&1 | head
+          AAPT2=$(find "$SDK" -type f -name aapt2 2>/dev/null | sort -V | tail -1)
+          echo "using aapt2: ${AAPT2:-none}"
+          status=0
+          for f in $(find android/build/outputs/apk -name '*.apk'); do
+            echo "== $f"
+
+            # 1. Native libraries: without libgdx.so the app dies with UnsatisfiedLinkError.
+            for abi in arm64-v8a armeabi-v7a x86_64; do
+              if unzip -l "$f" | grep -q "lib/$abi/libgdx.so"; then
+                echo "ok: lib/$abi/libgdx.so"
+              else
+                echo "FATAL: $f is missing lib/$abi/libgdx.so"; status=1
+              fi
+            done
+
+            # 2. The launcher activity must exist. A relative name in the manifest resolves
+            #    against the namespace, so a class in a sub package has to be fully qualified.
+            if [ -n "$AAPT2" ]; then
+              "$AAPT2" dump badging "$f" > badging.txt 2>&1 || echo "(aapt2 failed)"
+              grep -E "^(package|launchable-activity|native-code|sdkVersion|targetSdkVersion)" badging.txt || true
+              if grep -q "launchable-activity: name='com.backrooms.gdx.android.AndroidLauncher'" badging.txt; then
+                echo "ok: launcher activity"
+              else
+                echo "FATAL: $f does not declare com.backrooms.gdx.android.AndroidLauncher"; status=1
+              fi
+            fi
+
+            # 3. ...and the class must really be in the dex.
+            # The debug build is multidex, so search every classes*.dex.
+            if unzip -p "$f" 'classes*.dex' | strings | grep -q "Lcom/backrooms/gdx/android/AndroidLauncher;"; then
+              echo "ok: AndroidLauncher in classes.dex"
+            else
+              echo "FATAL: AndroidLauncher is not in classes.dex"; status=1
+            fi
+            echo "-- shared libraries packaged: $(unzip -l "$f" | grep -c 'lib/.*\.so')"
+          done
+          if [ "$status" = "0" ]; then echo "APK sanity checks passed"; fi
+          exit $status
+
+      - name: Publish APK check
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p docs/ci
+          {
+            echo "# APK sanity check"
+            echo
+            echo "Commit: ${GITHUB_SHA}"
+            echo
+            echo '```'
+            cat apk-check.log 2>/dev/null || echo "(no log)"
+            echo '```'
+          } > docs/ci/apk-check.md
+          if [ -s gltf-probe.txt ]; then
+            {
+              echo "# glTF loader probe"
+              echo
+              echo '```'
+              cat gltf-probe.txt
+              echo '```'
+            } > docs/ci/gltf-probe.md
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f docs/ci/gltf-probe.md 2>/dev/null || true
+          git add -f docs/ci/apk-check.md
+          git diff --cached --quiet || git commit -m "chore: APK check log [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}" || true
+          gh issue comment 1 --body-file docs/ci/apk-check.md || true
+
+      - name: Collect APKs
+        if: success()
+        run: |
+          mkdir -p artifacts
+          find android/build/outputs/apk -name '*.apk' -exec cp {} artifacts/ \;
+          ls -la artifacts
+
+      - name: Report APK
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "APK report for \`${GITHUB_SHA::7}\`"
+            echo '```'
+            ls -la artifacts
+            for f in artifacts/*.apk; do
+              echo "--- $f"
+              unzip -l "$f" | grep -E "lib/|AndroidManifest|resources.arsc" | head -20; unzip -l "$f" | tail -1
+            done
+            echo '```'
+          } > report.txt
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" -f body="$(cat report.txt)" || true
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v5
+        with:
+          name: backrooms-debug-apk
+          path: artifacts/*debug*.apk
+          if-no-files-found: error
+
+      - name: Upload release APK
+        if: success()
+        uses: actions/upload-artifact@v5
+        with:
+          name: backrooms-release-apk
+          path: artifacts/*release*.apk
+          if-no-files-found: warn
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: unit-test-report
+          path: core/build/reports/tests/test
+          if-no-files-found: ignore
+
+      # The job log is not always reachable from the build sandbox, so on failure the tail of
+      # the compiler output is also posted as an issue comment where it can be read back.
+      - name: Report failure
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f build.log ]; then exit 0; fi
+          BODY=$(printf 'Build failed on `%s`\n\n```\n%s\n```\n' "${GITHUB_SHA::7}" "$(tail -c 50000 build.log)")
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/1/comments" -f body="$BODY" \
+            || echo "could not comment"
+          # Also commit the tail: the runner's own logs are not reachable from everywhere, and a
+          # compile error is much easier to read as a file in the repo than as a web page.
+          mkdir -p docs/ci
+          {
+            echo "# Last build failure"
+            echo
+            echo "Commit: ${GITHUB_SHA::7}"
+            echo
+            echo '```'
+            grep -v '^\s*$' build.log | tail -c 30000
+            echo '```'
+          } > docs/ci/build-error.md
+          git config user.name "backrooms-ci"
+          git config user.email "ci@users.noreply.github.com"
+          git add -f docs/ci/build-error.md
+          git commit -q -m "chore: build error log [skip ci]" || true
+          git pull --rebase -q || true
+          git push -q || true
+
+      - name: Publish APK to GitHub release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: artifacts/*.apk
+          generate_release_notes: true

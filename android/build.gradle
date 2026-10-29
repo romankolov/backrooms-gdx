@@ -1,0 +1,128 @@
+apply plugin: "com.android.application"
+
+android {
+    namespace "com.backrooms.gdx"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.backrooms.gdx"
+        minSdk 24
+        targetSdk 35
+        versionCode rootProject.ext.appVersionCode
+        versionName rootProject.ext.appVersionName
+        // The libGDX natives below are extracted for exactly these ABIs.
+        ndk {
+            abiFilters "arm64-v8a", "armeabi-v7a", "x86_64"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile "AndroidManifest.xml"
+            java.srcDirs = ["src/main/java"]
+            res.srcDirs = ["res"]
+            assets.srcDirs = [rootProject.file("assets")]
+            // copyAndroidNatives unpacks libgdx.so and friends into libs/<abi>/ from here.
+            jniLibs.srcDirs = ["libs"]
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+        release {
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            // Signed only when the build environment provides a keystore.
+            if (System.getenv("BACKROOMS_KEYSTORE") != null) {
+                signingConfig signingConfigs.create("release") {
+                    storeFile file(System.getenv("BACKROOMS_KEYSTORE"))
+                    storePassword System.getenv("BACKROOMS_KEYSTORE_PASSWORD")
+                    keyAlias System.getenv("BACKROOMS_KEY_ALIAS")
+                    keyPassword System.getenv("BACKROOMS_KEY_PASSWORD")
+                }
+            }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+        resources {
+            excludes += ["META-INF/robovm/ios/robovm.xml", "META-INF/versions/**"]
+        }
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+configurations {
+    // Everything needed on the device comes from this configuration; the jars are only sources
+    // of .so files, never packaged as jars themselves.
+    natives
+}
+
+dependencies {
+    implementation project(":core")
+    implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
+}
+
+/**
+ * Extracts libgdx.so (and the other native libraries) out of the platform jars into
+ * libs/<abi>/ so that Android packages them. Without this the APK has no lib/ directory and
+ * System.loadLibrary("gdx") throws UnsatisfiedLinkError on launch.
+ */
+tasks.register("copyAndroidNatives") {
+    def outputRoot = layout.projectDirectory.dir("libs")
+    def jars = configurations.natives
+    inputs.files(jars)
+    outputs.dir(outputRoot)
+
+    doLast {
+        ["armeabi-v7a", "arm64-v8a", "x86_64"].each { abi ->
+            project.file("libs/$abi").mkdirs()
+        }
+        jars.files.each { jar ->
+            def abi = null
+            if (jar.name.endsWith("natives-armeabi-v7a.jar")) abi = "armeabi-v7a"
+            else if (jar.name.endsWith("natives-arm64-v8a.jar")) abi = "arm64-v8a"
+            else if (jar.name.endsWith("natives-x86_64.jar")) abi = "x86_64"
+            if (abi != null) {
+                project.copy {
+                    from project.zipTree(jar)
+                    into project.file("libs/$abi")
+                    include "*.so"
+                }
+            }
+        }
+        def found = project.file("libs").listFiles()?.findAll { it.isDirectory() }
+                ?.collectMany { it.listFiles()?.findAll { f -> f.name.endsWith(".so") } ?: [] }
+        if (!found) {
+            throw new GradleException("No native libraries were extracted; the APK would crash " +
+                    "with UnsatisfiedLinkError at launch.")
+        }
+        logger.lifecycle("Android natives: " + found.collect { it.parentFile.name + "/" + it.name }
+                .sort().join(", "))
+    }
+}
+
+tasks.matching { it.name.contains("JniLibFolders") || it.name.contains("JniLibs") }
+        .configureEach { dependsOn "copyAndroidNatives" }
+
+tasks.named("preBuild") { dependsOn "copyAndroidNatives" }

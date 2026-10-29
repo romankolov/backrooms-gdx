@@ -1,0 +1,30 @@
+# Gradle / build output
+.gradle/
+build/
+*/build/
+local.properties
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Generated assets fetched by tools/make_assets.py
+backrooms-textures/
+
+# Screenshots and other scratch files
+screenshots/
+*.hprof
+*.log
+
+assets/screenshots/
+
+# libGDX natives extracted by :android:copyAndroidNatives
+android/libs/
+
+# The Sketchfab download the entity model is built from: assets/models/entity.glb is the build
+# product, tools/prepare_entity_model.sh reproduces it from this zip.
+accurate_backrooms_bacteria_v2_with_animations.zip
+
+# Python scratch
+__pycache__/
