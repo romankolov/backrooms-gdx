@@ -9,8 +9,9 @@ They are downscaled/re-encoded here so the APK stays small:
     single PNG so the shader only needs one sampler for it.
 
 Audio is synthesised from scratch (no third-party samples): muffled carpet
-footsteps, a fluorescent tube buzz loop, a low room tone loop, the tape hiss of
-the VHS camcorder, and the wet steps and roar of the thing in the corridors.
+footsteps, a fluorescent tube buzz loop, the tape hiss of the VHS camcorder, and
+the wet steps, roar and small noises (creak, chitter, scrape, breath) of the
+thing in the corridors.
 
 Usage:  python3 tools/make_assets.py [path/to/backrooms-textures]
 """
@@ -249,18 +250,6 @@ def make_buzz(duration=4.0):
     wobble = 1.0 + 0.08 * np.sin(2 * np.pi * 0.7 * t) + 0.05 * np.sin(2 * np.pi * 2.3 * t)
     signal = (hum * 0.5 + grit) * wobble
     return signal
-
-
-def make_room_tone(duration=8.0):
-    n = int(SR * duration)
-    t = np.arange(n) / SR
-    rng = np.random.default_rng(11)
-    base = (np.sin(2 * np.pi * 41.0 * t) * 0.35
-            + np.sin(2 * np.pi * 61.5 * t + 1.1) * 0.22
-            + np.sin(2 * np.pi * 97.0 * t + 2.3) * 0.10)
-    air = one_pole_lowpass(rng.uniform(-1.0, 1.0, n), 400.0) * 0.5
-    tremolo = 1.0 + 0.15 * np.sin(2 * np.pi * 0.11 * t) + 0.08 * np.sin(2 * np.pi * 0.31 * t + 0.7)
-    return (base + air) * tremolo * 0.6
 
 
 def make_tape_hiss(duration=6.0):
@@ -538,7 +527,7 @@ def build_audio():
         step = make_footstep(np.random.default_rng(100 + i), tone=0.94 + 0.05 * i)
         write_ogg(os.path.join(SFX_OUT, "footstep_%d.ogg" % (i + 1)), step)
     write_ogg(os.path.join(SFX_OUT, "light_buzz.ogg"), make_buzz(), loop=True)
-    write_ogg(os.path.join(SFX_OUT, "room_tone.ogg"), make_room_tone(), loop=True)
+    # No room tone: the fluorescent buzz of the nearest tube is the only room sound, deliberately.
     write_ogg(os.path.join(SFX_OUT, "tape_hiss.ogg"), make_tape_hiss(), loop=True)
     for i in range(3):
         step = make_entity_step(np.random.default_rng(200 + i), tone=0.92 + 0.07 * i)

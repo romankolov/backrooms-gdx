@@ -5,7 +5,7 @@
 | `textures/*.jpg` (wallpaper, carpet, ceiling tile diffuse + normal maps) | [amini-allight/backrooms-textures](https://github.com/amini-allight/backrooms-textures) — created/modified by Amini Allight | CC0 1.0 (public domain), see `textures/LICENSE-backrooms-textures.txt` |
 | `ui/font*.png`, `ui/font*.fnt` | Bitmap atlas generated from DejaVu Sans | Bitstream Vera / DejaVu licence, see `ui/LICENSE-DejaVu.txt` |
 | `sounds/footstep_1..4.ogg` | Synthesised by `tools/make_assets.py` | CC0 1.0 (generated, no third-party samples) |
-| `sounds/light_buzz.ogg`, `sounds/room_tone.ogg` | Synthesised by `tools/make_assets.py` (50/100 Hz mains hum + noise) | CC0 1.0 (generated) |
+| `sounds/light_buzz.ogg` | Synthesised by `tools/make_assets.py` (50/100 Hz mains hum) | CC0 1.0 (generated) |
 | `sounds/tape_hiss.ogg` | Synthesised by `tools/make_assets.py` (band-limited hiss, wow/flutter, dropouts) | CC0 1.0 (generated) |
 | `sounds/entity_step_1..3.ogg` | Synthesised by `tools/make_assets.py` (sub-bass impact, wet squelch, gurgle) | CC0 1.0 (generated) |
 | `sounds/entity_roar.ogg` | Synthesised by `tools/make_assets.py` (saturated throat stack, moving formants, comb reverb), voiced after the entity of the Backrooms series | CC0 1.0 (generated) |
