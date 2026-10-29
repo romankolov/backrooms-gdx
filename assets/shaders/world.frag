@@ -69,19 +69,19 @@ void main() {
         albedo = texture2D(u_wallTex, uv).rgb;
         nmap = texture2D(u_wallNormal, uv).rgb;
         float g = mix(0.55, 1.12, pow(v_aux, 0.8));
-        irr = wallLight * g * 0.85;
+        irr = wallLight * g * 0.68;
     } else if (v_mat < 1.5) {
         // ---- carpet ----
         vec2 uv = v_uv * 0.5;                // one tile every 2m
         albedo = texture2D(u_floorTex, uv).rgb;
         nmap = texture2D(u_floorNormal, uv).rgb;
-        irr = mix(lm.rgb * u_lightRange * 1.05, wallLight * 0.75, vert);
+        irr = mix(lm.rgb * u_lightRange * 0.82, wallLight * 0.60, vert);
     } else if (v_mat < 2.5) {
         // ---- ceiling tiles ----
         vec2 uv = v_uv * 0.5;
         albedo = texture2D(u_ceilTex, uv).rgb;
         nmap = texture2D(u_ceilNormal, uv).rgb;
-        irr = mix(lm.rgb * u_lightRange * 0.46, wallLight * 0.80, vert);
+        irr = mix(lm.rgb * u_lightRange * 0.36, wallLight * 0.62, vert);
     } else {
         // ---- the ceiling fitting ----
         // Its own photograph, mapped once across the panel: rim, glass and all. The glow is a mask
