@@ -1,6 +1,6 @@
 # Last build failure
 
-Commit: 03fb085
+Commit: 13e4659
 
 ```
 Welcome to Gradle 8.11.1!
@@ -26,46 +26,160 @@ Android natives: arm64-v8a/libgdx.so, armeabi-v7a/libgdx.so, x86_64/libgdx.so
 > Task :android:parseDebugLocalResources FROM-CACHE
 > Task :android:createDebugCompatibleScreenManifests
 > Task :android:extractDeepLinksDebug FROM-CACHE
+> Task :android:processDebugMainManifest FROM-CACHE
+> Task :android:processDebugManifest FROM-CACHE
+> Task :android:processDebugManifestForPackage FROM-CACHE
+> Task :android:processDebugResources FROM-CACHE
+> Task :android:mergeDebugShaders
+> Task :android:compileDebugShaders NO-SOURCE
+> Task :android:generateDebugAssets UP-TO-DATE
+> Task :android:mergeDebugAssets
+> Task :android:desugarDebugFileDependencies FROM-CACHE
+> Task :android:processDebugJavaRes NO-SOURCE
+> Task :android:mergeDebugJniLibFolders
+> Task :android:checkDebugDuplicateClasses
+> Task :android:compressDebugAssets
 > Task :core:compileJava
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 > Task :core:processResources NO-SOURCE
 > Task :core:classes
-> Task :android:processDebugMainManifest FROM-CACHE
-> Task :android:processDebugManifest FROM-CACHE
 > Task :core:jar
-> Task :android:processDebugManifestForPackage FROM-CACHE
-> Task :android:processDebugResources FROM-CACHE
+> Task :android:validateSigningDebug
 > Task :core:compileTestJava
 > Task :core:processTestResources NO-SOURCE
 > Task :core:testClasses
 > Task :android:compileDebugJavaWithJavac
 Note: /home/runner/work/backrooms-gdx/backrooms-gdx/android/src/main/java/com/backrooms/gdx/android/AndroidLauncher.java uses or overrides a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
-> Task :android:mergeDebugShaders
-> Task :android:compileDebugShaders NO-SOURCE
-> Task :android:generateDebugAssets UP-TO-DATE
-> Task :android:mergeDebugAssets
-> Task :android:compressDebugAssets
-> Task :android:desugarDebugFileDependencies FROM-CACHE
 > Task :android:dexBuilderDebug FROM-CACHE
-> Task :android:processDebugJavaRes NO-SOURCE
+> Task :android:mergeDebugJavaResource
 > Task :core:test
+ChunkMesherTest > holesAreCutIntoTheFloor FAILED
+    java.lang.ArrayIndexOutOfBoundsException: Index 1980 out of bounds for length 1980
+        at com.backrooms.gdx.light.LightBaker$Cells.<init>(LightBaker.java:238)
+        at com.backrooms.gdx.light.LightBaker.bake(LightBaker.java:48)
+        at com.backrooms.gdx.chunk.ChunkMesher.build(ChunkMesher.java:34)
+        at com.backrooms.gdx.ChunkMesherTest.holesAreCutIntoTheFloor(ChunkMesherTest.java:170)
+ChunkMesherTest > textureCoordinatesStillFollowTheWorldGrid FAILED
+    java.lang.ArrayIndexOutOfBoundsException: Index 1980 out of bounds for length 1980
+        at com.backrooms.gdx.light.LightBaker$Cells.<init>(LightBaker.java:238)
+        at com.backrooms.gdx.light.LightBaker.bake(LightBaker.java:48)
+        at com.backrooms.gdx.chunk.ChunkMesher.build(ChunkMesher.java:34)
+        at com.backrooms.gdx.ChunkMesherTest.textureCoordinatesStillFollowTheWorldGrid(ChunkMesherTest.java:125)
+ChunkMesherTest > geometryIsStoredRelativeToItsChunk FAILED
+    java.lang.ArrayIndexOutOfBoundsException: Index 1980 out of bounds for length 1980
+        at com.backrooms.gdx.light.LightBaker$Cells.<init>(LightBaker.java:238)
+        at com.backrooms.gdx.light.LightBaker.bake(LightBaker.java:48)
+        at com.backrooms.gdx.chunk.ChunkMesher.build(ChunkMesher.java:34)
+        at com.backrooms.gdx.ChunkMesherTest.geometryIsStoredRelativeToItsChunk(ChunkMesherTest.java:100)
+ChunkMesherTest > meshIsWellFormed FAILED
+    java.lang.ArrayIndexOutOfBoundsException: Index 1980 out of bounds for length 1980
+        at com.backrooms.gdx.light.LightBaker$Cells.<init>(LightBaker.java:238)
+        at com.backrooms.gdx.light.LightBaker.bake(LightBaker.java:48)
+        at com.backrooms.gdx.chunk.ChunkMesher.build(ChunkMesher.java:34)
+        at com.backrooms.gdx.ChunkMesherTest.meshIsWellFormed(ChunkMesherTest.java:25)
 ChunkMesherTest > everyKindOfRoomMeshesAtItsOwnHeight FAILED
-    java.lang.AssertionError: maze should be meshed at -2.65
-        at org.junit.Assert.fail(Assert.java:89)
-        at org.junit.Assert.assertTrue(Assert.java:42)
-        at com.backrooms.gdx.ChunkMesherTest.everyKindOfRoomMeshesAtItsOwnHeight(ChunkMesherTest.java:239)
+    java.lang.ArrayIndexOutOfBoundsException: Index 1980 out of bounds for length 1980
+        at com.backrooms.gdx.light.LightBaker$Cells.<init>(LightBaker.java:238)
+        at com.backrooms.gdx.light.LightBaker.bake(LightBaker.java:48)
+        at com.backrooms.gdx.chunk.ChunkMesher.build(ChunkMesher.java:34)
+        at com.backrooms.gdx.ChunkMesherTest.everyKindOfRoomMeshesAtItsOwnHeight(ChunkMesherTest.java:231)
+ChunkMesherTest > lightmapIsFullyPacked FAILED
+    java.lang.ArrayIndexOutOfBoundsException: Index 1980 out of bounds for length 1980
+        at com.backrooms.gdx.light.LightBaker$Cells.<init>(LightBaker.java:238)
+        at com.backrooms.gdx.light.LightBaker.bake(LightBaker.java:48)
+        at com.backrooms.gdx.chunk.ChunkMesher.build(ChunkMesher.java:34)
+        at com.backrooms.gdx.ChunkMesherTest.lightmapIsFullyPacked(ChunkMesherTest.java:76)
+ChunkMesherTest > boundsCoverTheChunk FAILED
+    java.lang.ArrayIndexOutOfBoundsException: Index 1980 out of bounds for length 1980
+        at com.backrooms.gdx.light.LightBaker$Cells.<init>(LightBaker.java:238)
+        at com.backrooms.gdx.light.LightBaker.bake(LightBaker.java:48)
+        at com.backrooms.gdx.chunk.ChunkMesher.build(ChunkMesher.java:34)
+        at com.backrooms.gdx.ChunkMesherTest.boundsCoverTheChunk(ChunkMesherTest.java:61)
 EntityControllerTest > itPassesByAndLeavesBehindAWall FAILED
     java.lang.AssertionError: it must not appear where the player can see it
         at org.junit.Assert.fail(Assert.java:89)
         at org.junit.Assert.assertTrue(Assert.java:42)
         at org.junit.Assert.assertFalse(Assert.java:65)
         at com.backrooms.gdx.EntityControllerTest.itPassesByAndLeavesBehindAWall(EntityControllerTest.java:98)
-51 tests completed, 2 failed
-> Task :android:mergeDebugJavaResource
+LightBakerTest > wallsBlockLight FAILED
+    java.lang.ArrayIndexOutOfBoundsException: Index 1980 out of bounds for length 1980
+        at com.backrooms.gdx.light.LightBaker$Cells.<init>(LightBaker.java:238)
+        at com.backrooms.gdx.light.LightBaker.blocked(LightBaker.java:342)
+        at com.backrooms.gdx.LightBakerTest.wallsBlockLight(LightBakerTest.java:36)
+LightBakerTest > wallsDarkenTheFloorAroundThem FAILED
+    java.lang.ArrayIndexOutOfBoundsException: Index 1980 out of bounds for length 1980
+        at com.backrooms.gdx.light.LightBaker$Cells.<init>(LightBaker.java:238)
+        at com.backrooms.gdx.light.LightBaker.bake(LightBaker.java:48)
+        at com.backrooms.gdx.LightBakerTest.wallsDarkenTheFloorAroundThem(LightBakerTest.java:52)
+> Task :android:mergeExtDexDebug FROM-CACHE
+> Task :android:mergeProjectDexDebug FROM-CACHE
+> Task :android:mergeDebugNativeLibs
+> Task :android:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libgdx.so.
+> Task :android:writeDebugAppMetadata
+> Task :android:writeDebugSigningConfigVersions
+> Task :android:preReleaseBuild
+> Task :android:mergeReleaseJniLibFolders
+> Task :android:mergeReleaseNativeLibs
+> Task :android:stripReleaseDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libgdx.so.
+> Task :android:extractReleaseNativeSymbolTables FROM-CACHE
+> Task :android:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :android:checkReleaseDuplicateClasses
+> Task :android:javaPreCompileRelease FROM-CACHE
+> Task :android:checkReleaseAarMetadata
+> Task :android:generateReleaseResValues FROM-CACHE
+> Task :android:mapReleaseSourceSetPaths
+> Task :android:generateReleaseResources FROM-CACHE
+> Task :android:mergeReleaseResources FROM-CACHE
+> Task :android:packageReleaseResources FROM-CACHE
+> Task :android:parseReleaseLocalResources FROM-CACHE
+> Task :android:createReleaseCompatibleScreenManifests
+> Task :android:extractDeepLinksRelease FROM-CACHE
+> Task :android:processReleaseMainManifest FROM-CACHE
+> Task :android:processReleaseManifest FROM-CACHE
+> Task :android:processReleaseManifestForPackage FROM-CACHE
+> Task :android:processReleaseResources FROM-CACHE
+> Task :android:compileReleaseJavaWithJavac FROM-CACHE
+> Task :android:dexBuilderRelease FROM-CACHE
+> Task :android:desugarReleaseFileDependencies FROM-CACHE
+> Task :android:mergeReleaseStartupProfile
+> Task :android:mergeExtDexRelease FROM-CACHE
+> Task :android:mergeReleaseArtProfile
+> Task :android:mergeReleaseShaders
+> Task :android:compileReleaseShaders NO-SOURCE
+> Task :android:generateReleaseAssets UP-TO-DATE
+> Task :android:mergeReleaseAssets
+> Task :android:mergeDebugGlobalSynthetics FROM-CACHE
+> Task :android:mergeReleaseGlobalSynthetics FROM-CACHE
+> Task :android:mergeLibDexDebug
+> Task :android:compressReleaseAssets
+> Task :android:extractReleaseVersionControlInfo
+> Task :android:processReleaseJavaRes NO-SOURCE
+> Task :android:packageDebug
+> Task :android:createDebugApkListingFileRedirect
+> Task :android:assembleDebug
+> Task :android:optimizeReleaseResources FROM-CACHE
+> Task :android:collectReleaseDependencies
+> Task :android:mergeReleaseJavaResource
+> Task :android:sdkReleaseDependencyData
+> Task :android:writeReleaseAppMetadata
+> Task :android:writeReleaseSigningConfigVersions
+> Task :android:mergeDexRelease
+> Task :android:compileReleaseArtProfile
+> Task :android:packageRelease
+> Task :android:createReleaseApkListingFileRedirect
+> Task :android:assembleRelease
+> Task :core:test
+WorldStreamingTest > buildsAndUnloadsChunksAroundThePlayer FAILED
+    java.lang.AssertionError: chunks should stream in
+        at org.junit.Assert.fail(Assert.java:89)
+        at org.junit.Assert.assertTrue(Assert.java:42)
+        at com.backrooms.gdx.WorldStreamingTest.buildsAndUnloadsChunksAroundThePlayer(WorldStreamingTest.java:34)
+51 tests completed, 11 failed
 > Task :core:test FAILED
-> Task :android:checkDebugDuplicateClasses
 [Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
 FAILURE: Build failed with an exception.
 * What went wrong:
@@ -236,6 +350,6 @@ Caused by: org.gradle.api.internal.exceptions.MarkedVerificationException: There
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 13s
-27 actionable tasks: 14 executed, 13 from cache
+BUILD FAILED in 20s
+79 actionable tasks: 45 executed, 34 from cache
 ```
