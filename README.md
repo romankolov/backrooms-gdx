@@ -13,14 +13,14 @@ thrown away behind you, so the map never ends and memory never grows.
 
 | | |
 | --- | --- |
-| **Infinite map** | One flat storey — a level floor at 0 m, a ceiling at 3 m, no stairs — cut by 7 m rooms with doorways, dividers and open halls, with the occasional pit in the carpet that swallows you. Every wall, light and hole is a pure hash of its integer coordinates and the world seed, so any chunk can be generated on its own and always comes out the same. |
+| **Infinite map** | Built in two layers. **Lanes**: corridors two metres wide that run for a hundred metres or so and then stop dead in a wall, so the grid cannot be counted. **Blocks**: every 12 m square is one of seven kinds — offices of small rooms, an open hall, a forest of pillars, a grid of holes, terraces stepping down into the floor, a comb maze, or a grand hall with a four-and-a-half metre ceiling. Offices are still about six blocks in ten. Every wall, light, hole and terrace is a pure hash of its integer coordinates and the world seed, so any chunk can be generated on its own and always comes out the same. |
 | **Streaming** | Chunks (16 × 16 m) are sampled, meshed and light-baked on background threads, uploaded at most two per frame, and released again behind you. Draw distance adjustable in game (2–6 chunks). |
 | **Baked lighting** | Soft fluorescent pools, contact shadows in corners and a bounce pass, all baked per chunk at 2 texels/m into an 8 KB lightmap (irradiance on floors in RGB, on walls in alpha). Zero dynamic lights at runtime. |
 | **Materials** | The CC0 wallpaper, carpet and ceiling tile sets with their normal maps (normal-mapped, specular, parallax-free), plus procedural fluorescent panels that flicker: a diffuser gradient across the panel, and an additive halo pass that blooms the light past the tube so it reads as a light rather than a white rectangle. |
 | **Lighting model** | Warm fluorescent tubes, a handheld torch cone, distance haze, ACES tone mapping, vignette and a touch of sensor grain. |
-| **VHS camcorder** | The whole frame goes through an offscreen pass that emulates tape: drum curvature, head-switch tear along the bottom edge, chroma smear from the low chroma bandwidth, a tracking band that drifts up the frame, dropout speckles, scanlines, grain and a warm washed-out grade. Plus a camcorder OSD (REC lamp, SP, date, tape counter) drawn from a hand-built 5x7 character generator, and synthesised tape hiss. Toggle it in the pause menu (`VHS LOOK`) or with `-Dbackrooms.vhs=0`. |
+| **VHS camcorder** | The whole frame goes through an offscreen pass that emulates tape — a *good* tape in a working deck: geometry straight to within a pixel, a little chroma smear from the low chroma bandwidth, a tracking band that nudges rather than tears, soft grain, faint scanlines and a warm slightly-lifted grade. Plus a camcorder OSD (REC lamp, SP, date, tape counter) drawn from a hand-built 5x7 character generator, and synthesised tape hiss. Toggle it in the pause menu (`VHS LOOK`) or with `-Dbackrooms.vhs=0`. |
 | **The presence** | Something else is in here. Most of the time there is nothing at all. Eventually a figure appears ten to eighteen metres ahead of where you are looking, on the far side of a wall so you never see it arrive; it walks across the corridor ahead of you at a stroll, and keeps walking until another wall takes it out of your sight - only then does it go, and not again for half a minute or more. It never runs, never chases and cannot catch you: it is a silhouette in the shape of a person, solid black and featureless, and what it does is make you doubt what you saw. Toggle it in the pause menu (`THE PRESENCE`). |
-| **Audio** | Everything is synthesised in `tools/make_assets.py`; no third-party samples. Footsteps pick a sample at random, then *echo off the room they happen in*: eight rays measure the walls around you, the nearest two surfaces become early reflections (delayed by distance and panned to the side they came from) and the average distance sets a diffuse tail, so a corridor snaps and a hall rings. The entity's steps are placed, panned, muffled through walls and echo the same way, and every so often it makes a sound you cannot place. The fluorescent buzz fades in with the nearest working tube, over a low room tone, with tape hiss tied to the camcorder. |
+| **Audio** | Everything is synthesised in `tools/make_assets.py`; no third-party samples. Footsteps pick a sample at random, then *echo off the room they happen in*: eight rays measure the walls around you, the nearest two surfaces become early reflections (delayed by distance and panned to the side they came from) and the average distance sets a diffuse tail, so a corridor snaps and a hall rings. The entity's steps are placed, panned, muffled through walls and echo the same way, and every so often it makes one of its own noises — a creak of something heavy leaning on a wall, chittering, something dragged, its breathing — each placed in the level, and harder to muffle than a footstep should be. The only room sound is the fluorescent buzz of the nearest working tube, fading in with distance; the tape hiss belongs to the camcorder. |
 | **Controls** | Touch: floating stick on the left, drag-to-look anywhere on the right, run (hold), jump, torch and pause buttons — all fingers at once. Keyboard and mouse also work (desktop build). The emulator job drives the real controls and checks the numbers the app logs, so a dead button or a dead look drag fails CI instead of shipping. |
 | **Platforms** | Android (`minSdk 24`, arm64 + armv7 + x86_64) and a desktop launcher used for development and screenshots. |
 
@@ -30,7 +30,7 @@ Rendered by CI on software OpenGL (llvmpipe), 1280×720, seed 20241027:
 
 ![A corridor](screenshots/shot1.png)
 
-A pit in the carpet, the only thing that interrupts the level's flat floor:
+A hole in the carpet — they are not rare, and falling in is how the level moves you somewhere else:
 
 ![A hole in the floor](screenshots/hole/shot0.png)
 
@@ -97,8 +97,10 @@ Handy system properties for the desktop run:
 ./gradlew :core:test
 ```
 
-45 unit tests cover the generator (determinism, seeds, wall density, stair grid, chunk seams),
-the mesher (winding, index bounds, bounds, lightmap), the light baker (occlusion, blockages),
+51 unit tests cover the generator (determinism, seeds, wall density, every kind of block, the
+terraces being steps rather than ledges, corridors that run and corridors that stop, and that nine
+tenths of the level around the spawn can actually be walked to), the mesher (winding, index bounds,
+bounds, lightmap, the height of every kind of room), the light baker (occlusion, blockages),
 the player physics (landing, thin-wall collision, 1200 steps of random walking without ever
 clipping through a wall or sinking through the floor), the streaming that builds and releases
 chunks, the shader rules that only bite on GLES2, the camcorder's 5x7 glyph table, the acoustics
@@ -138,11 +140,11 @@ core/src/main/java/com/backrooms/gdx
 ├── player/Player.java         first person movement, thin-wall capsule collision
 ├── input/TouchControls.java   floating stick, drag look, buttons, keyboard
 ├── entity/EntityController    the pass-by: where it appears, where it walks, when it goes (no GL)
-├── entity/EntityRenderer      the rigged silhouette: clips, black material, placeholder fallback
+├── entity/EntityRenderer      the rigged silhouette: walk clip #1, black material, fallback body
 ├── render/VhsEffect.java      offscreen buffer + the tape shader
 ├── ui/VhsOsd.java             camcorder OSD drawn from a 5x7 character generator
 ├── audio/Acoustics.java       probes the walls around a step and returns the room's answer
-├── audio/AudioManager.java    muxer: placed footsteps, echo taps, buzz, room tone, tape hiss
+├── audio/AudioManager.java    muxer: placed footsteps, echo taps, buzz, tape hiss, its noises
 └── ui/Hud.java, screens/…     title screen, HUD, pause menu
 ```
 
@@ -198,11 +200,16 @@ if your device needs it.
 | Constant | Where | Meaning |
 | --- | --- | --- |
 | `CHUNK_CELLS` | `WorldGen` | chunk edge in metres (16) |
-| `MACRO` | `WorldGen` | room size (7 m) |
+| `BLOCK` | `WorldGen` | edge of a block, lane included (12 m) |
+| `CORRIDOR_WIDTH` | `WorldGen` | width of a corridor lane (2 m) |
+| `ROOM_MODULE` | `WorldGen` | size of an office room (3 m); two of its four walls open |
+| `kindAt()` | `WorldGen` | the mix of block kinds — offices are about six in ten |
+| `laneColumn()` / `laneRow()` | `WorldGen` | where corridors run, and how often they stop |
 | `LIGHT_SPACING` / `LIGHT_PHASE` | `WorldGen` | fixture lattice |
-| `ROOM_HEIGHT` | `WorldGen` | ceiling height (3 m) |
-| `HOLE_DEPTH` | `WorldGen` | how far the pits drop (2.5 m) |
-| `isHole()` | `WorldGen` | hole shape and density (about 2% of the floor) |
+| `ROOM_HEIGHT`, `CORRIDOR_CEIL`, `MAZE_CEIL`, `GRAND_CEIL`, `SUNKEN_CEIL` | `WorldGen` | ceiling of each kind of room |
+| `HOLE_DEPTH` | `WorldGen` | how far the pits drop (6 m: you do not climb out) |
+| `TERRACE_STEP`, `TERRACE_RINGS` | `WorldGen` | how a sunken room steps down (0.5 m, 4 rings) |
+| `isHole()` | `WorldGen` | hole shape and density (about 4% of the floor) |
 | `LIGHT_INTENSITY`, `FALLOFF`, `RANGE` | `LightBaker` | brightness, falloff and lightmap encoding |
 | `TEXELS_PER_METER` | `LightBaker` | lightmap resolution (2) |
 | `WALK_SPEED`, `SPRINT_SPEED`, `GRAVITY`, `JUMP_SPEED` | `Player` | movement feel |
@@ -212,6 +219,8 @@ if your device needs it.
 | `STALK_SPEED` | `EntityController` | its walking pace — it never speeds up |
 | `HIDDEN_TO_VANISH`, `GONE_MIN`, `GONE_MAX` | `EntityController` | seconds out of sight before it leaves, and how long it stays away |
 | `scale` | `VhsEffect` | resolution of the tape buffer (0.85 of the screen by default) |
+| `CUE_MIN`, `CUE_MAX` | `EntityController` | how often it makes one of its small noises |
+| `WALK_CLIP_INDEX` | `EntityRenderer` | which animation it walks on (number one) |
 | `u_scanline`, `u_intensity` | `VhsEffect` | how heavy the camcorder look is |
 
 ## Assets
