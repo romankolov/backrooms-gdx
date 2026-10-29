@@ -7,6 +7,9 @@ HOLE_DEPTH = 6.0
 TERRACE_STEP = 0.5
 TERRACE_RINGS = 4
 
+def fmod(a, b):
+    return a % b        # Python's % is already floor-mod, like Java's Math.floorMod
+
 def s32(x):
     x &= 0xffffffff
     return x - 0x100000000 if x >= 0x80000000 else x
@@ -97,7 +100,7 @@ def kind_of(x0, z0, x1, z1):
     w, h = x1-x0, z1-z0
     if min(w, h) <= CORRIDOR_WIDTH: return KIND_PLAIN
     hh = hash3(s32(SEED ^ 0x0abc), s32(x0*13+z0), s32(x1*7+z1), w*5+h)
-    roll = hh % 100
+    roll = fmod(hh, 100)
     narrow = min(w, h)
     if roll < 63: return KIND_PLAIN
     if roll < 70: return KIND_GRAND
@@ -158,6 +161,26 @@ def doorway(node, axis, pos, along):
         if s2 <= along < s2 + w2 and s2 + w2 <= span1: return True
     return False
 
+def ceil_of(q):
+    x0, z0, x1, z1 = q.leaf
+    w, h = x1-x0, z1-z0
+    if q.kind == KIND_GRAND:
+        hh = hash3(s32(SEED ^ 0x0f00), x0, z0, x1+z1)
+        return 4.2 + fmod(hh, 100) * 0.01 * (5.4 - 4.2)
+    if q.kind == KIND_SUNKEN: return 3.4
+    if q.kind == KIND_PITS: return 3.4
+    if q.kind == KIND_SPURS: return 2.8
+    if min(w, h) <= CORRIDOR_WIDTH:
+        hh = hash3(s32(SEED ^ 0x0ba2), x0, z0, x1+z1)
+        return 2.7 + fmod(hh, 100) * 0.01 * (3.1 - 2.7)
+    return 3.0
+
+def floor_of(q, cx, cz):
+    if is_hole(cx, cz, q): return -6.0
+    if q.kind == KIND_SUNKEN:
+        return -min(4, inset(q.leaf, cx, cz)) * 0.5
+    return 0.0
+
 def inset(leaf, cx, cz):
     x0, z0, x1, z1 = leaf
     return min(cx-x0, x1-1-cx, cz-z0, z1-1-cz)
@@ -202,3 +225,13 @@ def is_hole(cx, cz, q):
     hh = hash3(s32(SEED ^ 0x1791), q.leaf[0], q.leaf[1], q.leaf[2]+q.leaf[3])
     if (hh & 15) != 0: return False
     return fbm2(s32(SEED ^ 0x6f31c9d7), cx*0.31, cz*0.31) > 0.74
+
+
+LIGHT_SPACING = 6
+def fixture_at(cx, cz):
+    if cx % LIGHT_SPACING != 0 or cz % LIGHT_SPACING != 0: return False
+    h = hash2(s32(SEED ^ 0x2f9c3d11), cx // LIGHT_SPACING, cz // LIGHT_SPACING)
+    if (h & 255) >= 226: return False
+    q = Q(); leaf_at(cx, cz, q)
+    if is_hole(cx, cz, q): return False
+    return q.kind != KIND_DARK

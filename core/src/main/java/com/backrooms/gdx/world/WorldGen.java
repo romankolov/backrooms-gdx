@@ -450,7 +450,7 @@ public final class WorldGen {
             return KIND_PLAIN;                     // a corridor is always a corridor
         }
         int hh = Hash.hash3(seed ^ 0x0abc, x0 * 13 + z0, x1 * 7 + z1, w * 5 + h);
-        int roll = hh % 100;
+        int roll = Hash.floorMod(hh, 100);
         if (roll < 63) {
             return KIND_PLAIN;
         }
@@ -534,7 +534,7 @@ public final class WorldGen {
             case KIND_GRAND: {
                 int hh = Hash.hash3(seed ^ 0x0f00, q.x0, q.z0, q.x1 + q.z1);
                 return GRAND_CEIL_MIN
-                        + (hh % 100) * (1f / 100f) * (GRAND_CEIL_MAX - GRAND_CEIL_MIN);
+                        + Hash.floorMod(hh, 100) * (1f / 100f) * (GRAND_CEIL_MAX - GRAND_CEIL_MIN);
             }
             case KIND_SUNKEN:
                 return SUNKEN_CEIL;
@@ -546,7 +546,8 @@ public final class WorldGen {
                 if (Math.min(w, h) <= CORRIDOR_WIDTH) {
                     int hh = Hash.hash3(seed ^ 0x0ba2, q.x0, q.z0, q.x1 + q.z1);
                     return CORRIDOR_CEIL_MIN
-                            + (hh % 100) * (1f / 100f) * (CORRIDOR_CEIL_MAX - CORRIDOR_CEIL_MIN);
+                            + Hash.floorMod(hh, 100) * (1f / 100f)
+                                    * (CORRIDOR_CEIL_MAX - CORRIDOR_CEIL_MIN);
                 }
                 return ROOM_HEIGHT;
         }
@@ -773,6 +774,10 @@ public final class WorldGen {
         int h = Hash.hash2(seed ^ 0x2f9c3d11, fixtureIndex(cellX), fixtureIndex(cellZ));
         if ((h & 255) >= 226) {
             return false;                          // a few sockets are empty
+        }
+        // Nothing is hung over a hole: a fitting there lights the bottom of a pit.
+        if (isHole(cellX, cellZ)) {
+            return false;
         }
         // A room with no working light has no fixtures in it at all.
         return kindAt(cellX, cellZ) != KIND_DARK;

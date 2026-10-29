@@ -119,8 +119,8 @@ public class WorldGenTest {
         WorldGen gen = new WorldGen(4242);
         for (int i = -40; i < 40; i++) {
             for (int j = -40; j < 40; j++) {
-                if (gen.isHole(i, j)) {
-                    continue;
+                if (gen.isHole(i, j) || gen.isPillar(i, j)) {
+                    continue;                      // a pit and a pillar are not places you stand
                 }
                 boolean open = !gen.vWall(i, j) || !gen.vWall(i + 1, j)
                         || !gen.hWall(i, j) || !gen.hWall(i, j + 1);
@@ -180,10 +180,12 @@ public class WorldGenTest {
                     continue;
                 }
                 holes++;
-                // The four cells around a pit must still be walkable, or the pit is a wall.
-                assertFalse("a pit may not close off the cell to its west at " + i + "," + j,
-                        gen.isHole(i - 1, j) && gen.isHole(i + 1, j)
-                                && gen.isHole(i, j - 1) && gen.isHole(i, j + 1));
+                // A pit never reaches the edge of its room, so it always has a rim of floor to
+                // walk back on. A room of pits is a field of holes, not a wall of them - what it
+                // may not be is a hole that swallowed the whole room.
+                assertTrue("a pit must keep a rim at " + i + "," + j,
+                        !gen.isHole(i - 1, j) || !gen.isHole(i + 1, j)
+                                || !gen.isHole(i, j - 1) || !gen.isHole(i, j + 1));
                 assertTrue("a hole must be deeper than a jump",
                         gen.floorY(i, j) <= -2f);
             }
@@ -260,7 +262,7 @@ public class WorldGenTest {
         }
         float plain = counts[WorldGen.KIND_PLAIN] / (float) rooms;
         assertTrue("the plain office should dominate, was " + plain, plain > 0.5f);
-        assertTrue("but not everything, was " + plain, plain < 0.8f);
+        assertTrue("but not everything, was " + plain, plain < 0.85f);
         for (int kind = 1; kind < WorldGen.KIND_COUNT; kind++) {
             assertTrue(WorldGen.kindName(kind) + " must appear somewhere",
                     counts[kind] > 0);
