@@ -42,6 +42,10 @@ public final class LightBaker {
         float x0 = data.chunkX * WorldGen.CHUNK_SIZE - PAD;
         float z0 = data.chunkZ * WorldGen.CHUNK_SIZE - PAD;
 
+        // Every ray this bake casts asks the same handful of cells the same questions, so the cells
+        // are sampled once up front. This is the difference between a few thousand generator calls
+        // and a few million: the world generator is pure, but it is not free.
+        Cells cells = new Cells(gen, Hash.floorInt(x0), Hash.floorInt(z0));
         // The fixtures that can reach this chunk, collected once instead of per texel.
         float[] fixtures = collectFixtures(gen, x0, z0);
 
@@ -52,7 +56,7 @@ public final class LightBaker {
             float wz = z0 + (tj + 0.5f) * TEXEL_SIZE;
             for (int ti = 0; ti < TEXELS; ti++) {
                 float wx = x0 + (ti + 0.5f) * TEXEL_SIZE;
-                bakeTexel(gen, fixtures, wx, wz, up, side, tj * TEXELS + ti);
+                bakeTexel(cells, fixtures, wx, wz, up, side, tj * TEXELS + ti);
             }
         }
 
@@ -120,7 +124,7 @@ public final class LightBaker {
         return out;
     }
 
-    private static void bakeTexel(WorldGen gen, float[] fixtures, float wx0, float wz0, float[] up,
+    private static void bakeTexel(Cells gen, float[] fixtures, float wx0, float wz0, float[] up,
                                   float[] side, int index) {
         // Floor, ceiling and wall corner vertices sit exactly on wall lines. Sampling there would
         // read the inside of the wall and paint a black seam along every wall, so the probe is
@@ -185,7 +189,94 @@ public final class LightBaker {
                 + 0.0722f * (sb * sideScale + ambient * 0.9f);
     }
 
-    private static float slideOutOfWallX(WorldGen gen, float x, float z) {
+    /**
+     * A window of the level's cells, sampled once.
+     *
+     * <p>{@link WorldGen} answers every question by hashing integer coordinates, which is what makes
+     * the world infinite and thread safe - and what makes it far too slow to call hundreds of
+     * thousands of times per chunk. The light bake does exactly that, so it works on this instead:
+     * the floors, ceilings and walls of a window big enough for every ray the bake can cast, read
+     * out of the generator once. Outside the window the generator still answers, so the result is
+     * identical to sampling the world directly.
+     */
+    static final class Cells {
+        /** How far past the chunk edge a ray can reach: the light radius plus the bounce blur. */
+        private static final int MARGIN = (int) LIGHT_RADIUS + 3;
+
+        private final WorldGen gen;
+        private final int x0;
+        private final int z0;
+        private final int size;
+        private final float[] floor;
+        private final float[] ceil;
+        private final boolean[] vWall;
+        private final boolean[] hWall;
+
+        Cells(WorldGen gen, int cellX0, int cellZ0) {
+            this.gen = gen;
+            this.x0 = cellX0 - MARGIN;
+            this.z0 = cellZ0 - MARGIN;
+            this.size = WorldGen.CHUNK_CELLS + MARGIN * 2;
+            int cells = size * size;
+            floor = new float[cells];
+            ceil = new float[cells];
+            // Wall arrays are one wider on their own axis: the wall at the far edge belongs to the
+            // window too.
+            vWall = new boolean[(size + 1) * size];
+            hWall = new boolean[size * (size + 1)];
+            for (int j = 0; j < size; j++) {
+                for (int i = 0; i < size; i++) {
+                    int cx = x0 + i;
+                    int cz = z0 + j;
+                    float f = gen.floorY(cx, cz);
+                    floor[j * size + i] = f;
+                    ceil[j * size + i] = gen.ceilY(cx, cz);
+                    vWall[j * (size + 1) + i] = gen.vWall(cx, cz);
+                    hWall[j * (size + 1) + i] = gen.hWall(cx, cz);
+                }
+                vWall[j * (size + 1) + size] = gen.vWall(x0 + size, z0 + j);
+                hWall[size * (size + 1) + j] = gen.hWall(x0 + j, z0 + size);
+            }
+        }
+
+        float floorY(int cellX, int cellZ) {
+            int i = cellX - x0;
+            int j = cellZ - z0;
+            if (i < 0 || j < 0 || i >= size || j >= size) {
+                return gen.floorY(cellX, cellZ);
+            }
+            return floor[j * size + i];
+        }
+
+        float ceilY(int cellX, int cellZ) {
+            int i = cellX - x0;
+            int j = cellZ - z0;
+            if (i < 0 || j < 0 || i >= size || j >= size) {
+                return gen.ceilY(cellX, cellZ);
+            }
+            return ceil[j * size + i];
+        }
+
+        boolean vWall(int cellX, int cellZ) {
+            int i = cellX - x0;
+            int j = cellZ - z0;
+            if (i < 0 || j < 0 || i > size || j >= size) {
+                return gen.vWall(cellX, cellZ);
+            }
+            return vWall[j * (size + 1) + i];
+        }
+
+        boolean hWall(int cellX, int cellZ) {
+            int i = cellX - x0;
+            int j = cellZ - z0;
+            if (i < 0 || j < 0 || i >= size || j > size) {
+                return gen.hWall(cellX, cellZ);
+            }
+            return hWall[j * (size + 1) + i];
+        }
+    }
+
+    private static float slideOutOfWallX(Cells gen, float x, float z) {
         int j = Hash.floorInt(z);
         float th = WorldGen.WALL_HALF_THICKNESS + 0.12f;
         for (int i = Hash.floorInt(x) - 1; i <= Hash.floorInt(x) + 1; i++) {
@@ -198,7 +289,7 @@ public final class LightBaker {
         return x;
     }
 
-    private static float slideOutOfWallZ(WorldGen gen, float x, float z) {
+    private static float slideOutOfWallZ(Cells gen, float x, float z) {
         int i = Hash.floorInt(x);
         float th = WorldGen.WALL_HALF_THICKNESS + 0.12f;
         for (int j = Hash.floorInt(z) - 1; j <= Hash.floorInt(z) + 1; j++) {
@@ -219,6 +310,11 @@ public final class LightBaker {
      * floor the rays also climb, for a wall they stay horizontal at chest height.
      */
     public static float ambientOcclusion(WorldGen gen, float x, float y, float z, boolean upFacing) {
+        // Convenience for callers (and tests) that have no window of their own.
+        return ambientOcclusion(new Cells(gen, Hash.floorInt(x), Hash.floorInt(z)), x, y, z, upFacing);
+    }
+
+    static float ambientOcclusion(Cells gen, float x, float y, float z, boolean upFacing) {
         int open = 0;
         for (int k = 0; k < AO_PROBES; k++) {
             double angle = k * (Math.PI * 2.0 / AO_PROBES) + 0.21;
@@ -242,6 +338,13 @@ public final class LightBaker {
      */
     public static boolean blocked(WorldGen gen, float x0, float y0, float z0,
                                   float x1, float y1, float z1) {
+        // Convenience for callers (and tests) that have no window of their own.
+        return blocked(new Cells(gen, Hash.floorInt(x0), Hash.floorInt(z0)),
+                x0, y0, z0, x1, y1, z1);
+    }
+
+    static boolean blocked(Cells gen, float x0, float y0, float z0,
+                           float x1, float y1, float z1) {
         float dx = x1 - x0;
         float dy = y1 - y0;
         float dz = z1 - z0;
@@ -300,7 +403,7 @@ public final class LightBaker {
         return false;
     }
 
-    private static boolean crossesWall(WorldGen gen, int ax, int az, int bx, int bz, float y) {
+    private static boolean crossesWall(Cells gen, int ax, int az, int bx, int bz, float y) {
         float lo = Math.min(gen.floorY(ax, az), gen.floorY(bx, bz));
         float hi = Math.max(gen.ceilY(ax, az), gen.ceilY(bx, bz));
         return y > lo && y < hi;

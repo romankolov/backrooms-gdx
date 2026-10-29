@@ -79,6 +79,15 @@ public final class EntityController {
     private static final int WINDOW = 40;              // cells searched in each direction
     private static final int SIDE = WINDOW * 2 + 1;
     private static final int MAX_PATH = 384;
+    /** How many cells one route search may look at. A route is short; the search is bounded. */
+    private static final int SEARCH_BUDGET = 2600;
+    /**
+     * Looking for somewhere to appear is a search over the level, and a bad neighbourhood can eat
+     * tens of milliseconds. A slice of it runs per frame instead, so the picture never stalls while
+     * it decides where to stand.
+     */
+    private static final int APPEAR_ATTEMPTS_PER_FRAME = 10;
+    private static final int APPEAR_ATTEMPTS_TOTAL = 140;
 
     private final WorldGen gen;
     private final Random random;
@@ -114,6 +123,9 @@ public final class EntityController {
     private final int[] cameFrom = new int[SIDE * SIDE];
     private final int[] pathX = new int[MAX_PATH];
     private final int[] pathZ = new int[MAX_PATH];
+    /** Route scratch, reused: planning happens during play and must not allocate. */
+    private final int[] reversed = new int[MAX_PATH];
+    private int appearTries;
     private int pathLength;
     private int pathIndex;
     private float repathTimer;
@@ -281,8 +293,16 @@ public final class EntityController {
         switch (state) {
             case ABSENT:
                 dormant -= delta;
-                if (dormant <= 0f && !planPass(player, yaw)) {
-                    dormant = 2f;                  // nowhere good to appear yet; try again shortly
+                if (dormant <= 0f) {
+                    if (planPass(player, yaw, APPEAR_ATTEMPTS_PER_FRAME)) {
+                        appearTries = 0;
+                    } else {
+                        appearTries += APPEAR_ATTEMPTS_PER_FRAME;
+                        if (appearTries >= APPEAR_ATTEMPTS_TOTAL) {
+                            appearTries = 0;
+                            dormant = 2f;          // nowhere good to appear yet; try again shortly
+                        }
+                    }
                 }
                 break;
 
@@ -361,12 +381,12 @@ public final class EntityController {
      * view to a cell that is behind another wall. Returns false if the level has no room for that
      * here, in which case the caller simply tries again later.
      */
-    private boolean planPass(Vector3 player, float yaw) {
+    private boolean planPass(Vector3 player, float yaw, int attempts) {
         // The player's forward, in the same convention as the camera: yaw 0 looks down -Z.
         float forwardX = -MathUtils.sin(yaw);
         float forwardZ = -MathUtils.cos(yaw);
 
-        for (int attempt = 0; attempt < 140; attempt++) {
+        for (int attempt = 0; attempt < attempts; attempt++) {
             // A direction a little off the centre of the view, so it crosses the corridor ahead
             // rather than walking straight at the player.
             float offset = (0.5f + random.nextFloat() * 0.9f)
@@ -536,7 +556,7 @@ public final class EntityController {
         int best = start;
         float bestScore = Float.MAX_VALUE;
 
-        while (head < tail) {
+        while (head < tail && head < SEARCH_BUDGET) {
             int cell = frontier[head++];
             int cx = cellX(cell);
             int cz = cellZ(cell);
@@ -561,7 +581,7 @@ public final class EntityController {
                 }
                 int wx = startX + nx;
                 int wz = startZ + nz;
-                if (!standable(wx, wz) && !(nx == gx && nz == gz)) {
+                if (!walkable(wx, wz) && !(nx == gx && nz == gz)) {
                     continue;
                 }
                 if (!canStep(startX + cx, startZ + cz, wx, wz)) {
@@ -574,7 +594,6 @@ public final class EntityController {
 
         // Walk the chain back to the start and store it forwards.
         int n = 0;
-        int[] reversed = new int[MAX_PATH];
         int cell = best;
         while (cell != start && n < MAX_PATH) {
             reversed[n++] = cell;
@@ -593,6 +612,15 @@ public final class EntityController {
 
     private boolean standable(int cx, int cz) {
         return gen.isOpenSpace(cx, cz) && gen.isSolidGround(cx, cz) && !gen.isHole(cx, cz);
+    }
+
+    /**
+     * The cheaper test used inside the route search, where it runs thousands of times: free of
+     * walls and not over a hole. It does not insist on solid ground all round - the search would
+     * rather route past the rim of a pit than fail to route at all.
+     */
+    private boolean walkable(int cx, int cz) {
+        return gen.isOpenSpace(cx, cz) && !gen.isHole(cx, cz);
     }
 
     private float groundAt(float x, float z) {
