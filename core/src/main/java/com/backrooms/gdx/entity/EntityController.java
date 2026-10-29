@@ -574,8 +574,14 @@ public final class EntityController {
         return gen.blocksSight(x, z);
     }
 
-    /** True if the step between two neighbouring cells is not blocked by a wall. */
+    /**
+     * True if the step between two neighbouring cells is not blocked by a wall and not a drop the
+     * thing would have to climb. It walks terraces happily; it does not walk off a ledge.
+     */
     private boolean canStep(int fromX, int fromZ, int toX, int toZ) {
+        if (Math.abs(gen.floorY(toX, toZ) - gen.floorY(fromX, fromZ)) > 0.6f) {
+            return false;
+        }
         int dx = toX - fromX;
         int dz = toZ - fromZ;
         if (dx == 1 && dz == 0) {

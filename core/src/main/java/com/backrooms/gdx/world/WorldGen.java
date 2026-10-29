@@ -5,11 +5,26 @@ import com.backrooms.gdx.util.Hash;
 /**
  * The infinite backrooms: a pure, stateless description of the level.
  *
- * <p>Level 0 is a single flat storey: one floor level, one ceiling height, no stairs and no ledges,
- * cut up by thin walls that run along the integer grid lines. The only thing that ever interrupts
- * the floor is the occasional hole. Walls, holes and ceiling lights are all derived from a hash of
- * their integer coordinates, so any chunk can be produced in isolation and the world never ends in
- * any direction.
+ * <p>A chunk can be produced in isolation, on any thread, in any order, and always comes out the
+ * same, because everything here is a function of integer grid coordinates and the world seed. That
+ * is what makes the map infinite without a map.
+ *
+ * <p>The layout is built from two layers:
+ *
+ * <ol>
+ *   <li><b>Lanes.</b> Every {@link #BLOCK} cells there is a lane two cells wide. Whether a lane is
+ *       actually a corridor is decided per block column and block row, so a corridor usually runs
+ *       for many tens of metres - the long halls - and sometimes stops dead at a wall. Two crossing
+ *       corridors form a junction automatically.</li>
+ *   <li><b>Blocks.</b> The cells a lane does not use belong to a block, and each block is one of
+ *       seven kinds: offices, an open hall, a forest of pillars, a grid of holes, a terraced pit,
+ *       a comb maze, or a grand hall with a ceiling seven metres up. Blocks of the same kind that
+ *       are not separated by a lane merge into one bigger room.</li>
+ * </ol>
+ *
+ * <p>That gives the two things the level needs at once: the flat, walled, endlessly familiar office
+ * most of the time (over half of it), and something you were not expecting often enough that you
+ * stop trusting the next doorway.
  */
 public final class WorldGen {
 
@@ -21,16 +36,54 @@ public final class WorldGen {
     public static final float CHUNK_SIZE = CHUNK_CELLS * CELL;
     /** Thin wall half-thickness. Walls are boxes 16cm thick. */
     public static final float WALL_HALF_THICKNESS = 0.08f;
-    /** Height of a room from floor to ceiling. The same everywhere: Level 0 is flat. */
+    /** Ceiling height of an ordinary room. */
     public static final float ROOM_HEIGHT = 3.0f;
-    /** How far below the floor the bottom of a hole sits. */
-    public static final float HOLE_DEPTH = 2.5f;
-    /** Room grid period, in cells. */
-    public static final int MACRO = 7;
-    /** Light fixtures sit on this lattice (in cells), one per room. */
-    public static final int LIGHT_SPACING = MACRO;
-    /** Fixtures are placed on cells with this phase inside the room lattice. */
-    public static final int LIGHT_PHASE = 3;
+    /** How far below the floor the bottom of a hole sits. Deep enough that you do not get out. */
+    public static final float HOLE_DEPTH = 6.0f;
+
+    /** Light fixtures sit on this lattice (in cells). */
+    public static final int LIGHT_SPACING = 6;
+    /** Fixtures are placed on cells with this phase inside the light lattice. */
+    public static final int LIGHT_PHASE = 0;
+
+    /** Cells per block edge, corridor lane included. */
+    public static final int BLOCK = 12;
+    /** Office rooms are this many cells across; the walls between them sit on its multiples. */
+    public static final int ROOM_MODULE = 3;
+    /** Rooms per block axis: four of them fill a block exactly. */
+    public static final int ROOMS_PER_AXIS = BLOCK / ROOM_MODULE;
+    /** Width of a corridor lane, in cells. */
+    public static final int CORRIDOR_WIDTH = 2;
+
+    // Block kinds.
+    public static final int KIND_OFFICE = 0;
+    public static final int KIND_HALL = 1;
+    public static final int KIND_PILLARS = 2;
+    public static final int KIND_PITS = 3;
+    public static final int KIND_SUNKEN = 4;
+    public static final int KIND_MAZE = 5;
+    public static final int KIND_GRAND = 6;
+    public static final int KIND_COUNT = 7;
+
+    // Sides of a room, used by the office partitions.
+    private static final int SIDE_EAST = 0;
+    private static final int SIDE_WEST = 1;
+    private static final int SIDE_SOUTH = 2;
+    private static final int SIDE_NORTH = 3;
+    private static final int SIDE_COUNT = 4;
+
+    /** Ceiling of a corridor lane: a touch higher than the rooms it runs between. */
+    public static final float CORRIDOR_CEIL = 3.15f;
+    /** Ceiling of a maze block: cramped, so the corridors feel low. */
+    public static final float MAZE_CEIL = 2.65f;
+    /** Ceiling of a grand hall. */
+    public static final float GRAND_CEIL = 4.6f;
+    /** Ceiling of a sunken room: it keeps its height while the floor drops away. */
+    public static final float SUNKEN_CEIL = 3.6f;
+    /** Each terrace of a sunken room drops this much: under the player's step height, so it walks. */
+    public static final float TERRACE_STEP = 0.5f;
+    /** How many terraces a sunken room has before it reaches its plateau. */
+    public static final int TERRACE_RINGS = 4;
 
     private final int seed;
 
@@ -43,29 +96,163 @@ public final class WorldGen {
     }
 
     // ---------------------------------------------------------------------------------------------
+    // the two layers: lanes and blocks
+    // ---------------------------------------------------------------------------------------------
+
+    public static int blockX(int cellX) {
+        return Hash.floorDiv(cellX, BLOCK);
+    }
+
+    public static int blockZ(int cellZ) {
+        return Hash.floorDiv(cellZ, BLOCK);
+    }
+
+    public static int localX(int cellX) {
+        return Hash.floorMod(cellX, BLOCK);
+    }
+
+    public static int localZ(int cellZ) {
+        return Hash.floorMod(cellZ, BLOCK);
+    }
+
+    /**
+     * True when a north-south corridor runs through this block.
+     *
+     * <p>Which block columns are worth running a corridor down at all is one hash, and whether the
+     * corridor is still going when it reaches this particular block is another. A corridor therefore
+     * runs for a hundred metres or so, ends in a wall, and picks up again a few blocks later - which
+     * is what stops the level from being a grid you can count.
+     */
+    private boolean laneColumn(int bx, int bz) {
+        if ((Hash.hash2(seed ^ 0x51ed270b, bx, 0x2f) & 255) >= 190) {
+            return false;
+        }
+        return (Hash.hash2(seed ^ 0x6a09e667, bx, bz) & 255) < 232;
+    }
+
+    /** True when an east-west corridor runs through this block. */
+    private boolean laneRow(int bz, int bx) {
+        if ((Hash.hash2(seed ^ 0x2fb1a3c7, bz, 0x71) & 255) >= 182) {
+            return false;
+        }
+        return (Hash.hash2(seed ^ 0xbb67ae85, bz, bx) & 255) < 232;
+    }
+
+    /** True if the cell is part of a corridor lane. Lanes are always open and always at y = 0. */
+    public boolean isCorridor(int cellX, int cellZ) {
+        if (localX(cellX) < CORRIDOR_WIDTH && laneColumn(blockX(cellX), blockZ(cellZ))) {
+            return true;
+        }
+        return localZ(cellZ) < CORRIDOR_WIDTH && laneRow(blockZ(cellZ), blockX(cellX));
+    }
+
+    /**
+     * Which kind of block a cell belongs to. Corridor cells still report their block, but nothing
+     * outside the block geometry uses it for them.
+     */
+    public int kindAt(int cellX, int cellZ) {
+        int h = Hash.hash2(seed ^ 0x9e3779b9, blockX(cellX), blockZ(cellZ)) & 1023;
+        if (h < 600) return KIND_OFFICE;        // 58%: the level everyone remembers
+        if (h < 670) return KIND_HALL;          // 7%: one big empty room
+        if (h < 740) return KIND_PILLARS;       // 7%: a forest of square pillars
+        if (h < 810) return KIND_PITS;          // 7%: a grid of drop-through holes
+        if (h < 872) return KIND_SUNKEN;        // 6%: terraces stepping down into the floor
+        if (h < 944) return KIND_MAZE;          // 7%: a comb maze of one-metre passages
+        return KIND_GRAND;                      // 8%: a hall with a four-and-a-half metre ceiling
+    }
+
+    public static String kindName(int kind) {
+        switch (kind) {
+            case KIND_OFFICE: return "office";
+            case KIND_HALL: return "hall";
+            case KIND_PILLARS: return "pillars";
+            case KIND_PITS: return "pits";
+            case KIND_SUNKEN: return "sunken";
+            case KIND_MAZE: return "maze";
+            case KIND_GRAND: return "grand";
+            default: return "?";
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
     // terrain
     // ---------------------------------------------------------------------------------------------
 
-    /**
-     * Floor level of a cell. Flat everywhere except inside a hole, where the pit bottom sits
-     * {@link #HOLE_DEPTH} metres lower.
-     */
+    /** Floor level of a cell. */
     public float floorY(int cellX, int cellZ) {
-        return isHole(cellX, cellZ) ? -HOLE_DEPTH : 0f;
+        if (isHole(cellX, cellZ)) {
+            return -HOLE_DEPTH;
+        }
+        if (isCorridor(cellX, cellZ)) {
+            return 0f;
+        }
+        if (kindAt(cellX, cellZ) == KIND_SUNKEN) {
+            return sunkenFloor(localX(cellX), localZ(cellZ));
+        }
+        return 0f;
     }
 
-    /** Ceiling height of a cell. Flat everywhere, holes included - only the floor drops. */
+    /** Ceiling height of a cell: absolute, so a sunken room keeps its full height. */
     public float ceilY(int cellX, int cellZ) {
-        return ROOM_HEIGHT;
+        if (isCorridor(cellX, cellZ)) {
+            return CORRIDOR_CEIL;
+        }
+        switch (kindAt(cellX, cellZ)) {
+            case KIND_GRAND:
+                return GRAND_CEIL;
+            case KIND_MAZE:
+                return MAZE_CEIL;
+            case KIND_SUNKEN:
+                return SUNKEN_CEIL;
+            default:
+                return ROOM_HEIGHT;
+        }
     }
 
     /**
-     * True where the floor drops away into a pit. Two octaves only, so the blobs come out compact
-     * and round instead of as one-cell slivers: about 3% of the floor, in pits a few metres across.
-     * Everything outside them is on the same level.
+     * True where the floor drops away and there is no way back up: the scattered pits, and the whole
+     * grid of them in a {@link #KIND_PITS} block. Falling in is how the level moves you somewhere
+     * else, so a hole is never a place you can stand.
      */
     public boolean isHole(int cellX, int cellZ) {
-        return Hash.fbm2(seed ^ 0x2545f491, cellX * 0.07f + 11f, cellZ * 0.07f - 7f) > 0.57f;
+        if (isCorridor(cellX, cellZ)) {
+            return false;
+        }
+        switch (kindAt(cellX, cellZ)) {
+            case KIND_PITS:
+                return gridPit(localX(cellX), localZ(cellZ));
+            case KIND_OFFICE:
+            case KIND_HALL:
+            case KIND_GRAND:
+                // Two octaves only, so the blobs come out compact and round instead of as
+                // one-cell slivers: about 3% of these blocks, in pits a few metres across.
+                return Hash.fbm2(seed ^ 0x2545f491, cellX * 0.07f + 11f, cellZ * 0.07f - 7f) > 0.57f;
+            default:
+                return false;
+        }
+    }
+
+    /** Two-by-two holes on a three-cell lattice: a grid of holes joined by one-cell walkways. */
+    private static boolean gridPit(int lx, int lz) {
+        return Hash.floorMod(lx, 3) != 0 && Hash.floorMod(lz, 3) != 0;
+    }
+
+    /**
+     * A room whose floor steps down towards the middle in half-metre terraces. Every step is
+     * shorter than the player's stride up, so the whole room can be walked into and out of, and the
+     * ceiling stays where it was: the room gets taller the further in you go.
+     */
+    private static float sunkenFloor(int lx, int lz) {
+        int d = Math.min(Math.min(lx, lz), Math.min(BLOCK - 1 - lx, BLOCK - 1 - lz));
+        return -Math.min(TERRACE_RINGS, d) * TERRACE_STEP;
+    }
+
+    /** True where the cell is the hollow inside of a square pillar. */
+    private boolean pillarCell(int cellX, int cellZ) {
+        if (kindAt(cellX, cellZ) != KIND_PILLARS) {
+            return false;
+        }
+        return Hash.floorMod(localX(cellX), 3) == 1 && Hash.floorMod(localZ(cellZ), 3) == 1;
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -74,105 +261,248 @@ public final class WorldGen {
 
     /** Wall on the vertical line {@code x = cellX}, spanning {@code z in [cellZ, cellZ+1)}. */
     public boolean vWall(int cellX, int cellZ) {
-        if (vMacroWall(cellX)) {
-            return !vDoorway(cellX, cellZ) && !vOpenBorder(cellX, cellZ);
-        }
-        return vClutter(cellX, cellZ);
+        return wall(true, cellX, cellZ);
     }
 
     /** Wall on the horizontal line {@code z = cellZ}, spanning {@code x in [cellX, cellX+1)}. */
     public boolean hWall(int cellX, int cellZ) {
-        if (hMacroWall(cellZ)) {
-            return !hDoorway(cellX, cellZ) && !hOpenBorder(cellX, cellZ);
-        }
-        return hClutter(cellX, cellZ);
-    }
-
-    /** Some room borders are missing entirely, which opens up the big halls of Level 0. */
-    private boolean vOpenBorder(int cellX, int cellZ) {
-        int line = Hash.floorDiv(cellX, MACRO);
-        return (Hash.hash2(seed ^ 0x3c6ef372, line, Hash.floorDiv(cellZ, MACRO)) & 255) < 34;
-    }
-
-    private boolean hOpenBorder(int cellX, int cellZ) {
-        int line = Hash.floorDiv(cellZ, MACRO);
-        return (Hash.hash2(seed ^ 0x3c6ef373, line, Hash.floorDiv(cellX, MACRO)) & 255) < 34;
-    }
-
-    private boolean vMacroWall(int cellX) {
-        if (Hash.floorMod(cellX, MACRO) != 0) return false;
-        int line = Hash.floorDiv(cellX, MACRO);
-        int h = Hash.hash2(seed ^ 0x68e31da4, line, 0x51ed);
-        return (h & 255) < 208;                  // most room borders are walls
-    }
-
-    private boolean hMacroWall(int cellZ) {
-        if (Hash.floorMod(cellZ, MACRO) != 0) return false;
-        int line = Hash.floorDiv(cellZ, MACRO);
-        int h = Hash.hash2(seed ^ 0x68e31da5, line, 0x51ed);
-        return (h & 255) < 208;
-    }
-
-    private boolean vDoorway(int cellX, int cellZ) {
-        int line = Hash.floorDiv(cellX, MACRO);
-        int block = Hash.floorDiv(cellZ, MACRO);
-        int h = Hash.hash2(seed ^ 0x1b56c4e9, line, block);
-        int door = Hash.floorMod(h, MACRO - 1);          // 0..4 (two cells wide)
-        int lz = Hash.floorMod(cellZ, MACRO);
-        return lz == door || lz == door + 1;
-    }
-
-    private boolean hDoorway(int cellX, int cellZ) {
-        int line = Hash.floorDiv(cellZ, MACRO);
-        int block = Hash.floorDiv(cellX, MACRO);
-        int h = Hash.hash2(seed ^ 0x1b56c4ea, line, block);
-        int door = Hash.floorMod(h, MACRO - 1);
-        int lx = Hash.floorMod(cellX, MACRO);
-        return lx == door || lx == door + 1;
+        return wall(false, cellX, cellZ);
     }
 
     /**
-     * One internal wall per room, in about half of the rooms, with a gap in it. This gives rooms an
-     * interior without filling the level with noise.
+     * Every wall in the level is decided here, from the two cells on either side of it. The rule is
+     * a function of those cells only, which is what keeps neighbouring chunks agreeing about the
+     * wall between them.
      */
-    private boolean divider(int cellX, int cellZ, boolean vertical) {
-        int local = Hash.floorMod(vertical ? cellX : cellZ, MACRO);
-        if (local == 0) {
+    private boolean wall(boolean vertical, int line, int row) {
+        // (line, row) is the wall's own coordinate: x for a vertical wall, z for a horizontal one,
+        // with the other axis along it. The two cells it separates are therefore (line-1, row) and
+        // (line, row) in both cases.
+        final int ax;
+        final int az;
+        final int bx;
+        final int bz;
+        if (vertical) {
+            ax = line - 1;
+            az = row;
+            bx = line;
+            bz = row;
+        } else {
+            ax = line;
+            az = row - 1;
+            bx = line;
+            bz = row;
+        }
+
+        boolean corridorA = isCorridor(ax, az);
+        boolean corridorB = isCorridor(bx, bz);
+        if (corridorA && corridorB) {
+            return false;                          // inside a corridor, or where two of them cross
+        }
+        if (corridorA || corridorB) {
+            // A corridor runs alongside a room: the room's own wall, with a doorway into it.
+            int roomX = corridorA ? bx : ax;
+            int roomZ = corridorA ? bz : az;
+            return !doorIntoBlock(vertical, line, row, roomX, roomZ);
+        }
+
+        boolean sameBlock = blockX(ax) == blockX(bx) && blockZ(az) == blockZ(bz);
+        if (sameBlock) {
+            return interiorWall(vertical, line, row, kindAt(ax, az), ax, az, bx, bz);
+        }
+        return !doorBetweenBlocks(vertical, line, row, bx, bz);
+    }
+
+    /**
+     * Is there a doorway through this corridor wall into the block on the far side? The position is
+     * hashed from the block and which of its four sides this is, so both cells of the two-cell-wide
+     * door agree, and every other wall on that side is solid.
+     */
+    private boolean doorIntoBlock(boolean vertical, int line, int row, int roomX, int roomZ) {
+        int bx = blockX(roomX);
+        int bz = blockZ(roomZ);
+        int side;
+        int along;
+        if (vertical) {
+            side = roomX >= line ? 0 : 1;          // corridor to the block's -x or +x side
+            along = localZ(roomZ);
+        } else {
+            side = roomZ >= row ? 2 : 3;
+            along = localX(roomX);
+        }
+        if (!doorAt(bx, bz, side, along)) {
             return false;
         }
-        int other = Hash.floorMod(vertical ? cellZ : cellX, MACRO);
-        if (other == 0) {
-            return false;                       // keep the doorway zone of the room border clear
+        // A doorway that opens onto a hole or into a pillar is not a doorway.
+        return !isHole(roomX, roomZ) && !pillarCell(roomX, roomZ);
+    }
+
+    private boolean doorBetweenBlocks(boolean vertical, int line, int row, int bx, int bz) {
+        int side;
+        int along;
+        if (vertical) {
+            side = 0;                              // the block to the +x side of the boundary
+            along = localZ(bz);
+        } else {
+            side = 2;
+            along = localX(bx);
         }
-        int rx = Hash.floorDiv(vertical ? cellX : cellZ, MACRO);
-        int rz = Hash.floorDiv(vertical ? cellZ : cellX, MACRO);
-        int h = Hash.hash2(seed ^ 0x7feb352d, rx, rz);
-        if ((h & 255) >= 236) {
-            return false;                       // this room is undivided
-        }
-        if ((((h >> 8) & 1) == 1) != vertical) {
-            return false;                       // divided along the other axis
-        }
-        if (1 + ((h >> 9) % (MACRO - 2)) != local) {
+        if (!doorAt(blockX(bx), blockZ(bz), side, along)) {
             return false;
         }
-        int gap = 1 + ((h >> 15) % (MACRO - 2));
-        return !(other == gap || other == (gap + 1) % MACRO);
+        return !isHole(bx, bz) && !pillarCell(bx, bz);
     }
 
-    private boolean vClutter(int cellX, int cellZ) {
-        return divider(cellX, cellZ, true);
+    /** Hashed doorway on one side of one block: two cells wide, and some sides have none at all. */
+    private boolean doorAt(int bx, int bz, int side, int along) {
+        int h = Hash.hash2(seed ^ 0x5bf03635, bx * 4 + side, bz);
+        if ((h & 255) >= 224) {
+            return false;                          // about one side in eight is solid
+        }
+        int start = 1 + Hash.floorMod(h >>> 8, BLOCK - 3);
+        return along >= start && along < start + 2;
     }
 
-    private boolean hClutter(int cellX, int cellZ) {
-        return divider(cellX, cellZ, false);
+    /** Walls inside a block, which is where each kind of room gets its character. */
+    private boolean interiorWall(boolean vertical, int line, int row, int kind,
+                                 int ax, int az, int bx, int bz) {
+        int wallLine = vertical ? localX(line) : localZ(row);
+        int along = vertical ? localZ(row) : localX(line);
+
+        switch (kind) {
+            case KIND_PILLARS:
+                return pillarCell(ax, az) || pillarCell(bx, bz);
+
+            case KIND_MAZE: {
+                // Walls every other line, with a gap of one cell every four whose phase shifts from
+                // line to line. Nobody can be sealed in, and the passages are cramped.
+                if (Hash.floorMod(wallLine, 2) != 0) {
+                    return false;
+                }
+                int phase = Hash.floorMod(wallLine / 2, 4);
+                return Hash.floorMod(along, 4) != phase;
+            }
+
+            case KIND_OFFICE:
+                return officeWall(vertical, wallLine, along, ax, az);
+
+            case KIND_HALL:
+            case KIND_GRAND:
+            case KIND_PITS:
+            case KIND_SUNKEN:
+            default:
+                return false;                      // open, dropped or terraced: no walls inside
+        }
     }
 
-    /** True when the cell is at least one cell away from every room border, i.e. doors stay clear. */
-    private static boolean inRoomInterior(int cellX, int cellZ) {
-        int lx = Hash.floorMod(cellX, MACRO);
-        int lz = Hash.floorMod(cellZ, MACRO);
-        return lx > 0 && lx < MACRO - 1 && lz > 0 && lz < MACRO - 1;
+    /**
+     * Office partitions.
+     *
+     * <p>Walls stand on the multiples of {@link #ROOM_MODULE}, so a block is a grid of small rooms,
+     * and every partition has a two-cell doorway somewhere along it. Where a doorway goes is decided
+     * by the room it belongs to - each room opens on two of its own walls - which is still a function
+     * of integer coordinates, so the two cells either side of a wall always agree about it.
+     */
+    private boolean officeWall(boolean vertical, int wallLine, int along, int ax, int az) {
+        if (wallLine < ROOM_MODULE || Hash.floorMod(wallLine, ROOM_MODULE) != 0
+                || wallLine >= BLOCK) {
+            return false;
+        }
+        int bx = blockX(ax);
+        int bz = blockZ(az);
+        boolean laneAtWest = laneColumn(bx, bz);
+        boolean laneAtNorth = laneRow(bz, bx);
+        // Along the axis of a corridor lane the first partition is dropped: the room beside the
+        // corridor would otherwise be a one-cell sliver running the whole length of the block.
+        if (wallLine == ROOM_MODULE && (vertical ? laneAtWest : laneAtNorth)) {
+            return false;
+        }
+        int h = Hash.hash2(seed ^ 0x1b56c4e9, bx * 31 + bz, wallLine * 2 + (vertical ? 1 : 0));
+        if ((h & 255) < 34) {
+            return false;                          // one partition in eight is missing entirely
+        }
+        // The two rooms this wall segment separates. The low one is on the -x (or -z) side.
+        if (vertical) {
+            int rxLow = Hash.floorDiv(wallLine - 1, ROOM_MODULE);
+            int rxHigh = Hash.floorDiv(wallLine, ROOM_MODULE);
+            int rz = Hash.floorDiv(localZ(az), ROOM_MODULE);
+            int spanStart = rz * ROOM_MODULE;
+            int inset = laneAtNorth ? CORRIDOR_WIDTH : 0;
+            return !roomDoor(bx, bz, rxLow, rz, SIDE_EAST, spanStart, along, inset)
+                    && !roomDoor(bx, bz, rxHigh, rz, SIDE_WEST, spanStart, along, inset);
+        }
+        int rzLow = Hash.floorDiv(wallLine - 1, ROOM_MODULE);
+        int rzHigh = Hash.floorDiv(wallLine, ROOM_MODULE);
+        int rx = Hash.floorDiv(localX(ax), ROOM_MODULE);
+        int spanStart = rx * ROOM_MODULE;
+        int inset = laneAtWest ? CORRIDOR_WIDTH : 0;
+        return !roomDoor(bx, bz, rx, rzLow, SIDE_SOUTH, spanStart, along, inset)
+                && !roomDoor(bx, bz, rx, rzHigh, SIDE_NORTH, spanStart, along, inset);
+    }
+
+    /**
+     * True if the room at (rx, rz) inside a block opens on {@code side}, and the doorway it cut
+     * covers this cell. Walls on the block edge are not available: those are cut by the corridor and
+     * neighbour rules instead.
+     *
+     * <p>{@code inset} is the width of the corridor lane when one runs along this wall: a doorway is
+     * never cut into the part of a room that the corridor has taken.
+     */
+    private boolean roomDoor(int bx, int bz, int rx, int rz, int side, int spanStart, int along,
+                             int inset) {
+        int mask = availableMask(rx, rz);
+        if ((mask & (1 << side)) == 0) {
+            return false;
+        }
+        // Which walls a room opens on must not depend on which wall is asking, or two walls of the
+        // same room could both think they are the chosen one - or, worse, neither could.
+        int key = Hash.hash3(seed ^ 0x3c6ef372, bx * 16 + rx, bz * 16 + rz, 0);
+        if ((chosenSides(mask, key) & (1 << side)) == 0) {
+            return false;
+        }
+        int h = Hash.hash3(seed ^ 0x7f4a7c15, bx * 16 + rx, bz * 16 + rz, side);
+        int first = Math.max(spanStart, inset);
+        int last = spanStart + ROOM_MODULE - 1;
+        int roomWidth = last - first;
+        int start = roomWidth <= 0 ? first : first + Hash.floorMod(h >>> 10, roomWidth);
+        return along == start || (roomWidth > 0 && along == start + 1);
+    }
+
+    private static int availableMask(int rx, int rz) {
+        int mask = 0;
+        if (rx + 1 < ROOMS_PER_AXIS) mask |= 1 << SIDE_EAST;
+        if (rx > 0) mask |= 1 << SIDE_WEST;
+        if (rz + 1 < ROOMS_PER_AXIS) mask |= 1 << SIDE_SOUTH;
+        if (rz > 0) mask |= 1 << SIDE_NORTH;
+        return mask;
+    }
+
+    /**
+     * The walls a room opens on: two of them, or every one it has if it has fewer than two. Two
+     * doors rather than one keeps rooms from clustering into pockets that nothing outside the pocket
+     * can reach.
+     */
+    private static int chosenSides(int mask, int value) {
+        int count = Integer.bitCount(mask);
+        if (count <= 1) {
+            return mask;
+        }
+        int i = Hash.floorMod(value, count);
+        int j = (i + 1 + Hash.floorMod(value >>> 12, count - 1)) % count;
+        return (1 << sideAt(mask, i)) | (1 << sideAt(mask, j));
+    }
+
+    /** The nth side that a room actually has. */
+    private static int sideAt(int mask, int index) {
+        for (int side = 0; side < SIDE_COUNT; side++) {
+            if ((mask & (1 << side)) != 0) {
+                if (index == 0) {
+                    return side;
+                }
+                index--;
+            }
+        }
+        return -1;
     }
 
     /** True if nothing blocks movement through this cell centre (used for spawning). */
@@ -259,7 +589,7 @@ public final class WorldGen {
         if (Hash.floorMod(cellX - LIGHT_PHASE, LIGHT_SPACING) != 0) return false;
         if (Hash.floorMod(cellZ - LIGHT_PHASE, LIGHT_SPACING) != 0) return false;
         int h = Hash.hash2(seed ^ 0x2f9c3d11, fixtureIndex(cellX), fixtureIndex(cellZ));
-        return (h & 255) < 232;                   // a few sockets are empty
+        return (h & 255) < 226;                   // a few sockets are empty
     }
 
     /** Index of a fixture along the light lattice. */
@@ -284,10 +614,16 @@ public final class WorldGen {
         return ((h & 255) < 34) ? (h | 1) : 0;
     }
 
-    /** Relative strength of the fixture (warm, slightly uneven brightness). */
+    /**
+     * Relative strength of the fixture (warm, slightly uneven brightness). Taller rooms get more
+     * tube, so a grand hall is dim but never unlit: without this the inverse square falloff leaves
+     * the floor under a four-and-a-half metre ceiling almost black.
+     */
     public float fixturePower(int cellX, int cellZ) {
         int h = Hash.hash2(seed ^ 0x77c1a3b5, cellX, cellZ);
-        return 0.85f + ((h >>> 8) & 63) * (0.3f / 63f);
+        float base = 0.85f + ((h >>> 8) & 63) * (0.3f / 63f);
+        float extra = Math.max(0f, ceilY(cellX, cellZ) - ROOM_HEIGHT);
+        return base * (1f + 0.32f * extra);
     }
 
     public static float fixtureCenterY(WorldGen gen, int cellX, int cellZ) {
@@ -307,14 +643,16 @@ public final class WorldGen {
         }
     }
 
-    /** Finds a safe spawn cell near the origin: open, roughly flat and not in a hole. */
+    /**
+     * Finds a safe spawn near the origin. Waking up in a corridor is the right first impression, so
+     * a corridor is preferred; any open floor will do if the seed has none nearby.
+     */
     public void findSpawn(float[] out) {
-        int best = 0;
-        for (int ring = 0; ring < 24; ring++) {
+        for (int ring = 0; ring < 8; ring++) {
             for (int k = -ring; k <= ring; k++) {
                 int[][] candidates = {{k, -ring}, {k, ring}, {-ring, k}, {ring, k}};
                 for (int[] c : candidates) {
-                    if (isOpenSpace(c[0], c[1]) && isSolidGround(c[0], c[1])) {
+                    if (isCorridor(c[0], c[1]) && isOpenSpace(c[0], c[1])) {
                         out[0] = c[0] + 0.5f;
                         out[1] = floorY(c[0], c[1]);
                         out[2] = c[1] + 0.5f;
@@ -322,7 +660,20 @@ public final class WorldGen {
                     }
                 }
             }
-            best = ring;
+        }
+        for (int ring = 0; ring < 40; ring++) {
+            for (int k = -ring; k <= ring; k++) {
+                int[][] candidates = {{k, -ring}, {k, ring}, {-ring, k}, {ring, k}};
+                for (int[] c : candidates) {
+                    if (isOpenSpace(c[0], c[1]) && isSolidGround(c[0], c[1])
+                            && floorY(c[0], c[1]) == 0f) {
+                        out[0] = c[0] + 0.5f;
+                        out[1] = floorY(c[0], c[1]);
+                        out[2] = c[1] + 0.5f;
+                        return;
+                    }
+                }
+            }
         }
         out[0] = 0.5f;
         out[1] = floorY(0, 0);
@@ -338,7 +689,7 @@ public final class WorldGen {
                 int[][] candidates = {{ci + k, cj - ring}, {ci + k, cj + ring},
                         {ci - ring, cj + k}, {ci + ring, cj + k}};
                 for (int[] c : candidates) {
-                    if (isSolidGround(c[0], c[1])) {
+                    if (isSolidGround(c[0], c[1]) && !pillarCell(c[0], c[1])) {
                         out[0] = c[0] + 0.5f;
                         out[1] = floorY(c[0], c[1]);
                         out[2] = c[1] + 0.5f;

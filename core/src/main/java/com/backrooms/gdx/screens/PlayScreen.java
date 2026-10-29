@@ -23,12 +23,19 @@ import com.backrooms.gdx.render.VhsEffect;
 import com.backrooms.gdx.render.WorldRenderer;
 import com.backrooms.gdx.ui.Hud;
 import com.backrooms.gdx.ui.VhsOsd;
+import com.backrooms.gdx.util.Hash;
 import com.backrooms.gdx.world.World;
+import com.backrooms.gdx.world.WorldGen;
 
 /** The game itself: streaming world, first person walking, ambience and HUD. */
 public final class PlayScreen extends ScreenAdapter {
 
-    private static final float FALL_DEPTH = -2.1f;
+    /**
+     * Falling is decided by the cell, not by a depth: the level has sunken rooms three metres below
+     * the main floor now, and a fixed threshold would swallow the player the moment they walked
+     * into one.
+     */
+    private static final float FALL_DEPTH = -WorldGen.HOLE_DEPTH * 0.5f;
 
     private final BackroomsGame game;
     private final GameSettings settings;
@@ -326,7 +333,9 @@ public final class PlayScreen extends ScreenAdapter {
             if (player.landingImpact > 0.18f) {
                 audio.landing(player.landingImpact);
             }
-            if (player.grounded && player.position.y < FALL_DEPTH) {
+            int px = Hash.floorInt(player.position.x);
+            int pz = Hash.floorInt(player.position.z);
+            if (player.grounded && player.position.y < FALL_DEPTH && world.gen().isHole(px, pz)) {
                 startFallThrough();
             }
             // The heading matters: it appears out of sight *in front of the player*, not behind.

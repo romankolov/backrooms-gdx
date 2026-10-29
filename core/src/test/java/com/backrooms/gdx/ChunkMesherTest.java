@@ -142,8 +142,10 @@ public class ChunkMesherTest {
     }
 
     /**
-     * A pit has to actually be in the mesh: a floor quad at the bottom, on its own cell. The level
-     * is flat everywhere else, so a missing hole would simply look like more carpet.
+     * A pit has to actually be in the mesh: a floor quad at the bottom, on its own cell, and a rim
+     * of risers up to the room floor. Since the level now has holes, terraces and rooms of several
+     * heights, the check that no vertex lands at an unexpected height is against the set of heights
+     * the generator itself reports.
      */
     @Test
     public void holesAreCutIntoTheFloor() {
@@ -194,15 +196,51 @@ public class ChunkMesherTest {
         assertTrue("the pit floor must face up, found " + bottomFaces, bottomFaces >= 4);
         assertTrue("the pit rim needs geometry too, found " + rimVertices, rimVertices > 0);
 
-        // Only the floor, the bottom of a pit and the ceiling exist: no stairs, no ledges.
+        // Nothing may be drawn at a height the level does not have.
         for (int v = 0; v < build.vertexCount(); v++) {
             float y = build.vertices[v * STRIDE + 1];
-            boolean floor = Math.abs(y) < 0.01f;
-            boolean bottom = Math.abs(y + WorldGen.HOLE_DEPTH) < 0.01f;
-            // The light panels hang 3 cm under the ceiling.
-            boolean ceiling = Math.abs(y - WorldGen.ROOM_HEIGHT) < 0.05f;
-            assertTrue("vertex at an unexpected height: " + y, floor || bottom || ceiling);
+            assertTrue("vertex at an unexpected height: " + y, isLevelHeight(y));
         }
+    }
+
+    @Test
+    public void everyKindOfRoomMeshesAtItsOwnHeight() {
+        WorldGen gen = new WorldGen(777);
+        boolean sawGrand = false;
+        boolean sawSunken = false;
+        boolean sawCorridorCeiling = false;
+        for (int chunk = -6; chunk <= 6; chunk++) {
+            ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, chunk, -chunk));
+            for (int v = 0; v < build.vertexCount(); v++) {
+                float y = build.vertices[v * STRIDE + 1];
+                assertTrue("vertex at an unexpected height: " + y, isLevelHeight(y));
+                if (Math.abs(y - WorldGen.GRAND_CEIL) < 0.05f) sawGrand = true;
+                if (Math.abs(y + WorldGen.TERRACE_STEP) < 0.05f) sawSunken = true;
+                if (Math.abs(y - WorldGen.CORRIDOR_CEIL) < 0.05f) sawCorridorCeiling = true;
+            }
+        }
+        assertTrue("a grand hall should have been meshed nearby", sawGrand);
+        assertTrue("a sunken terrace should have been meshed nearby", sawSunken);
+        assertTrue("a corridor ceiling should have been meshed nearby", sawCorridorCeiling);
+    }
+
+    /** Every height the mesher may place a vertex at: a floor, a ceiling, or a light panel. */
+    private static boolean isLevelHeight(float y) {
+        float[] levels = {0f, -WorldGen.HOLE_DEPTH,
+                -WorldGen.TERRACE_STEP, -2f * WorldGen.TERRACE_STEP,
+                -3f * WorldGen.TERRACE_STEP, -4f * WorldGen.TERRACE_STEP,
+                WorldGen.ROOM_HEIGHT, WorldGen.CORRIDOR_CEIL, WorldGen.MAZE_CEIL,
+                WorldGen.GRAND_CEIL, WorldGen.SUNKEN_CEIL};
+        for (float level : levels) {
+            if (Math.abs(y - level) < 0.05f) {
+                return true;
+            }
+            // Light panels hang three centimetres under their ceiling.
+            if (Math.abs(y - (level - 0.03f)) < 0.02f) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Test
