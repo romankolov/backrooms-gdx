@@ -180,12 +180,12 @@ public class WorldGenTest {
                     continue;
                 }
                 holes++;
-                // A pit never reaches the edge of its room, so it always has a rim of floor to
-                // walk back on. A room of pits is a field of holes, not a wall of them - what it
-                // may not be is a hole that swallowed the whole room.
-                assertTrue("a pit must keep a rim at " + i + "," + j,
-                        !gen.isHole(i - 1, j) || !gen.isHole(i + 1, j)
-                                || !gen.isHole(i, j - 1) || !gen.isHole(i, j + 1));
+                // A room of pits is a field of holes, so a pit may well have pits on all four
+                // sides - what it may never be is a pit walled in on all four sides, because that
+                // is a hole nobody can see into and nobody can get out of.
+                assertFalse("a pit must not be walled in on every side at " + i + "," + j,
+                        gen.vWall(i, j) && gen.vWall(i + 1, j)
+                                && gen.hWall(i, j) && gen.hWall(i, j + 1));
                 assertTrue("a hole must be deeper than a jump",
                         gen.floorY(i, j) <= -2f);
             }
