@@ -220,10 +220,10 @@ public final class LightBaker {
             int cells = size * size;
             floor = new float[cells];
             ceil = new float[cells];
-            // Wall arrays are one wider on their own axis: the wall at the far edge belongs to the
-            // window too.
-            vWall = new boolean[(size + 1) * size];
-            hWall = new boolean[size * (size + 1)];
+            // Wall arrays carry one extra line on each axis: the wall at the far edge of the window
+            // belongs to the window too.
+            vWall = new boolean[(size + 1) * (size + 1)];
+            hWall = new boolean[(size + 1) * (size + 1)];
             for (int j = 0; j < size; j++) {
                 for (int i = 0; i < size; i++) {
                     int cx = x0 + i;

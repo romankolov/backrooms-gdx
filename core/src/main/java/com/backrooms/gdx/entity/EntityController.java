@@ -433,6 +433,12 @@ public final class EntityController {
                     || !standable(midCellX, midCellZ)) {
                 continue;
             }
+            // It stands in the middle of a cell, so judge what can be seen from where it will
+            // actually be - a point in the corner of the cell can be hidden while its middle is not.
+            startX = startCellX + 0.5f;
+            startZ = startCellZ + 0.5f;
+            endX = endCellX + 0.5f;
+            endZ = endCellZ + 0.5f;
             if (gen.hasLineOfSight(startX, startZ, player.x, player.z)
                     || gen.hasLineOfSight(endX, endZ, player.x, player.z)) {
                 continue;                          // it would be seen arriving or leaving
