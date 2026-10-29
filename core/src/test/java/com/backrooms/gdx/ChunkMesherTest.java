@@ -177,7 +177,11 @@ public class ChunkMesherTest {
             float y = build.vertices[base + 1];
             float x = build.vertices[base] + build.originX;
             float z = build.vertices[base + 2] + build.originZ;
-            boolean overThePit = x >= cellX && x <= cellX + 1 && z >= cellZ && z <= cellZ + 1;
+            // Faces reach to the centre line of an adjoining wall, so the pit's own floor quad can
+            // stick out by a wall thickness on any side.
+            float reach = WorldGen.WALL_HALF_THICKNESS + 0.02f;
+            boolean overThePit = x >= cellX - reach && x <= cellX + 1 + reach
+                    && z >= cellZ - reach && z <= cellZ + 1 + reach;
             if (!overThePit) {
                 continue;
             }
@@ -203,25 +207,56 @@ public class ChunkMesherTest {
         }
     }
 
+    /**
+     * Every kind of room reaches the mesh at its own ceiling height. The chunks are chosen from the
+     * generator rather than guessed, so the test cannot pass by accident of seed.
+     */
     @Test
     public void everyKindOfRoomMeshesAtItsOwnHeight() {
         WorldGen gen = new WorldGen(777);
-        boolean sawGrand = false;
-        boolean sawSunken = false;
-        boolean sawCorridorCeiling = false;
-        for (int chunk = -6; chunk <= 6; chunk++) {
-            ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, chunk, -chunk));
+        int[][] wanted = {
+                {WorldGen.KIND_GRAND, 0, (int) (WorldGen.GRAND_CEIL * 100f)},
+                {WorldGen.KIND_SUNKEN, 1, (int) (WorldGen.TERRACE_STEP * 100f)},
+                {WorldGen.KIND_MAZE, 2, (int) (WorldGen.MAZE_CEIL * 100f)},
+        };
+        boolean[] seen = new boolean[wanted.length];
+        for (int[] target : wanted) {
+            // A sunken room is only a terrace once you are a step inside it.
+            int[] cell = findKind(gen, target[0], target[1] == 1);
+            assertTrue(WorldGen.kindName(target[0]) + " must exist near the origin", cell != null);
+            float height = target[2] / 100f;
+            float sign = target[1] == 0 ? 1f : -1f;
+            int chunkX = Math.floorDiv(cell[0], WorldGen.CHUNK_CELLS);
+            int chunkZ = Math.floorDiv(cell[1], WorldGen.CHUNK_CELLS);
+            ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, chunkX, chunkZ));
             for (int v = 0; v < build.vertexCount(); v++) {
                 float y = build.vertices[v * STRIDE + 1];
                 assertTrue("vertex at an unexpected height: " + y, isLevelHeight(y));
-                if (Math.abs(y - WorldGen.GRAND_CEIL) < 0.05f) sawGrand = true;
-                if (Math.abs(y + WorldGen.TERRACE_STEP) < 0.05f) sawSunken = true;
-                if (Math.abs(y - WorldGen.CORRIDOR_CEIL) < 0.05f) sawCorridorCeiling = true;
+                if (Math.abs(y - sign * height) < 0.05f) {
+                    seen[target[1]] = true;
+                }
+            }
+            assertTrue(WorldGen.kindName(target[0]) + " should be meshed at " + (sign * height),
+                    seen[target[1]]);
+        }
+    }
+
+    /** Finds a cell of a given block kind, searching outwards from the origin. */
+    private static int[] findKind(WorldGen gen, int kind, boolean wantLowFloor) {
+        for (int ring = 0; ring < 200; ring += 4) {
+            for (int i = -ring; i <= ring; i += 2) {
+                for (int j = -ring; j <= ring; j += 2) {
+                    if (gen.isCorridor(i, j) || gen.kindAt(i, j) != kind) {
+                        continue;
+                    }
+                    if (wantLowFloor && gen.floorY(i, j) > -0.4f) {
+                        continue;
+                    }
+                    return new int[] {i, j};
+                }
             }
         }
-        assertTrue("a grand hall should have been meshed nearby", sawGrand);
-        assertTrue("a sunken terrace should have been meshed nearby", sawSunken);
-        assertTrue("a corridor ceiling should have been meshed nearby", sawCorridorCeiling);
+        return null;
     }
 
     /** Every height the mesher may place a vertex at: a floor, a ceiling, or a light panel. */

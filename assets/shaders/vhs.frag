@@ -15,9 +15,10 @@
 //      little highlight smear, lifted blacks and a vignette.
 //
 // The temptation with an effect like this is to push every value until the tape is unmistakable,
-// which ends with a picture nobody can see through. The constraint that governs all the constants
-// below: at 1280 wide, the scene must still read as the level, and the camcorder character has to
-// come from the sum of many small things rather than from one big one.
+// which ends with a picture nobody can see through. This is a *good* tape in a *working* camcorder:
+// the geometry is straight, the tracking is mostly right, and the character comes from softness,
+// a little chroma smear and a little grain. Every displacement below is under a pixel or two at
+// 1280 wide, which is exactly how far a real deck is out.
 #ifdef GL_ES
 precision mediump float;
 #endif
@@ -57,33 +58,33 @@ void main() {
     vec2 texel = 1.0 / u_resolution;
 
     // ---------------------------------------------------------------- 1. drum curvature
-    // Very slight: a real deck's geometry error is a couple of pixels at the edges, not a fisheye.
+    // Very slight: a real deck's geometry error is a pixel at the edges, not a fisheye.
     vec2 centered = v_uv - 0.5;
     float r2 = dot(centered, centered);
-    vec2 uv = 0.5 + centered * (1.0 + r2 * 0.022 * strength);
+    vec2 uv = 0.5 + centered * (1.0 + r2 * 0.004 * strength);
 
     // ---------------------------------------------------------------- 2. head switching
     // The bottom ~0.8% of a VHS frame is written by the other head while the servo changes over:
     // a thin torn strip along the bottom edge, and nothing above it. v_uv.y = 0 is the bottom of the
     // picture, so the strip lives at the low end of the range.
-    float bottom = 1.0 - smoothstep(0.0, 0.008, uv.y);
+    float bottom = 1.0 - smoothstep(0.0, 0.005, uv.y);
     float tearNoise = hash(vec2(floor(uv.y * u_resolution.y), floor(u_grainTime * 24.0)));
-    uv.x += bottom * (0.004 + 0.012 * tearNoise) * strength;
+    uv.x += bottom * (0.001 + 0.003 * tearNoise) * strength;
 
     // ---------------------------------------------------------------- 4. tracking band
     // A soft horizontal band that crawls up the frame. It shifts what is under it by a pixel or
     // two and adds a little noise - a badly tracked tape, not a broken one.
     float bandY = fract(u_tracking);
     float band = exp(-pow((uv.y - bandY) * 22.0, 2.0));
-    float bandJitter = (noise(vec2(uv.y * 220.0, u_grainTime * 3.0)) - 0.5) * 0.0035;
-    uv.x += (bandJitter + band * 0.005 * sin(uv.y * 90.0 + u_time * 6.0)) * strength;
+    float bandJitter = (noise(vec2(uv.y * 220.0, u_grainTime * 3.0)) - 0.5) * 0.0008;
+    uv.x += (bandJitter + band * 0.0012 * sin(uv.y * 90.0 + u_time * 6.0)) * strength;
 
     // Dropout streaks: thin horizontal slices shoved sideways. Rare, and mostly tied to the glitch
     // amount, so they read as damage rather than as a permanent feature of the picture.
     float glitchSeed = hash(vec2(floor(u_grainTime * 2.0), 7.0));
-    float streak = step(0.998 - glitch * 0.05,
+    float streak = step(0.9997 - glitch * 0.02,
                         hash(vec2(floor(uv.y * 90.0), floor(u_grainTime * 4.0))));
-    uv.x += streak * (0.004 + 0.03 * glitchSeed) * strength;
+    uv.x += streak * (0.001 + 0.006 * glitchSeed) * strength;
 
     // The warped frame must not sample outside the image: clamp instead of painting a black border,
     // which on a curved CRT is invisible anyway and on a rectangle looks like a broken mask.
@@ -92,56 +93,56 @@ void main() {
     // ---------------------------------------------------------------- 3. chroma smear
     // Chroma bandwidth is a fraction of luma's, so colour is dragged sideways (never vertically,
     // never radially - the delay line only runs one way) and softened.
-    float smear = (0.0011 + 0.0016 * band + 0.0012 * streak + 0.0022 * glitch) * strength;
+    float smear = (0.0007 + 0.0005 * band + 0.0004 * streak + 0.0013 * glitch) * strength;
     float cr = texture2D(u_tex, uv + vec2(smear, 0.0)).r;
     float cg = texture2D(u_tex, uv).g;
     float cb = texture2D(u_tex, uv - vec2(smear, 0.0)).b;
 
     // Soften the colour a little further with a two-tap average; luma (the green channel) stays
     // sharp, which is what gives the picture its crisp edges and soft, bleeding colours.
-    cr = cr * 0.65 + texture2D(u_tex, uv + vec2(smear * 1.8, 0.0)).r * 0.35;
-    cb = cb * 0.65 + texture2D(u_tex, uv - vec2(smear * 1.8, 0.0)).b * 0.35;
+    cr = cr * 0.75 + texture2D(u_tex, uv + vec2(smear * 1.6, 0.0)).r * 0.25;
+    cb = cb * 0.75 + texture2D(u_tex, uv - vec2(smear * 1.6, 0.0)).b * 0.25;
 
     vec3 color = vec3(cr, cg, cb);
 
     // ---------------------------------------------------------------- 6a. highlight smear
     // Tape is soft: bright things trail sideways by a few pixels. This is the whole "glow" budget.
     vec3 trail = vec3(0.0);
+    trail += texture2D(u_tex, uv + vec2(1.5, 0.0) * texel).rgb;
     trail += texture2D(u_tex, uv + vec2(3.0, 0.0) * texel).rgb;
-    trail += texture2D(u_tex, uv + vec2(6.0, 0.0) * texel).rgb;
-    trail += texture2D(u_tex, uv - vec2(3.0, 0.0) * texel).rgb;
+    trail += texture2D(u_tex, uv - vec2(1.5, 0.0) * texel).rgb;
     trail *= 0.3333;
-    float bright = max(0.0, dot(trail, vec3(0.333)) - 0.86);
-    color += trail * bright * 0.55 * strength;
+    float bright = max(0.0, dot(trail, vec3(0.333)) - 0.90);
+    color += trail * bright * 0.20 * strength;
 
     // ---------------------------------------------------------------- 6b. scanlines and grain
     float scan = sin(gl_FragCoord.y * 3.14159) * 0.5 + 0.5;      // one dark line per 2 pixels
-    color *= mix(1.0, mix(0.93, 1.04, scan), u_scanline);
+    color *= mix(1.0, mix(0.975, 1.01, scan), u_scanline);
 
     // Fine tape grain: a per-pixel hash that changes every frame.
     float grain = hash(gl_FragCoord.xy + vec2(u_grainTime * 137.0, u_grainTime * 91.0));
-    color += (grain - 0.5) * (0.018 + 0.02 * band + 0.02 * glitch) * strength;
+    color += (grain - 0.5) * (0.006 + 0.008 * band + 0.010 * glitch) * strength;
 
     // Real dropout: a handful of short speckles, not snowfall.
-    float dropout = step(0.9993 - glitch * 0.002,
+    float dropout = step(0.99992 - glitch * 0.0004,
                          hash(floor(gl_FragCoord.xy * vec2(0.5, 0.5)) + floor(u_grainTime * 24.0)));
-    color = mix(color, vec3(0.08 + 0.8 * dropout), dropout * 0.35 * strength);
+    color = mix(color, vec3(0.08 + 0.8 * dropout), dropout * 0.15 * strength);
 
     // The tracking band loses a little colour and brightness, nothing more.
-    color = mix(color, vec3(dot(color, vec3(0.333))) + (hash(gl_FragCoord.xy) - 0.5) * 0.06,
-                band * 0.18 * strength);
-    color *= 1.0 - band * 0.04 * strength;
+    color = mix(color, vec3(dot(color, vec3(0.333))) + (hash(gl_FragCoord.xy) - 0.5) * 0.03,
+                band * 0.06 * strength);
+    color *= 1.0 - band * 0.012 * strength;
 
     // ---------------------------------------------------------------- 6c. grade
     // Consumer tape: warm, slightly green, blacks lifted, highlights rolled off, low saturation.
     float lum = dot(color, vec3(0.299, 0.587, 0.114));
-    color = mix(vec3(lum), color, 0.93);
-    color = color * vec3(1.015, 1.0, 0.975) + vec3(0.012, 0.011, 0.009);
-    color = color / (1.0 + max(color - 0.92, 0.0) * 1.2);
+    color = mix(vec3(lum), color, 0.965);
+    color = color * vec3(1.008, 1.0, 0.985) + vec3(0.006, 0.006, 0.005);
+    color = color / (1.0 + max(color - 0.94, 0.0) * 0.7);
 
     // Vignette, mild: the corners of a camcorder lens, not a dark tunnel.
-    float vig = pow(16.0 * v_uv.x * v_uv.y * (1.0 - v_uv.x) * (1.0 - v_uv.y), 0.18);
-    color *= mix(1.0, mix(0.93, 1.0, vig), strength);
+    float vig = pow(16.0 * v_uv.x * v_uv.y * (1.0 - v_uv.x) * (1.0 - v_uv.y), 0.10);
+    color *= mix(1.0, mix(0.975, 1.0, vig), strength);
 
     gl_FragColor = vec4(color, 1.0);
 }

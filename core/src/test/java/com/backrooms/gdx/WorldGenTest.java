@@ -111,30 +111,33 @@ public class WorldGenTest {
         }
     }
 
-    /** Long halls are part of the point: some corridors run tens of metres without a break. */
+    /**
+     * Long halls are part of the point: a corridor should run for tens of metres without a break,
+     * and it should also stop. Both, or the level is only ever a grid you can count.
+     */
     @Test
     public void corridorsRunLongAndSometimesStop() {
         WorldGen gen = new WorldGen(4242);
         int longest = 0;
-        int stops = 0;
-        for (int j = -100; j < 100; j += 7) {
+        int shortRuns = 0;
+        for (int j = -120; j < 120; j += 7) {
             int run = 0;
-            for (int i = -200; i < 200; i++) {
-                // Walk east along lane row j: are the cells between crossings open?
-                if (gen.isCorridor(i, j) && !gen.isCorridor(i, j - 1) && !gen.isCorridor(i, j + 1)) {
+            for (int i = -220; i < 220; i++) {
+                if (gen.isCorridor(i, j)) {
                     run++;
                     longest = Math.max(longest, run);
                 } else {
-                    if (run > 0 && run < 3) {
-                        stops++;
+                    if (run > 0 && run <= 12) {
+                        shortRuns++;
                     }
                     run = 0;
                 }
             }
         }
-        assertTrue("corridors should run for a long time somewhere, longest " + longest,
-                longest >= 12);
-        assertTrue("corridors should also break off somewhere", stops > 0);
+        assertTrue("corridors should run for a long way somewhere, longest " + longest,
+                longest >= 24);
+        assertTrue("corridors should also stop somewhere, found " + shortRuns + " short runs",
+                shortRuns > 0);
     }
 
     /** Most of the level is still the office: only then does the strange part feel strange. */
@@ -170,8 +173,8 @@ public class WorldGenTest {
         for (int i = -200; i < 200; i++) {
             for (int j = -200; j < 200; j++) {
                 float f = gen.floorY(i, j);
-                if (f >= -0.001f) {
-                    continue;
+                if (f >= -0.001f || gen.isHole(i, j)) {
+                    continue;                      // flat floor, or the bottom of a pit
                 }
                 terraces++;
                 float east = gen.floorY(i + 1, j);

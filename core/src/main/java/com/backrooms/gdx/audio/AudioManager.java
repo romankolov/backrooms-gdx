@@ -11,7 +11,8 @@ import com.backrooms.gdx.world.WorldGen;
  * Everything that makes a noise.
  *
  * <p>Three things are happening here. The ambience loops (the fluorescent buzz of the nearest tube,
- * the low room tone, the tape hiss) are mixed from live distances. Footsteps - the player's and the
+ * the tape hiss) are mixed from live distances: the buzz is the only room sound, because a constant
+ * drone under everything is the fastest way to make a quiet level feel loud. Footsteps - the player's and the
  * entity's - are played with the position they came from, so a step behind you is on the right. And
  * every step throws an echo whose timing is measured from the walls around it (see
  * {@link Acoustics}): in a tight corridor the slap-back is a few tens of milliseconds behind the
@@ -25,7 +26,6 @@ public final class AudioManager implements Disposable {
     private final Assets assets;
     private final WorldGen gen;
     private long buzzId = -1;
-    private long toneId = -1;
     private long tapeId = -1;
     private boolean tapeWanted;
     private float buzzVolume;
@@ -50,17 +50,12 @@ public final class AudioManager implements Disposable {
     public AudioManager(Assets assets, WorldGen gen) {
         this.assets = assets;
         this.gen = gen;
-        if (assets.roomTone != null) {
-            toneId = assets.roomTone.loop(0.22f);
-        }
     }
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
         if (!enabled) {
             stopLoops();
-        } else if (toneId == -1 && assets.roomTone != null) {
-            toneId = assets.roomTone.loop(0.22f);
         }
     }
 
@@ -89,7 +84,7 @@ public final class AudioManager implements Disposable {
         if (tapeId == -1) {
             return;
         }
-        assets.tapeHiss.setVolume(tapeId, MathUtils.clamp(0.10f + 0.18f * glitch, 0f, 0.6f) * level);
+        assets.tapeHiss.setVolume(tapeId, MathUtils.clamp(0.035f + 0.09f * glitch, 0f, 0.4f) * level);
     }
 
     /**
@@ -107,7 +102,7 @@ public final class AudioManager implements Disposable {
         }
         float nearest = nearestFixture(x, z);
         targetBuzz = nearest < 0f ? 0f : MathUtils.clamp(1f - nearest / 13f, 0f, 1f);
-        targetBuzz = targetBuzz * targetBuzz * 0.55f;
+        targetBuzz = targetBuzz * targetBuzz * 0.34f;
         buzzVolume += (targetBuzz - buzzVolume) * Math.min(1f, delta * 4f);
 
         if (assets.buzz != null) {
@@ -207,6 +202,43 @@ public final class AudioManager implements Disposable {
         sound.play(volume, pitch, pan);
         // Echoes are heard from the entity's position, so they pan the same way.
         scheduleEchoes(sound, probeAt(x, z), volume * 0.7f, pitch * 0.92f, pan, 4);
+    }
+
+    /**
+     * One of the thing's small noises: it leaning on a wall, chittering to itself, dragging
+     * something, breathing.
+     *
+     * <p>These carry further than a footstep and lose less through a wall than they should, because
+     * a sound you cannot identify, arriving from somewhere you cannot see, is the point.
+     */
+    public void entityCue(int which, float x, float z) {
+        if (!enabled || assets.entityCues == null
+                || which < 0 || which >= assets.entityCues.length) {
+            return;
+        }
+        Sound sound = assets.entityCues[which];
+        if (sound == null) {
+            return;
+        }
+        float dx = x - listenerX;
+        float dz = z - listenerZ;
+        float distance = (float) Math.sqrt(dx * dx + dz * dz);
+        if (distance > 46f) {
+            return;
+        }
+        boolean visible = gen.hasLineOfSight(listenerX, listenerZ, x, z);
+        float rolloff = distance / 7.5f;
+        float volume = 0.9f / (1f + rolloff * rolloff);
+        if (!visible) {
+            volume *= 0.72f;
+        }
+        if (volume < 0.01f) {
+            return;
+        }
+        float pitch = 0.9f + random.nextFloat() * 0.2f;
+        float pan = panFor(dx, dz, distance);
+        sound.play(volume, pitch, pan);
+        scheduleEchoes(sound, probeAt(x, z), volume * 0.55f, pitch * 0.9f, pan, 4);
     }
 
     /** The roar. Loud, low, and it fills whatever room it happens in. */
@@ -348,10 +380,6 @@ public final class AudioManager implements Disposable {
         if (buzzId != -1 && assets.buzz != null) {
             assets.buzz.stop(buzzId);
             buzzId = -1;
-        }
-        if (toneId != -1 && assets.roomTone != null) {
-            assets.roomTone.stop(toneId);
-            toneId = -1;
         }
         stopTape();
         pending = 0;

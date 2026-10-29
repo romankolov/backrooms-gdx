@@ -356,6 +356,11 @@ public final class PlayScreen extends ScreenAdapter {
                             : 0.25f;
                     audio.roar(volume, 0.92f + random.nextFloat() * 0.12f);
                 }
+                // The small noises: something leaning on a wall, clicking, dragging, breathing.
+                // Placed where it is, so the pan tells the player which corridor to avoid.
+                for (int cue = entity.takeCue(); cue >= 0; cue = entity.takeCue()) {
+                    audio.entityCue(cue, entity.position.x, entity.position.z);
+                }
             }
             if (teleporting) {
                 fade = Math.min(1f, fade + delta * 3.2f);
@@ -381,9 +386,11 @@ public final class PlayScreen extends ScreenAdapter {
         boolean tape = vhsOn && vhs.isReady() && !debugView;
         if (tape) {
             // An old tape is never quite clean: every so often the tracking slips for a moment.
-            float glitch = entity.presence() * 0.85f;
-            if (!paused && random.nextFloat() < delta * 0.10f) {
-                glitch = Math.max(glitch, 0.35f + random.nextFloat() * 0.25f);
+            // A good tape stays clean for minutes at a time; the picture only tears when the thing
+            // is close, and then only a little.
+            float glitch = entity.presence() * 0.55f;
+            if (!paused && random.nextFloat() < delta * 0.05f) {
+                glitch = Math.max(glitch, 0.18f + random.nextFloat() * 0.18f);
             }
             if (glitch > 0.001f) {
                 vhs.setGlitch(glitch);

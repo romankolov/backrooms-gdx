@@ -407,6 +407,131 @@ def make_entity_roar(duration=3.6):
     return signal + tail * 0.6
 
 
+def make_entity_creak(duration=3.2):
+    """
+    Something enormous leaning on something that should not bend. Stick-slip friction is a stream
+    of tiny catches and releases, so the creak is noise gated by an irregular pulse train, with a
+    resonant band that glides upward as the weight settles.
+    """
+    n = int(SR * duration)
+    t = np.arange(n) / SR
+    rng = np.random.default_rng(51)
+
+    # The catch-and-release rate wanders: nothing alive creaks at a steady tempo.
+    rate = 8.0 + 3.0 * np.sin(2 * np.pi * 0.31 * t) + 1.5 * np.sin(2 * np.pi * 0.83 * t + 1.7)
+    grit = (0.5 + 0.5 * np.sin(2 * np.pi * np.cumsum(rate) / SR)) ** 3
+
+    noise = rng.uniform(-1.0, 1.0, n)
+    # Two fixed resonances, crossfaded as the weight settles: the filters are one-pole, so the glide
+    # is done by mixing rather than by moving the cutoff.
+    band_low = one_pole_lowpass(noise, 620.0) - one_pole_lowpass(noise, 250.0)
+    band_high = one_pole_lowpass(noise, 1400.0) - one_pole_lowpass(noise, 560.0)
+    glide = np.clip(t / duration, 0.0, 1.0) ** 1.5
+    creak = (band_low * (1.0 - glide) + band_high * glide) * grit * 1.6
+
+    # A tonal pair under the friction, bending as the thing shifts its weight.
+    pitch = 150.0 + 70.0 * glide
+    tone = np.sin(2 * np.pi * np.cumsum(pitch) / SR + 0.4 * np.sin(2 * np.pi * 3.1 * t))
+    creak += tone * grit * 0.30
+
+    # A sub-bass drone that swells in the middle: mass, felt rather than heard.
+    creak += np.sin(2 * np.pi * 41.0 * t) * 0.18 * np.exp(-((t - duration * 0.55) ** 2) / 0.36)
+
+    env = np.clip(t / 0.35, 0.0, 1.0) * np.clip((duration - t) / 0.9, 0.0, 1.0) ** 1.4
+    signal = soft_clip(creak * 1.2, 1.2) * env
+    return signal + reverb(signal, decay=0.5, size=0.09) * 0.5
+
+
+def make_entity_chitter(duration=1.8):
+    """
+    A mouth that is not a mouth: irregular clicks in the presence band, too fast for a jaw, with a
+    wet throat underneath. It is the sound of the thing talking to itself a room away.
+    """
+    n = int(SR * duration)
+    t = np.arange(n) / SR
+    rng = np.random.default_rng(77)
+    signal = np.zeros(n)
+
+    pos = 0.0
+    while pos < duration:
+        start = int(pos * SR)
+        if start >= n:
+            break
+        length = int(SR * rng.uniform(0.006, 0.02))
+        length = min(length, n - start)
+        burst = rng.uniform(-1.0, 1.0, length)
+        burst = one_pole_highpass(one_pole_lowpass(burst, 5200.0), 1400.0)
+        burst *= np.hanning(length)
+        signal[start:start + length] += burst * rng.uniform(0.25, 1.0) * np.exp(-pos * 0.35)
+        pos += rng.uniform(0.012, 0.055)
+
+    throat = one_pole_lowpass(rng.uniform(-1.0, 1.0, n), 420.0) * 0.5
+    throat *= 0.4 + 0.6 * np.abs(np.sin(2 * np.pi * 6.5 * t))
+    signal += throat * 0.35
+
+    env = np.clip(t / 0.15, 0.0, 1.0) * np.clip((duration - t) / 0.4, 0.0, 1.0)
+    signal = soft_clip(signal * 1.6, 1.5) * env
+    return signal + reverb(signal, decay=0.42, size=0.07) * 0.55
+
+
+def make_entity_scrape(duration=2.4):
+    """
+    Something being dragged along a corridor wall: noise through a band that slides around, gated
+    by the body catching and releasing, with the weight of the thing landing on the first beat.
+    """
+    n = int(SR * duration)
+    t = np.arange(n) / SR
+    rng = np.random.default_rng(91)
+
+    noise = rng.uniform(-1.0, 1.0, n)
+    band_low = one_pole_lowpass(noise, 900.0) - one_pole_lowpass(noise, 400.0)
+    band_high = one_pole_lowpass(noise, 2600.0) - one_pole_lowpass(noise, 1100.0)
+    # The resonance slides between two bands, which is what makes it drag rather than hiss.
+    slide = 0.5 + 0.5 * np.sin(2 * np.pi * 0.7 * t - 1.2)
+    grain_rate = 11.0 + 4.0 * np.sin(2 * np.pi * 0.9 * t)
+    grain = 0.35 + 0.65 * np.abs(np.sin(2 * np.pi * np.cumsum(grain_rate) / SR)) ** 2
+    drag = (band_low * (1.0 - slide) + band_high * slide) * grain * 2.0
+
+    thud = np.sin(2 * np.pi * 58.0 * t) * np.exp(-t * 9.0) * 0.5
+    squelch = one_pole_lowpass(noise, 1200.0) * np.exp(-t * 14.0) * 0.45
+
+    signal = drag + thud + squelch
+    env = np.clip(t / 0.1, 0.0, 1.0) * np.clip((duration - t) / 0.7, 0.0, 1.0) ** 1.2
+    signal = soft_clip(signal * 1.3, 1.4) * env
+    return signal + reverb(signal, decay=0.5, size=0.085) * 0.6
+
+
+def make_entity_breath(duration=3.2):
+    """
+    A long inhale that gets closer, then an exhale with a wheeze in it. Breath is the one signal in
+    the level that is unmistakably alive, so it is the one used when the thing is nearest.
+    """
+    n = int(SR * duration)
+    t = np.arange(n) / SR
+    rng = np.random.default_rng(113)
+    noise = rng.uniform(-1.0, 1.0, n)
+
+    inhale = np.clip(t / (duration * 0.45), 0.0, 1.0)
+    low = one_pole_lowpass(noise, 600.0)
+    high = one_pole_lowpass(noise, 2200.0) - one_pole_lowpass(noise, 700.0)
+    breath = low * (1.0 - inhale) + high * inhale
+    breath *= np.where(t < duration * 0.45,
+                       np.clip(t / (duration * 0.35), 0.0, 1.0),
+                       np.clip((duration - t) / (duration * 0.55), 0.0, 1.0) ** 1.5)
+
+    wheeze = np.sin(2 * np.pi * np.cumsum(1750.0 + 120.0 * np.sin(2 * np.pi * 5.3 * t)) / SR)
+    breath += wheeze * 0.05 * (1.0 - inhale) * np.clip((duration - t) / 1.2, 0.0, 1.0)
+
+    # A wet click where the breath turns around.
+    turn = int(duration * 0.45 * SR)
+    length = min(900, n - turn)
+    click = one_pole_highpass(rng.uniform(-1.0, 1.0, length), 900.0) * np.hanning(length) * 0.5
+    breath[turn:turn + length] += click
+
+    signal = soft_clip(breath * 2.0, 1.5)
+    return signal + reverb(signal, decay=0.45, size=0.08) * 0.55
+
+
 def build_audio():
     rng = np.random.default_rng(3)
     for i in range(4):
@@ -419,6 +544,11 @@ def build_audio():
         step = make_entity_step(np.random.default_rng(200 + i), tone=0.92 + 0.07 * i)
         write_ogg(os.path.join(SFX_OUT, "entity_step_%d.ogg" % (i + 1)), step)
     write_ogg(os.path.join(SFX_OUT, "entity_roar.ogg"), make_entity_roar())
+    # The small noises: the thing leaning on a wall, clicking to itself, dragging, breathing.
+    write_ogg(os.path.join(SFX_OUT, "entity_creak.ogg"), make_entity_creak())
+    write_ogg(os.path.join(SFX_OUT, "entity_chitter.ogg"), make_entity_chitter())
+    write_ogg(os.path.join(SFX_OUT, "entity_scrape.ogg"), make_entity_scrape())
+    write_ogg(os.path.join(SFX_OUT, "entity_breath.ogg"), make_entity_breath())
 
 
 # --------------------------------------------------------------------------

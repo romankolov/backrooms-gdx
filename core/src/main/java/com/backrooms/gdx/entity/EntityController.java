@@ -69,6 +69,13 @@ public final class EntityController {
     private static final float ROAR_MIN = 14f;
     private static final float ROAR_MAX = 34f;
 
+    /** How often it makes one of its small noises while it is in the level. */
+    private static final float CUE_MIN = 5f;
+    private static final float CUE_MAX = 13f;
+    /** Cues are waited on, not played at the moment they happen: this is a queue, not a flag. */
+    private static final int CUE_KINDS = 4;
+    private static final int CUE_QUEUE = 4;
+
     private static final int WINDOW = 40;              // cells searched in each direction
     private static final int SIDE = WINDOW * 2 + 1;
     private static final int MAX_PATH = 384;
@@ -92,6 +99,9 @@ public final class EntityController {
     private float walked;
     private float roarTimer;
     private boolean roarPending;
+    private float cueTimer;
+    private final int[] cueQueue = new int[CUE_QUEUE];
+    private int cueCount;
     private float speedNow;
     private float presence;
 
@@ -173,6 +183,30 @@ public final class EntityController {
         return true;
     }
 
+    /**
+     * The next small noise it made, or -1 if it has not made one. Kinds: 0 a creak of something
+     * leaning, 1 chittering, 2 something dragged, 3 breathing.
+     */
+    public int takeCue() {
+        if (cueCount == 0) {
+            return -1;
+        }
+        int which = cueQueue[0];
+        for (int i = 1; i < cueCount; i++) {
+            cueQueue[i - 1] = cueQueue[i];
+        }
+        cueCount--;
+        return which;
+    }
+
+    private void pushCue(int which, float distance) {
+        // Near, it is breathing and clicking; far off, the heavier sounds carry better.
+        int kind = distance < 12f ? which : (which % 2 == 0 ? 0 : 2);
+        if (cueCount < CUE_QUEUE) {
+            cueQueue[cueCount++] = kind;
+        }
+    }
+
     /** True when it vocalises - a distant, quiet sound while it walks. */
     public boolean consumeRoar() {
         boolean was = roarPending;
@@ -197,6 +231,8 @@ public final class EntityController {
         repathTimer = 0f;
         walked = 0f;
         roarTimer = ROAR_MIN * 0.5f + random.nextFloat() * ROAR_MIN;
+        cueTimer = CUE_MIN * 0.6f + random.nextFloat() * CUE_MIN;
+        cueCount = 0;
         // Walk away from the cell it was given, so a forced pass also travels.
         float heading = random.nextFloat() * MathUtils.PI2;
         goalX = MathUtils.floor(x + MathUtils.cos(heading) * PASS_MIN);
@@ -214,6 +250,8 @@ public final class EntityController {
         travelled = 0f;
         roarPending = false;
         roarTimer = 0f;
+        cueTimer = 0f;
+        cueCount = 0;
         // presence is left alone: the tape should keep tearing for a moment after it is gone.
     }
 
@@ -264,6 +302,13 @@ public final class EntityController {
                     if (roarTimer <= 0f) {
                         roarPending = true;
                         roarTimer = ROAR_MIN + random.nextFloat() * (ROAR_MAX - ROAR_MIN);
+                    }
+                    // Its small noises are what you hear most of: something leaning its weight on
+                    // a wall two rooms away, clicking to itself, dragging itself along.
+                    cueTimer -= delta;
+                    if (cueTimer <= 0f) {
+                        pushCue(random.nextInt(CUE_KINDS), dist);
+                        cueTimer = CUE_MIN + random.nextFloat() * (CUE_MAX - CUE_MIN);
                     }
                 }
 
@@ -321,7 +366,7 @@ public final class EntityController {
         float forwardX = -MathUtils.sin(yaw);
         float forwardZ = -MathUtils.cos(yaw);
 
-        for (int attempt = 0; attempt < 70; attempt++) {
+        for (int attempt = 0; attempt < 140; attempt++) {
             // A direction a little off the centre of the view, so it crosses the corridor ahead
             // rather than walking straight at the player.
             float offset = (0.5f + random.nextFloat() * 0.9f)
@@ -372,13 +417,12 @@ public final class EntityController {
                     || gen.hasLineOfSight(endX, endZ, player.x, player.z)) {
                 continue;                          // it would be seen arriving or leaving
             }
-            if (!gen.hasLineOfSight(stageX, stageZ, player.x, player.z)) {
-                continue;                          // ...and never seen in between: pointless
-            }
 
             // Plan the walk from where it would appear, and make sure that walk really does come
             // out into the open: the route has to go round the walls, and one that stays hidden the
-            // whole way is not worth walking.
+            // whole way is not worth walking. This is what actually has to be true - the pass must
+            // be seen somewhere along the way, not necessarily at its midpoint, which in a corridor
+            // two cells wide would almost never be the case.
             position.set(startCellX + 0.5f, gen.floorY(startCellX, startCellZ), startCellZ + 0.5f);
             pathLength = 0;
             pathIndex = 0;
@@ -398,6 +442,8 @@ public final class EntityController {
             pathIndex = 0;
             repathTimer = 0.8f;
             roarTimer = ROAR_MIN + random.nextFloat() * (ROAR_MAX - ROAR_MIN);
+            cueTimer = CUE_MIN * 0.6f + random.nextFloat() * CUE_MIN;
+            cueCount = 0;
             return true;
         }
         return false;

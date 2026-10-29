@@ -262,14 +262,20 @@ public final class EntityRenderer implements Disposable {
         }
     }
 
+    /** The clip it walks with: animation number one in the rig, counting from zero. */
+    private static final int WALK_CLIP_INDEX = 1;
+
     /**
-     * Clips are matched by what their names suggest, with the longest clip as the locomotion
-     * fallback - a walk cycle is long, a transition or a pose is not.
+     * The walk is a fixed clip by request: animation number one. The idle is whichever clip is
+     * named as a pose ({@code stalkingpose} in this rig), falling back to the longest clip, since a
+     * pose is short and a walk cycle is not.
      */
     private void pickClips(Array<Animation> animations) {
         if (animations == null || animations.size == 0) {
             return;
         }
+        int walkIndex = Math.min(WALK_CLIP_INDEX, animations.size - 1);
+        walkClip = animations.get(walkIndex).id;
         Animation longest = animations.get(0);
         for (Animation a : animations) {
             if (a.duration > longest.duration) {
@@ -277,14 +283,14 @@ public final class EntityRenderer implements Disposable {
             }
             String id = lower(a.id);
             if (idleClip == null && (id.contains("stalk") || id.contains("idle")
-                    || id.contains("stand") || id.contains("breath"))) {
+                    || id.contains("stand") || id.contains("breath") || id.contains("pose"))) {
                 idleClip = a.id;
             }
         }
-        walkClip = longest.id;
         if (idleClip == null || idleClip.equals(walkClip)) {
-            idleClip = walkClip;
+            idleClip = longest.id.equals(walkClip) ? walkClip : longest.id;
         }
+        Gdx.app.log("Entity", "walk clip #" + walkIndex + " = " + walkClip + ", idle = " + idleClip);
     }
 
     private static String lower(String text) {
