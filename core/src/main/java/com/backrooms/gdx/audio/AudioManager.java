@@ -12,8 +12,7 @@ import com.backrooms.gdx.world.WorldGen;
  *
  * <p>Three things are happening here. The ambience loops (the fluorescent buzz of the nearest tube,
  * the tape hiss) are mixed from live distances: the buzz is the only room sound, because a constant
- * drone under everything is the fastest way to make a quiet level feel loud. Footsteps - the player's and the
- * entity's - are played with the position they came from, so a step behind you is on the right. And
+ * drone under everything is the fastest way to make a quiet level feel loud. Footsteps are played with the position they came from, so a step behind you is on the right, and
  * every step throws an echo whose timing is measured from the walls around it (see
  * {@link Acoustics}): in a tight corridor the slap-back is a few tens of milliseconds behind the
  * step, in a hall the tail arrives later, quieter and longer. Same sample, different room.

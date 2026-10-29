@@ -9,8 +9,10 @@ captures/
 .externalNativeBuild/
 .cxx/
 
-# Generated assets fetched by tools/make_assets.py
+# Generated assets fetched by tools/make_assets.py, and the source model the new surfaces are
+# extracted from (20 MB; the extractor in tools/ regenerates assets/textures/ from it).
 backrooms-textures/
+backrooms_vr.glb
 
 # Screenshots and other scratch files
 screenshots/

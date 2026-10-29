@@ -13,7 +13,7 @@ void main() {
     // No y flip. The scene was rendered into a framebuffer, whose texel rows run bottom-up just like
     // clip space does, so the mapping is a straight [-1,1] -> [0,1]. Flipping here - the habit from
     // 2D sprite work, where textures are stored top-down - renders the whole level upside down:
-    // ceiling below, carpet above, and the entity hanging head-down from the lights.
+    // ceiling below and carpet above.
     v_uv = a_position * 0.5 + 0.5;
     gl_Position = vec4(a_position, 0.0, 1.0);
 }

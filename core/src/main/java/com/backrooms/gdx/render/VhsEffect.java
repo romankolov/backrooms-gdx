@@ -110,7 +110,7 @@ public final class VhsEffect implements Disposable {
         return glitch;
     }
 
-    /** 0 = no extra glitches, 1 = the tape is in trouble (the entity is close, or something happened). */
+    /** 0 = no extra glitches, 1 = the tape is in trouble (it slipped, or something happened). */
     public void setGlitch(float glitch) {
         this.glitchTarget = Math.max(0f, Math.min(1f, glitch));
     }

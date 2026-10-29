@@ -14,6 +14,8 @@ only about twenty texels to the metre. `tools/extract_vr_assets.py` cuts the lar
 each material, divides out its own low-frequency light and colour, makes it seamless, and adds
 procedural grain so it still holds up at arm's length. The result is reproducible:
 
+Put the model next to the project (it is not committed - it is 20 MB) as `backrooms_vr.glb`, then:
+
 ```sh
 pip install pillow numpy
 python3 tools/extract_vr_assets.py            # textures, from backrooms_vr.glb

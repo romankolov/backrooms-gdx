@@ -120,6 +120,26 @@ public final class MeshBuilder {
     }
 
     /**
+     * The same rectangle, twice, with the two faces back to back.
+     *
+     * <p>Used for the vertical faces that close a height change - the riser of a step, the drop
+     * between two ceilings, the end of a wall run. Those faces sit on a cell boundary, which is a
+     * plane the player can be on either side of: through a doorway the drop above the neighbour's
+     * ceiling is visible from the tall room as well as from the short one, and a face drawn for
+     * only one of them leaves a rectangle of empty background to see through. The second copy is
+     * pushed a millimetre along its own normal so the two never z-fight.
+     */
+    public void rectBoth(float ox, float oy, float oz, float ux, float uy, float uz,
+                         float vx, float vy, float vz, float nx, float ny, float nz,
+                         int mat, float aux) {
+        final float e = 0.002f;
+        rect(ox + nx * e, oy + ny * e, oz + nz * e, ux, uy, uz, vx, vy, vz,
+                nx, ny, nz, mat, aux);
+        rect(ox - nx * e, oy - ny * e, oz - nz * e, ux, uy, uz, vx, vy, vz,
+                -nx, -ny, -nz, mat, aux);
+    }
+
+    /**
      * A ceiling lamp: the same rectangle, but its UVs run 0..1 across the fitting, so the lamp's own
      * photograph lands on it exactly once - glass in the middle, rim round the edge.
      */

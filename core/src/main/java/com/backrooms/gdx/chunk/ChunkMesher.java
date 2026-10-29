@@ -92,22 +92,22 @@ public final class ChunkMesher {
 
                 nf = d.floor[lj * size + li + 1];
                 if (nf < f - EPS && !d.vWallAt(li + 1, lj)) {
-                    mb.rect(x + 1f, nf, z, 0f, 0f, 1f, 0f, f - nf, 0f, 1f, 0f, 0f,
+                    mb.rectBoth(x + 1f, nf, z, 0f, 0f, 1f, 0f, f - nf, 0f, 1f, 0f, 0f,
                             MeshBuilder.MAT_FLOOR, 0f);
                 }
                 nf = d.floor[lj * size + li - 1];
                 if (nf < f - EPS && !d.vWallAt(li, lj)) {
-                    mb.rect(x, nf, z, 0f, 0f, 1f, 0f, f - nf, 0f, -1f, 0f, 0f,
+                    mb.rectBoth(x, nf, z, 0f, 0f, 1f, 0f, f - nf, 0f, -1f, 0f, 0f,
                             MeshBuilder.MAT_FLOOR, 0f);
                 }
                 nf = d.floor[(lj + 1) * size + li];
                 if (nf < f - EPS && !d.hWallAt(li, lj + 1)) {
-                    mb.rect(x, nf, z + 1f, 1f, 0f, 0f, 0f, f - nf, 0f, 0f, 0f, 1f,
+                    mb.rectBoth(x, nf, z + 1f, 1f, 0f, 0f, 0f, f - nf, 0f, 0f, 0f, 1f,
                             MeshBuilder.MAT_FLOOR, 0f);
                 }
                 nf = d.floor[(lj - 1) * size + li];
                 if (nf < f - EPS && !d.hWallAt(li, lj)) {
-                    mb.rect(x, nf, z, 1f, 0f, 0f, 0f, f - nf, 0f, 0f, 0f, -1f,
+                    mb.rectBoth(x, nf, z, 1f, 0f, 0f, 0f, f - nf, 0f, 0f, 0f, -1f,
                             MeshBuilder.MAT_FLOOR, 0f);
                 }
 
@@ -117,22 +117,22 @@ public final class ChunkMesher {
                 // through into the void above its neighbour.
                 nc = d.ceil[lj * size + li + 1];
                 if (nc < c - EPS && !d.vWallAt(li + 1, lj)) {
-                    mb.rect(x + 1f, nc, z, 0f, 0f, 1f, 0f, c - nc, 0f, 1f, 0f, 0f,
+                    mb.rectBoth(x + 1f, nc, z, 0f, 0f, 1f, 0f, c - nc, 0f, 1f, 0f, 0f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
                 nc = d.ceil[lj * size + li - 1];
                 if (nc < c - EPS && !d.vWallAt(li, lj)) {
-                    mb.rect(x, nc, z, 0f, 0f, 1f, 0f, c - nc, 0f, -1f, 0f, 0f,
+                    mb.rectBoth(x, nc, z, 0f, 0f, 1f, 0f, c - nc, 0f, -1f, 0f, 0f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
                 nc = d.ceil[(lj + 1) * size + li];
                 if (nc < c - EPS && !d.hWallAt(li, lj + 1)) {
-                    mb.rect(x, nc, z + 1f, 1f, 0f, 0f, 0f, c - nc, 0f, 0f, 0f, 1f,
+                    mb.rectBoth(x, nc, z + 1f, 1f, 0f, 0f, 0f, c - nc, 0f, 0f, 0f, 1f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
                 nc = d.ceil[(lj - 1) * size + li];
                 if (nc < c - EPS && !d.hWallAt(li, lj)) {
-                    mb.rect(x, nc, z, 1f, 0f, 0f, 0f, c - nc, 0f, 0f, 0f, -1f,
+                    mb.rectBoth(x, nc, z, 1f, 0f, 0f, 0f, c - nc, 0f, 0f, 0f, -1f,
                             MeshBuilder.MAT_CEILING, 0f);
                 }
             }
@@ -184,11 +184,11 @@ public final class ChunkMesher {
                 mb.setLightmapOffset(0f, 0f);
                 // End caps where the wall run stops.
                 if (!d.vWallAt(li, lj - 1)) {
-                    mb.rect(x - th, lo, z, th * 2f, 0f, 0f, 0f, h, 0f, 0f, 0f, -1f,
+                    mb.rectBoth(x - th, lo, z, th * 2f, 0f, 0f, 0f, h, 0f, 0f, 0f, -1f,
                             MeshBuilder.MAT_WALL, 0.5f);
                 }
                 if (!d.vWallAt(li, lj + 1)) {
-                    mb.rect(x - th, lo, z + 1f, th * 2f, 0f, 0f, 0f, h, 0f, 0f, 0f, 1f,
+                    mb.rectBoth(x - th, lo, z + 1f, th * 2f, 0f, 0f, 0f, h, 0f, 0f, 0f, 1f,
                             MeshBuilder.MAT_WALL, 0.5f);
                 }
             }
@@ -220,11 +220,11 @@ public final class ChunkMesher {
                         MeshBuilder.MAT_WALL, loS, 1f / Math.max(0.01f, hi - loS));
                 mb.setLightmapOffset(0f, 0f);
                 if (!d.hWallAt(li - 1, lj)) {
-                    mb.rect(x, lo, z - th, 0f, 0f, th * 2f, 0f, h, 0f, -1f, 0f, 0f,
+                    mb.rectBoth(x, lo, z - th, 0f, 0f, th * 2f, 0f, h, 0f, -1f, 0f, 0f,
                             MeshBuilder.MAT_WALL, 0.5f);
                 }
                 if (!d.hWallAt(li + 1, lj)) {
-                    mb.rect(x + 1f, lo, z - th, 0f, 0f, th * 2f, 0f, h, 0f, 1f, 0f, 0f,
+                    mb.rectBoth(x + 1f, lo, z - th, 0f, 0f, th * 2f, 0f, h, 0f, 1f, 0f, 0f,
                             MeshBuilder.MAT_WALL, 0.5f);
                 }
             }

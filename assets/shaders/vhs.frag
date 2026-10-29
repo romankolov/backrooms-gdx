@@ -31,7 +31,7 @@ uniform float u_time;        // seconds, full range (wrapped on the CPU for medi
 uniform float u_grainTime;   // seconds modulo 64, safe for mediump
 uniform float u_intensity;   // 0 = off, 1 = full camcorder
 uniform float u_tracking;    // 0..1, how far the tracking band has drifted
-uniform float u_glitch;      // 0..1, spikes when the entity is near / tape is bad
+uniform float u_glitch;      // 0..1, spikes when the tape slips
 uniform float u_scanline;    // scanline strength
 
 // Cheap hash noise. No texture, no repetition, deterministic per pixel and frame.
