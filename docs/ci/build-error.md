@@ -1,6 +1,6 @@
 # Last build failure
 
-Commit: 929f1ea
+Commit: b428192
 
 ```
 Welcome to Gradle 8.11.1!
@@ -18,8 +18,8 @@ Android natives: arm64-v8a/libgdx.so, armeabi-v7a/libgdx.so, x86_64/libgdx.so
 > Task :android:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :android:javaPreCompileDebug FROM-CACHE
 > Task :android:generateDebugResValues FROM-CACHE
-> Task :android:mapDebugSourceSetPaths
 > Task :android:checkDebugAarMetadata
+> Task :android:mapDebugSourceSetPaths
 > Task :android:generateDebugResources FROM-CACHE
 > Task :android:mergeDebugResources FROM-CACHE
 > Task :android:packageDebugResources FROM-CACHE
@@ -33,36 +33,34 @@ Android natives: arm64-v8a/libgdx.so, armeabi-v7a/libgdx.so, x86_64/libgdx.so
 > Task :android:mergeDebugShaders
 > Task :android:compileDebugShaders NO-SOURCE
 > Task :android:generateDebugAssets UP-TO-DATE
-> Task :android:mergeDebugAssets
-> Task :android:desugarDebugFileDependencies FROM-CACHE
-> Task :android:processDebugJavaRes NO-SOURCE
-> Task :android:mergeDebugJniLibFolders
-> Task :android:checkDebugDuplicateClasses
-> Task :android:compressDebugAssets
 > Task :core:compileJava
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 > Task :core:processResources NO-SOURCE
 > Task :core:classes
+> Task :android:mergeDebugAssets
 > Task :core:jar
+> Task :android:compressDebugAssets
 > Task :core:compileTestJava
 > Task :core:processTestResources NO-SOURCE
 > Task :core:testClasses
-> Task :android:validateSigningDebug
 > Task :android:compileDebugJavaWithJavac
 Note: /home/runner/work/backrooms-gdx/backrooms-gdx/android/src/main/java/com/backrooms/gdx/android/AndroidLauncher.java uses or overrides a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
+> Task :android:desugarDebugFileDependencies FROM-CACHE
+> Task :android:dexBuilderDebug FROM-CACHE
+> Task :android:processDebugJavaRes NO-SOURCE
+> Task :android:mergeDebugJavaResource
 > Task :core:test
-ChunkMesherTest > everyKindOfRoomMeshesAtItsOwnHeight FAILED
-    java.lang.AssertionError: maze should be meshed at -2.65
+WorldGenTest > holesNeverBlockTheWayThrough FAILED
+    java.lang.AssertionError: a pit must keep a rim at -108,-62
         at org.junit.Assert.fail(Assert.java:89)
         at org.junit.Assert.assertTrue(Assert.java:42)
-        at com.backrooms.gdx.ChunkMesherTest.everyKindOfRoomMeshesAtItsOwnHeight(ChunkMesherTest.java:239)
-> Task :android:dexBuilderDebug FROM-CACHE
-> Task :android:mergeDebugJavaResource
+        at com.backrooms.gdx.WorldGenTest.holesNeverBlockTheWayThrough(WorldGenTest.java:186)
+> Task :android:checkDebugDuplicateClasses
 > Task :core:test FAILED
-51 tests completed, 1 failed
-> Task :android:mergeExtDexDebug FROM-CACHE
+46 tests completed, 1 failed
+> Task :android:mergeExtDexDebug
 [Incubating] Problems report is available at: file:///home/runner/work/backrooms-gdx/backrooms-gdx/build/reports/problems/problems-report.html
 FAILURE: Build failed with an exception.
 * What went wrong:
@@ -233,6 +231,6 @@ Caused by: org.gradle.api.internal.exceptions.MarkedVerificationException: There
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-BUILD FAILED in 18s
-30 actionable tasks: 16 executed, 14 from cache
+BUILD FAILED in 16s
+28 actionable tasks: 15 executed, 13 from cache
 ```
