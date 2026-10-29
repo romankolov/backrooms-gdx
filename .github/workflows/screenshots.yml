@@ -67,19 +67,7 @@ jobs:
             -Dbackrooms.autostart=1 -Dbackrooms.seed=20241027 -Dbackrooms.pit=1 \
             -Dbackrooms.yaw=0 -Dbackrooms.pitch=-42 -Dbackrooms.frames=150 \
             -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/hole" >> render.log 2>&1 || true
-          # The thing in the corridor, posed a few metres ahead.
-          xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
-            -Dbackrooms.autostart=1 -Dbackrooms.seed=20241027 -Dbackrooms.entity=1 \
-            -Dbackrooms.frames=70 \
-            -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/entity" >> render.log 2>&1 || true
-          # The same shot with the camcorder pass off, so the model itself can be judged: whether
-          # it stands upright, the right way up, at the right size, and in the right pose.
-          xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :desktop:run --no-daemon --console=plain \
-            -Dbackrooms.autostart=1 -Dbackrooms.seed=20241027 -Dbackrooms.entity=1 \
-            -Dbackrooms.vhs=0 -Dbackrooms.frames=40 \
-            -Dbackrooms.capture="$GITHUB_WORKSPACE/screenshots/entity-raw" >> render.log 2>&1 || true
-          ls -la screenshots screenshots/title screenshots/hole screenshots/entity \
-            screenshots/entity-raw 2>/dev/null
+          ls -la screenshots screenshots/title screenshots/hole 2>/dev/null
 
       - name: Verify the render is not blank
         run: |
@@ -97,8 +85,7 @@ jobs:
             echo "the world shader did not compile:"; grep -a "SHADER FAILED" render.log
             fail=1
           fi
-          for f in screenshots/shot*.png screenshots/title/shot*.png screenshots/hole/shot*.png \
-                   screenshots/entity/shot*.png screenshots/entity-raw/shot*.png; do
+          for f in screenshots/shot*.png screenshots/title/shot*.png screenshots/hole/shot*.png; do
             [ -f "$f" ] || { echo "missing $f"; fail=1; continue; }
             size=$(stat -c %s "$f")
             echo "$f $size bytes"
@@ -116,8 +103,7 @@ jobs:
         run: |
           {
             echo "files:"
-            ls -la screenshots screenshots/title screenshots/hole screenshots/entity \
-              screenshots/entity-raw 2>&1 || true
+            ls -la screenshots screenshots/title screenshots/hole 2>&1 || true
             echo
             echo "performance:"
             grep -a "Perf\|Capture\|Exception\|error" render.log 2>/dev/null | tail -20 || true
@@ -154,7 +140,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f screenshots/*.png screenshots/title/*.png screenshots/hole/*.png \
-            screenshots/entity/*.png screenshots/entity-raw/*.png 2>/dev/null || true
+            2>/dev/null || true
           if git diff --cached --quiet; then
             echo "screenshots unchanged"
           else

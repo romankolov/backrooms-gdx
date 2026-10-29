@@ -130,6 +130,9 @@ public class ChunkMesherTest {
                 if (ny < 0.5f) {
                     continue;                    // only the horizontal faces tile on X and Z
                 }
+                if (build.vertices[base + 10] > 2.5f) {
+                    continue;                    // a lamp keeps its own fitting's texture (0..1)
+                }
                 float tile = 2f;                 // carpet and ceiling
                 double world = build.vertices[base] + originX + 0.001;
                 double local = build.vertices[base + 6] + 0.001;
@@ -208,78 +211,84 @@ public class ChunkMesherTest {
     }
 
     /**
-     * Every kind of room reaches the mesh at its own ceiling height. The chunks are chosen from the
-     * generator rather than guessed, so the test cannot pass by accident of seed.
+     * Every kind of room reaches the mesh at its own height. The chunks are chosen from the
+     * generator rather than guessed, so the test cannot pass by accident of seed: a grand hall has
+     * to be meshed up at its own ceiling, a sunken room has to be meshed down at its terraces.
      */
     @Test
     public void everyKindOfRoomMeshesAtItsOwnHeight() {
         WorldGen gen = new WorldGen(777);
-        // kind, how far its floor or ceiling sits from zero, the height in centimetres
-        int[][] wanted = {
-                {WorldGen.KIND_GRAND, 1, (int) (WorldGen.GRAND_CEIL * 100f)},
-                {WorldGen.KIND_SUNKEN, -1, (int) (WorldGen.TERRACE_STEP * 100f)},
-                {WorldGen.KIND_MAZE, 1, (int) (WorldGen.MAZE_CEIL * 100f)},
-        };
-        boolean[] seen = new boolean[wanted.length];
-        for (int k = 0; k < wanted.length; k++) {
-            int[] target = wanted[k];
-            boolean sunken = target[1] < 0;
-            // A sunken room is only a terrace once you are a step inside it.
-            int[] cell = findKind(gen, target[0], sunken);
-            assertTrue(WorldGen.kindName(target[0]) + " must exist near the origin", cell != null);
-            float height = target[2] / 100f;
-            float sign = sunken ? -1f : 1f;
-            int seenAt = k;
+        int[] kinds = {WorldGen.KIND_GRAND, WorldGen.KIND_SUNKEN, WorldGen.KIND_SPURS};
+        for (int kind : kinds) {
+            int[] cell = findKind(gen, kind);
+            assertTrue(WorldGen.kindName(kind) + " must exist near the origin", cell != null);
             int chunkX = Math.floorDiv(cell[0], WorldGen.CHUNK_CELLS);
             int chunkZ = Math.floorDiv(cell[1], WorldGen.CHUNK_CELLS);
             ChunkBuild build = ChunkMesher.build(gen, ChunkSampler.sample(gen, chunkX, chunkZ));
+            boolean found = false;
             for (int v = 0; v < build.vertexCount(); v++) {
                 float y = build.vertices[v * STRIDE + 1];
-                assertTrue("vertex at an unexpected height: " + y, isLevelHeight(y));
-                if (Math.abs(y - sign * height) < 0.05f) {
-                    seen[seenAt] = true;
+                assertTrue(WorldGen.kindName(kind) + " vertex at an unexpected height: " + y,
+                        isLevelHeight(y));
+                if (kind == WorldGen.KIND_GRAND && y > WorldGen.ROOM_HEIGHT + 0.5f) {
+                    found = true;
+                }
+                if (kind == WorldGen.KIND_SUNKEN && y < -0.4f && y > -WorldGen.HOLE_DEPTH + 0.5f) {
+                    found = true;
+                }
+                if (kind == WorldGen.KIND_SPURS && y > WorldGen.SPUR_CEIL - 0.06f
+                        && y < WorldGen.SPUR_CEIL + 0.01f) {
+                    found = true;
                 }
             }
-            assertTrue(WorldGen.kindName(target[0]) + " should be meshed at " + (sign * height),
-                    seen[seenAt]);
+            assertTrue(WorldGen.kindName(kind) + " should reach the mesh at its own height",
+                    found);
         }
     }
 
-    /** Finds a cell of a given block kind, searching outwards from the origin. */
-    private static int[] findKind(WorldGen gen, int kind, boolean wantLowFloor) {
-        for (int ring = 0; ring < 200; ring += 4) {
-            for (int i = -ring; i <= ring; i += 2) {
-                for (int j = -ring; j <= ring; j += 2) {
-                    if (gen.isCorridor(i, j) || gen.kindAt(i, j) != kind) {
-                        continue;
+    /** Finds a cell of a given room kind, searching outwards from the origin. */
+    private static int[] findKind(WorldGen gen, int kind) {
+        for (int ring = 0; ring < 300; ring += 2) {
+            for (int i = -ring; i <= ring; i += 1) {
+                for (int j = -ring; j <= ring; j += 1) {
+                    if (gen.kindAt(i, j) == kind) {
+                        return new int[] {i, j};
                     }
-                    if (wantLowFloor && gen.floorY(i, j) > -0.4f) {
-                        continue;
-                    }
-                    return new int[] {i, j};
                 }
             }
         }
         return null;
     }
 
-    /** Every height the mesher may place a vertex at: a floor, a ceiling, or a light panel. */
+    /**
+     * Every height the mesher may place a vertex at: a floor, a ceiling, or a light panel. Corridors
+     * and grand halls are given a height of their own, so those two are ranges rather than values.
+     */
     private static boolean isLevelHeight(float y) {
-        float[] levels = {0f, -WorldGen.HOLE_DEPTH,
-                -WorldGen.TERRACE_STEP, -2f * WorldGen.TERRACE_STEP,
-                -3f * WorldGen.TERRACE_STEP, -4f * WorldGen.TERRACE_STEP,
-                WorldGen.ROOM_HEIGHT, WorldGen.CORRIDOR_CEIL, WorldGen.MAZE_CEIL,
-                WorldGen.GRAND_CEIL, WorldGen.SUNKEN_CEIL};
-        for (float level : levels) {
-            if (Math.abs(y - level) < 0.05f) {
-                return true;
-            }
-            // Light panels hang three centimetres under their ceiling.
-            if (Math.abs(y - (level - 0.03f)) < 0.02f) {
+        float[] floors = {0f, -WorldGen.HOLE_DEPTH, -WorldGen.TERRACE_STEP,
+                -2f * WorldGen.TERRACE_STEP, -3f * WorldGen.TERRACE_STEP,
+                -4f * WorldGen.TERRACE_STEP};
+        for (float level : floors) {
+            if (near(y, level, 0.05f)) {
                 return true;
             }
         }
-        return false;
+        float[] ceilings = {WorldGen.ROOM_HEIGHT, WorldGen.SUNKEN_CEIL, WorldGen.PIT_CEIL,
+                WorldGen.SPUR_CEIL};
+        for (float level : ceilings) {
+            // Light panels hang three centimetres under their ceiling.
+            if (near(y, level, 0.05f) || near(y, level - 0.03f, 0.03f)) {
+                return true;
+            }
+        }
+        if (y > WorldGen.CORRIDOR_CEIL_MIN - 0.06f && y < WorldGen.CORRIDOR_CEIL_MAX + 0.01f) {
+            return true;
+        }
+        return y > WorldGen.GRAND_CEIL_MIN - 0.06f && y < WorldGen.GRAND_CEIL_MAX + 0.01f;
+    }
+
+    private static boolean near(float a, float b, float tolerance) {
+        return Math.abs(a - b) < tolerance;
     }
 
     @Test

@@ -45,6 +45,13 @@ public final class MeshBuilder {
     private float lmOffZ;
     private float uvOffU;
     private float uvOffV;
+    /** When set, the next rectangle gets UVs of 0..1 across itself instead of world-tiled ones. */
+    private boolean unitUv;
+    private int corner;
+
+    /** Corner UVs for a rectangle drawn with {@link #rectLamp}. */
+    private static final float[] CORNER_U = {0f, 1f, 1f, 0f};
+    private static final float[] CORNER_V = {0f, 0f, 1f, 1f};
 
     /**
      * @param originX world X of the chunk origin; positions and UVs are stored relative to it
@@ -113,6 +120,18 @@ public final class MeshBuilder {
     }
 
     /**
+     * A ceiling lamp: the same rectangle, but its UVs run 0..1 across the fitting, so the lamp's own
+     * photograph lands on it exactly once - glass in the middle, rim round the edge.
+     */
+    public void rectLamp(float ox, float oy, float oz, float ux, float uy, float uz,
+                         float vx, float vy, float vz, float nx, float ny, float nz,
+                         int mat, float aux) {
+        unitUv = true;
+        rect(ox, oy, oz, ux, uy, uz, vx, vy, vz, nx, ny, nz, mat, aux, 0f, 0f);
+        unitUv = false;
+    }
+
+    /**
      * Same as {@link #rect} but the aux value is derived from the vertex height:
      * {@code aux = clamp((y - gradBase) * gradScale, 0, 1)}. Used for the vertical light falloff on
      * walls, where the top of the wall is much brighter than the skirting.
@@ -137,9 +156,13 @@ public final class MeshBuilder {
         }
 
         int base = vertexCount();
+        corner = 0;
         addVertex(ox, oy, oz, nx, ny, nz, mat, aux, gradBase, gradScale);
+        corner = 1;
         addVertex(ox + ux, oy + uy, oz + uz, nx, ny, nz, mat, aux, gradBase, gradScale);
+        corner = 2;
         addVertex(ox + ux + vx, oy + uy + vy, oz + uz + vz, nx, ny, nz, mat, aux, gradBase, gradScale);
+        corner = 3;
         addVertex(ox + vx, oy + vy, oz + vz, nx, ny, nz, mat, aux, gradBase, gradScale);
 
         if (indicesUsed + 6 > indices.length) {
@@ -170,7 +193,10 @@ public final class MeshBuilder {
         float baseZ = wall ? wallBaseZ : floorBaseZ;
         float u;
         float v;
-        if (ny > 0.5f || ny < -0.5f) {
+        if (unitUv) {
+            u = CORNER_U[corner];
+            v = CORNER_V[corner];
+        } else if (ny > 0.5f || ny < -0.5f) {
             u = x - baseX;
             v = z - baseZ;
         } else if (nx > 0.5f || nx < -0.5f) {
@@ -180,8 +206,10 @@ public final class MeshBuilder {
             u = x - baseX;                  // wall running along X
             v = y;
         }
-        u += uvOffU;
-        v += uvOffV;
+        if (!unitUv) {
+            u += uvOffU;
+            v += uvOffV;
+        }
         int i = floatsUsed;
         vertices[i] = x - originX;
         vertices[i + 1] = y;

@@ -258,7 +258,8 @@ public final class ChunkMesher {
                     phase = d.fixturePhase(li, lj);
                 }
                 mb.setLightmapOffset(0f, 0f);
-                mb.rect(x + 0.04f, y, z + 0.04f, 0.92f, 0f, 0f, 0f, 0f, 0.92f, 0f, -1f, 0f,
+                // A whole fitting on a one-metre cell: the lamp's own texture, once, edge to edge.
+                mb.rectLamp(x + 0.04f, y, z + 0.04f, 0.92f, 0f, 0f, 0f, 0f, 0.92f, 0f, -1f, 0f,
                         MeshBuilder.MAT_PANEL, phase);
             }
         }

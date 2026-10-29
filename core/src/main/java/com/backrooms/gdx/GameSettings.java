@@ -16,7 +16,6 @@ public final class GameSettings {
     /** VHS camcorder pass: scanlines, chroma bleed, tracking drift, OSD and tape hiss. */
     public boolean vhs = true;
     /** The thing in the corridors. Off means a completely empty level. */
-    public boolean entity = true;
     public int quality = 1;          // 0 = low, 1 = high
 
     private Preferences prefs;
@@ -29,7 +28,6 @@ public final class GameSettings {
         torch = prefs.getBoolean("torch", true);
         showDebug = prefs.getBoolean("showDebug", false);
         vhs = prefs.getBoolean("vhs", true);
-        entity = prefs.getBoolean("entity", true);
         quality = prefs.getInteger("quality", 1);
     }
 
@@ -43,7 +41,6 @@ public final class GameSettings {
         prefs.putBoolean("torch", torch);
         prefs.putBoolean("showDebug", showDebug);
         prefs.putBoolean("vhs", vhs);
-        prefs.putBoolean("entity", entity);
         prefs.putInteger("quality", quality);
         prefs.flush();
     }

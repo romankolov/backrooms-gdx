@@ -13,14 +13,14 @@ thrown away behind you, so the map never ends and memory never grows.
 
 | | |
 | --- | --- |
-| **Infinite map** | Built in two layers. **Lanes**: corridors two metres wide that run for a hundred metres or so and then stop dead in a wall, so the grid cannot be counted. **Blocks**: every 12 m square is one of seven kinds — offices of small rooms, an open hall, a forest of pillars, a grid of holes, terraces stepping down into the floor, a comb maze, or a grand hall with a four-and-a-half metre ceiling. Offices are still about six blocks in ten. Every wall, light, hole and terrace is a pure hash of its integer coordinates and the world seed, so any chunk can be generated on its own and always comes out the same. |
+| **Infinite map** | There is no tile lattice and nothing repeats. The level is a **binary space partition** of the plane: every room is cut, again and again, at a random position along its long axis until the pieces are room sized, so a doorway leads into a four-metre slot, three such slots lead into a hall, and no two rooms share a size or a corner. Two more layers keep it habitable: **avenues**, halls two or three metres wide that run straight through macro after macro and then stop dead in a wall, and **rooms**, each of a kind decided by its own rectangle - plain office (about six in ten), a tall hall, terraces stepping down, pits in the carpet, a forest of pillars, a comb of short walls, or a room with no working light at all. Every cut carries a doorway, which is what makes the whole thing connected; one cut in four carries a second, which is what makes loops. Every wall, door, light, hole and terrace is a pure hash of its integer coordinates and the world seed, so any chunk can be generated on its own and always comes out the same. |
 | **Streaming** | Chunks (16 × 16 m) are sampled, meshed and light-baked on background threads, uploaded at most two per frame, and released again behind you. Draw distance adjustable in game (2–6 chunks). |
 | **Baked lighting** | Soft fluorescent pools, contact shadows in corners and a bounce pass, all baked per chunk at 2 texels/m into an 8 KB lightmap (irradiance on floors in RGB, on walls in alpha). Zero dynamic lights at runtime. |
-| **Materials** | The CC0 wallpaper, carpet and ceiling tile sets with their normal maps (normal-mapped, specular, parallax-free), plus procedural fluorescent panels that flicker: a diffuser gradient across the panel, and an additive halo pass that blooms the light past the tube so it reads as a light rather than a white rectangle. |
+| **Materials** | The wall, carpet, ceiling and lamp of `backrooms_vr.glb`, de-lit and made seamless by `tools/extract_vr_assets.py` (the model's own bake is divided out, so the lamp's hot spot stops being part of the pattern), with normal maps derived from the colour and procedural grain added back for arm's length detail. Ceiling fittings are the model's own photographed lamp, mapped whole across each panel, with the glass masked as an emitter: a real fitting with a rim, not a white rectangle. |
 | **Lighting model** | Warm fluorescent tubes, a handheld torch cone, distance haze, ACES tone mapping, vignette and a touch of sensor grain. |
 | **VHS camcorder** | The whole frame goes through an offscreen pass that emulates tape — a *good* tape in a working deck: geometry straight to within a pixel, a little chroma smear from the low chroma bandwidth, a tracking band that nudges rather than tears, soft grain, faint scanlines and a warm slightly-lifted grade. Plus a camcorder OSD (REC lamp, SP, date, tape counter) drawn from a hand-built 5x7 character generator, and synthesised tape hiss. Toggle it in the pause menu (`VHS LOOK`) or with `-Dbackrooms.vhs=0`. |
-| **The presence** | Something else is in here. Most of the time there is nothing at all. Eventually a figure appears ten to eighteen metres ahead of where you are looking, on the far side of a wall so you never see it arrive; it walks across the corridor ahead of you at a stroll, and keeps walking until another wall takes it out of your sight - only then does it go, and not again for half a minute or more. It never runs, never chases and cannot catch you: it is a silhouette in the shape of a person, solid black and featureless, and what it does is make you doubt what you saw. Toggle it in the pause menu (`THE PRESENCE`). |
-| **Audio** | Everything is synthesised in `tools/make_assets.py`; no third-party samples. Footsteps pick a sample at random, then *echo off the room they happen in*: eight rays measure the walls around you, the nearest two surfaces become early reflections (delayed by distance and panned to the side they came from) and the average distance sets a diffuse tail, so a corridor snaps and a hall rings. The entity's steps are placed, panned, muffled through walls and echo the same way, and every so often it makes one of its own noises — a creak of something heavy leaning on a wall, chittering, something dragged, its breathing — each placed in the level, and harder to muffle than a footstep should be. The only room sound is the fluorescent buzz of the nearest working tube, fading in with distance; the tape hiss belongs to the camcorder. |
+| **Alone** | There is nothing else in here for now. The stalker that used to pass by has been taken out before this release; what is left is the level itself, the light and the sound. |
+| **Audio** | Everything is synthesised in `tools/make_assets.py`; no third-party samples. Footsteps pick a sample at random, then *echo off the room they happen in*: eight rays measure the walls around you, the nearest two surfaces become early reflections (delayed by distance and panned to the side they came from) and the average distance sets a diffuse tail, so a corridor snaps and a hall rings. The only room sound is the fluorescent buzz of the nearest working tube, fading in with distance; the tape hiss belongs to the camcorder. |
 | **Controls** | Touch: floating stick on the left, drag-to-look anywhere on the right, run (hold), jump, torch and pause buttons — all fingers at once. Keyboard and mouse also work (desktop build). The emulator job drives the real controls and checks the numbers the app logs, so a dead button or a dead look drag fails CI instead of shipping. |
 | **Platforms** | Android (`minSdk 24`, arm64 + armv7 + x86_64) and a desktop launcher used for development and screenshots. |
 
@@ -33,10 +33,6 @@ Rendered by CI on software OpenGL (llvmpipe), 1280×720, seed 20241027:
 A hole in the carpet — they are not rare, and falling in is how the level moves you somewhere else:
 
 ![A hole in the floor](screenshots/hole/shot0.png)
-
-And the thing in the corridor (`-Dbackrooms.entity=1`):
-
-![The entity](screenshots/entity/shot1.png)
 
 Captured by CI from the real Android build on an API 30 emulator (touch controls):
 
@@ -88,7 +84,6 @@ Handy system properties for the desktop run:
 | `-Dbackrooms.hud=1` | show the performance readout |
 | `-Dbackrooms.vhs=0` | render the raw frame without the camcorder pass |
 | `-Dbackrooms.pit=1` | spawn on the rim of the nearest floor pit |
-| `-Dbackrooms.entity=1` | pose the entity a few metres ahead for a screenshot (`0` removes it entirely) |
 | `-Dbackrooms.capture=dir -Dbackrooms.frames=270` | render `frames` frames, dump PNGs into `dir`, quit |
 
 ### Tests
@@ -97,16 +92,15 @@ Handy system properties for the desktop run:
 ./gradlew :core:test
 ```
 
-51 unit tests cover the generator (determinism, seeds, wall density, every kind of block, the
-terraces being steps rather than ledges, corridors that run and corridors that stop, and that nine
-tenths of the level around the spawn can actually be walked to), the mesher (winding, index bounds,
-bounds, lightmap, the height of every kind of room), the light baker (occlusion, blockages),
-the player physics (landing, thin-wall collision, 1200 steps of random walking without ever
-clipping through a wall or sinking through the floor), the streaming that builds and releases
-chunks, the shader rules that only bite on GLES2, the camcorder's 5x7 glyph table, the acoustics
-(propagation delay, and that different rooms really do answer differently), and the entity's pass-by
-rules: it appears out of sight and metres away, is seen while it walks, never moves faster than a
-stroll, and only leaves once a wall has hidden it again.
+39 unit tests cover the generator (determinism, seeds, rooms coming in many sizes and shapes, no
+sealed cell, every kind of room appearing, pits that never block the way through, terraces that are
+steps rather than ledges, halls that run and halls that stop, and that nine tenths of the level
+around the spawn can actually be walked to), the mesher (winding, index bounds, bounds, lightmap,
+the height of every kind of room), the light baker (occlusion, blockages), the player physics
+(landing, thin-wall collision, 1200 steps of random walking without ever clipping through a wall or
+sinking through the floor), the streaming that builds and releases chunks, the shader rules that only
+bite on GLES2, the camcorder's 5x7 glyph table, and the acoustics (propagation delay, and that
+different rooms really do answer differently).
 
 ### CI
 
@@ -139,12 +133,10 @@ core/src/main/java/com/backrooms/gdx
 ├── render/WorldRenderer.java  one shader, 6 tiled textures, one draw call per chunk
 ├── player/Player.java         first person movement, thin-wall capsule collision
 ├── input/TouchControls.java   floating stick, drag look, buttons, keyboard
-├── entity/EntityController    the pass-by: where it appears, where it walks, when it goes (no GL)
-├── entity/EntityRenderer      the rigged silhouette: walk clip #1, black material, fallback body
 ├── render/VhsEffect.java      offscreen buffer + the tape shader
 ├── ui/VhsOsd.java             camcorder OSD drawn from a 5x7 character generator
 ├── audio/Acoustics.java       probes the walls around a step and returns the room's answer
-├── audio/AudioManager.java    muxer: placed footsteps, echo taps, buzz, tape hiss, its noises
+├── audio/AudioManager.java    muxer: placed footsteps, echo taps, buzz, tape hiss
 └── ui/Hud.java, screens/…     title screen, HUD, pause menu (with an fps and chunk readout)
 ```
 
@@ -200,13 +192,15 @@ if your device needs it.
 | Constant | Where | Meaning |
 | --- | --- | --- |
 | `CHUNK_CELLS` | `WorldGen` | chunk edge in metres (16) |
-| `BLOCK` | `WorldGen` | edge of a block, lane included (12 m) |
-| `CORRIDOR_WIDTH` | `WorldGen` | width of a corridor lane (2 m) |
-| `ROOM_MODULE` | `WorldGen` | size of an office room (3 m); two of its four walls open |
-| `kindAt()` | `WorldGen` | the mix of block kinds — offices are about six in ten |
-| `laneColumn()` / `laneRow()` | `WorldGen` | where corridors run, and how often they stop |
+| `MACRO` | `WorldGen` | where the partition is restarted, and the lattice avenues run on (32 m) |
+| `splitOf()` | `WorldGen` | where the next wall goes: the target room size, how often a corridor is shaved off an edge, and how a corridor is sometimes crossed |
+| `kindOf()` | `WorldGen` | the mix of room kinds — plain office is about six rooms in ten |
+| `CORRIDOR_WIDTH` | `WorldGen` | widest room that counts as a corridor, and so is never given features (3 m) |
+| `FEATURE_MARGIN` | `WorldGen` | floor kept clear round every room edge, so a pit or pillar never blocks a door (1 m) |
+| `doorway()` | `WorldGen` | where a cut opens, and how often it opens twice |
 | `LIGHT_SPACING` / `LIGHT_PHASE` | `WorldGen` | fixture lattice |
-| `ROOM_HEIGHT`, `CORRIDOR_CEIL`, `MAZE_CEIL`, `GRAND_CEIL`, `SUNKEN_CEIL` | `WorldGen` | ceiling of each kind of room |
+| `ROOM_HEIGHT`, `SUNKEN_CEIL`, `PIT_CEIL`, `SPUR_CEIL` | `WorldGen` | ceiling of each kind of room |
+| `CORRIDOR_CEIL_MIN/MAX`, `GRAND_CEIL_MIN/MAX` | `WorldGen` | the range a corridor or a hall may take its height from |
 | `HOLE_DEPTH` | `WorldGen` | how far the pits drop (6 m: you do not climb out) |
 | `TERRACE_STEP`, `TERRACE_RINGS` | `WorldGen` | how a sunken room steps down (0.5 m, 4 rings) |
 | `isHole()` | `WorldGen` | hole shape and density (about 4% of the floor) |
@@ -214,22 +208,15 @@ if your device needs it.
 | `TEXELS_PER_METER` | `LightBaker` | lightmap resolution (2) |
 | `WALK_SPEED`, `SPRINT_SPEED`, `GRAVITY`, `JUMP_SPEED` | `Player` | movement feel |
 | `fogDensity`, `exposure` | `PlayScreen` | haze and exposure |
-| `SPAWN_MIN`, `SPAWN_MAX` | `EntityController` | how far ahead of the player it appears |
-| `PASS_MIN`, `PASS_MAX` | `EntityController` | how far it walks across the view before a wall takes it |
-| `STALK_SPEED` | `EntityController` | its walking pace — it never speeds up |
-| `HIDDEN_TO_VANISH`, `GONE_MIN`, `GONE_MAX` | `EntityController` | seconds out of sight before it leaves, and how long it stays away |
 | `scale` | `VhsEffect` | resolution of the tape buffer (0.85 of the screen by default) |
-| `CUE_MIN`, `CUE_MAX` | `EntityController` | how often it makes one of its small noises |
-| `WALK_CLIP_INDEX` | `EntityRenderer` | which animation it walks on (number one) |
 | `u_scanline`, `u_intensity` | `VhsEffect` | how heavy the camcorder look is |
 
 ## Assets
 
-* Textures: [amini-allight/backrooms-textures](https://github.com/amini-allight/backrooms-textures),
-  CC0 1.0 — created and/or modified by Amini Allight.
-* Everything else (audio, icons, font atlas) is generated by `tools/make_assets.py`.
-* [gdx-gltf](https://github.com/mgsx-dev/gdx-gltf) (Apache-2.0) loads the rigged glTF model; it is
-  the project's only third-party runtime dependency.
+* Surfaces and the ceiling fitting: cut out of "Backrooms VR" by carlcapu9 (CC-BY-4.0, the model is
+  `backrooms_vr.glb` in this repository) by `tools/extract_vr_assets.py`.
+* Audio, icons and the font atlas are generated by `tools/make_assets.py`.
+* No third-party runtime dependency beyond libGDX itself.
 * See `assets/CREDITS.md`.
 
 ## Known limitations / next steps
@@ -242,13 +229,8 @@ if your device needs it.
   enforced by `ShaderPrecisionTest`, because a violation only shows up on the device.
 * The second device-only trap is `mediump`: anything the fragment shader interpolates has to stay
   small, which is why chunk geometry is chunk-local. `ChunkMesherTest` guards it.
-* The entity is the "Accurate Backrooms Bacteria v2 with Animations" model (CC-BY-4.0, credited in
-  `assets/CREDITS.md`), converted by `tools/prepare_entity_model.*`. The conversion does three
-  things the runtime cannot: it collapses the 135-joint rig to the 24 joints a GLES2 shader can
-  hold, it drops a piece of staging geometry that was welded to the root joint, and it normalises
-  the model to metres with its feet on the origin - a skinned mesh does not draw where its bounds
-  say, so the size has to be measured where the skin can be evaluated. If the file is missing or
-  fails to load, `EntityRenderer` falls back to a body built from boxes; see
-  `assets/models/README.md`.
+* The level generator is deliberately *stateless per query*: it re-walks the partition from the
+  macro corner every time, with a one-room cache per thread. That keeps chunks independent, but a
+  per-chunk memo table would make the light bake noticeably cheaper again.
 * The desktop build is a development tool, not a shipped target.
 * Multi-threaded chunk building uses up to 2 workers; a job system would scale to more cores.

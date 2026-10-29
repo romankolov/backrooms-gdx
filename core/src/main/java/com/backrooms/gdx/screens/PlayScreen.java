@@ -14,8 +14,6 @@ import com.backrooms.gdx.Assets;
 import com.backrooms.gdx.BackroomsGame;
 import com.backrooms.gdx.GameSettings;
 import com.backrooms.gdx.audio.AudioManager;
-import com.backrooms.gdx.entity.EntityController;
-import com.backrooms.gdx.entity.EntityRenderer;
 import com.backrooms.gdx.input.TouchControls;
 import com.backrooms.gdx.player.Player;
 import com.backrooms.gdx.render.LightGlow;
@@ -49,8 +47,6 @@ public final class PlayScreen extends ScreenAdapter {
     private final VhsEffect vhs;
     private final VhsOsd osd;
     private final LightGlow glow;
-    private final EntityController entity;
-    private final EntityRenderer entityView;
     private final PerspectiveCamera camera = new PerspectiveCamera(74f, 1, 1);
     private final InputAdapter menuInput;
     private final InputMultiplexer input;
@@ -91,14 +87,7 @@ public final class PlayScreen extends ScreenAdapter {
         this.vhs = new VhsEffect(1f);
         this.osd = new VhsOsd();
         this.glow = new LightGlow();
-        this.entity = new EntityController(world.gen(), seed * 0x9e3779b97f4a7c15L);
-        this.entityView = new EntityRenderer(entity);
         this.vhsOn = settings.vhs;
-        if (System.getProperty("backrooms.entity") != null
-                && System.getProperty("backrooms.entity").trim().matches("0|false|no|off")) {
-            settings.entity = false;
-        }
-        entity.setEnabled(settings.entity);
         // -Dbackrooms.vhs=0 renders the raw frame, which is what a screenshot wants when the
         // effect itself is being worked on.
         String vhsFlag = System.getProperty("backrooms.vhs");
@@ -139,35 +128,6 @@ public final class PlayScreen extends ScreenAdapter {
         }
         player.spawn(spawn[0], spawn[1], spawn[2]);
         player.torchOn = settings.torch;
-        // -Dbackrooms.entity=1 puts it in front of the camera, hunting, so a screenshot can show it.
-        // The spot is chosen as the furthest point down the view ray that is walkable and has a clear
-        // view of the player, so it is never behind a wall and never right on top of the camera.
-        String entityFlag = System.getProperty("backrooms.entity");
-        if (entityFlag != null && entityFlag.trim().matches("1|true|yes|on")) {
-            float ahead = 6.5f;
-            float fx = player.position.x - MathUtils.sin(player.yaw) * 6.5f;
-            float fz = player.position.z - MathUtils.cos(player.yaw) * 6.5f;
-            for (float d = 7.5f; d >= 4.5f; d -= 0.5f) {
-                float x = player.position.x - MathUtils.sin(player.yaw) * d;
-                float z = player.position.z - MathUtils.cos(player.yaw) * d;
-                int cx = com.backrooms.gdx.util.Hash.floorInt(x);
-                int cz = com.backrooms.gdx.util.Hash.floorInt(z);
-                if (world.gen().isOpenSpace(cx, cz) && world.gen().isSolidGround(cx, cz)
-                        && entity.hasLineOfSight(player.position, x, z)) {
-                    ahead = d;
-                    fx = x;
-                    fz = z;
-                    break;
-                }
-            }
-            // Stalking and frozen: the screenshot harness runs for far longer in game time than the
-            // frame count suggests (software OpenGL), so anything that walks ends up standing on
-            // the camera - or catches the player and fades the shot to black.
-            entity.forceSpawn(fx, fz);
-            entity.setFrozen(true);
-            Gdx.app.log("BackroomsInput", String.format(java.util.Locale.US,
-                    "entity at %.1f,%.1f (%.1f m ahead)", fx, fz, ahead));
-        }
         String yaw = System.getProperty("backrooms.yaw");
         if (yaw != null) {
             try {
@@ -338,30 +298,6 @@ public final class PlayScreen extends ScreenAdapter {
             if (player.grounded && player.position.y < FALL_DEPTH && world.gen().isHole(px, pz)) {
                 startFallThrough();
             }
-            // The heading matters: it appears out of sight *in front of the player*, not behind.
-            entity.update(delta, player.position, player.yaw);
-            if (entity.isEnabled()) {
-                // Its steps are placed in the level: panned, muffled by walls, and echoing off
-                // whatever room it is walking through.
-                if (entity.takeFootstep()) {
-                    audio.entityStep(entity.position.x, entity.position.z, false);
-                }
-                if (entity.consumeRoar()) {
-                    boolean facing = entity.hasLineOfSight(player.position);
-                    float distance = entity.distance(player.position);
-                    // Quiet, and further away than it sounds: the point of the sound is that the
-                    // player cannot tell which room it came from.
-                    float volume = facing
-                            ? MathUtils.clamp(0.75f - distance / 45f, 0.12f, 0.75f)
-                            : 0.25f;
-                    audio.roar(volume, 0.92f + random.nextFloat() * 0.12f);
-                }
-                // The small noises: something leaning on a wall, clicking, dragging, breathing.
-                // Placed where it is, so the pan tells the player which corridor to avoid.
-                for (int cue = entity.takeCue(); cue >= 0; cue = entity.takeCue()) {
-                    audio.entityCue(cue, entity.position.x, entity.position.z);
-                }
-            }
             if (teleporting) {
                 fade = Math.min(1f, fade + delta * 3.2f);
                 if (fade >= 0.999f) {
@@ -388,7 +324,7 @@ public final class PlayScreen extends ScreenAdapter {
             // An old tape is never quite clean: every so often the tracking slips for a moment.
             // A good tape stays clean for minutes at a time; the picture only tears when the thing
             // is close, and then only a little.
-            float glitch = entity.presence() * 0.55f;
+            float glitch = 0f;
             if (!paused && random.nextFloat() < delta * 0.05f) {
                 glitch = Math.max(glitch, 0.18f + random.nextFloat() * 0.18f);
             }
@@ -457,8 +393,6 @@ public final class PlayScreen extends ScreenAdapter {
         // The light haloes go on the world before anything solid is drawn over them: additive light
         // has to be behind whatever is in front of it.
         glow.render(camera, world.gen(), time, targetWidth, targetHeight);
-        entityView.update(delta);
-        entityView.render(camera, targetWidth, targetHeight);
 
         if (tape) {
             vhs.end(time);
@@ -545,12 +479,6 @@ public final class PlayScreen extends ScreenAdapter {
                 settings.save();
                 hud.refreshLabels(settings);
                 break;
-            case Hud.BTN_ENTITY:
-                settings.entity = !settings.entity;
-                entity.setEnabled(settings.entity);
-                settings.save();
-                hud.refreshLabels(settings);
-                break;
             case Hud.BTN_QUIT:
                 game.showTitle();
                 break;
@@ -601,7 +529,6 @@ public final class PlayScreen extends ScreenAdapter {
         vhs.dispose();
         osd.dispose();
         glow.dispose();
-        entityView.dispose();
         if (Gdx.input.getInputProcessor() == input) {
             Gdx.input.setInputProcessor(null);
         }

@@ -30,7 +30,8 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
     private static final int UNIT_WALL_N = 3;
     private static final int UNIT_CEIL = 4;
     private static final int UNIT_CEIL_N = 5;
-    private static final int UNIT_LIGHTMAP = 6;
+    private static final int UNIT_LAMP = 6;
+    private static final int UNIT_LIGHTMAP = 7;
 
     /**
      * The colour the corridors fade into, expressed as it finally appears on screen (sRGB 0..1).
@@ -83,6 +84,7 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
     private final Texture wallNormal;
     private final Texture ceilTex;
     private final Texture ceilNormal;
+    private final Texture lampTex;
 
     private final Matrix4 projView = new Matrix4();
     private final Vector3 tmp = new Vector3();
@@ -107,6 +109,8 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         wallNormal = load("textures/wall_normal.jpg", true);
         ceilTex = load("textures/ceiling_diffuse.jpg", true);
         ceilNormal = load("textures/ceiling_normal.jpg", true);
+        // The fitting is one photograph of one lamp, so it clamps rather than repeats.
+        lampTex = load("textures/lamp.jpg", false);
 
         shader = new ShaderProgram(Gdx.files.internal("shaders/world.vert"),
                 Gdx.files.internal("shaders/world.frag"));
@@ -194,6 +198,7 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         bind(UNIT_WALL_N, wallNormal, "u_wallNormal");
         bind(UNIT_CEIL, ceilTex, "u_ceilTex");
         bind(UNIT_CEIL_N, ceilNormal, "u_ceilNormal");
+        bind(UNIT_LAMP, lampTex, "u_lampTex");
         shader.setUniformi("u_lightmap", UNIT_LIGHTMAP);
     }
 
@@ -310,5 +315,6 @@ public final class WorldRenderer implements ChunkUploader, Disposable {
         wallNormal.dispose();
         ceilTex.dispose();
         ceilNormal.dispose();
+        lampTex.dispose();
     }
 }

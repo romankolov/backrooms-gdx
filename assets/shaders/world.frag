@@ -17,6 +17,8 @@ uniform sampler2D u_wallTex;
 uniform sampler2D u_wallNormal;
 uniform sampler2D u_ceilTex;
 uniform sampler2D u_ceilNormal;
+// The ceiling fitting, photographed from the model: a round lamp with its rim and its glass.
+uniform sampler2D u_lampTex;
 uniform sampler2D u_lightmap;
 
 // These two are handed over in chunk space (the renderer subtracts u_origin per draw call), so
@@ -67,35 +69,30 @@ void main() {
         albedo = texture2D(u_wallTex, uv).rgb;
         nmap = texture2D(u_wallNormal, uv).rgb;
         float g = mix(0.55, 1.12, pow(v_aux, 0.8));
-        irr = wallLight * g * 0.60;
+        irr = wallLight * g * 0.85;
     } else if (v_mat < 1.5) {
         // ---- carpet ----
         vec2 uv = v_uv * 0.5;                // one tile every 2m
         albedo = texture2D(u_floorTex, uv).rgb;
         nmap = texture2D(u_floorNormal, uv).rgb;
-        irr = mix(lm.rgb * u_lightRange * 0.70, wallLight * 0.50, vert);
+        irr = mix(lm.rgb * u_lightRange * 1.05, wallLight * 0.75, vert);
     } else if (v_mat < 2.5) {
         // ---- ceiling tiles ----
         vec2 uv = v_uv * 0.5;
         albedo = texture2D(u_ceilTex, uv).rgb;
         nmap = texture2D(u_ceilNormal, uv).rgb;
-        irr = mix(lm.rgb * u_lightRange * 0.30, wallLight * 0.58, vert);
+        irr = mix(lm.rgb * u_lightRange * 0.46, wallLight * 0.80, vert);
     } else {
-        // ---- fluorescent panel ----
-        vec2 p = fract(v_pos.xz + 0.5) * 2.0;
-        float frame = step(0.10, p.x) * step(0.10, p.y) * step(p.x, 1.90) * step(p.y, 1.90);
-        float tubes = 0.72 + 0.28 * sin(p.y * 26.0);
-        // The diffuser is not flat: it is brightest where the tube is behind it and dimmer towards
-        // the frame, which is what makes it read as something glowing rather than a white sticker.
-        float across = length(p - 1.0);
-        float diffuser = 1.18 - 0.30 * across;
-        albedo = mix(vec3(0.62, 0.62, 0.60), vec3(0.94, 0.93, 0.86), frame);
+        // ---- the ceiling fitting ----
+        // Its own photograph, mapped once across the panel: rim, glass and all. The glow is a mask
+        // over the glass so the fitting reads as something switched on rather than a lit sticker.
+        albedo = texture2D(u_lampTex, v_uv).rgb;
         nmap = vec3(0.5, 0.5, 1.0);
-        irr = lm.rgb * u_lightRange * 0.30;
-        // Left just under the point where ACES clips, so the tube stripes still read through the
-        // glow instead of the panel becoming a plain white rectangle.
-        emission = vec3(1.0, 0.985, 0.90) * (0.35 + 0.65 * frame) * tubes * diffuser
-                 * v_emit * 2.4;
+        float r = length(v_uv - 0.5) * 2.0;
+        float glass = smoothstep(0.62, 0.30, r);
+        irr = lm.rgb * u_lightRange * 0.34;
+        emission = (vec3(1.0, 0.97, 0.88) * (0.55 + 0.45 * glass) + albedo * 0.5)
+                 * glass * v_emit * 2.6;
     }
 
     // ---- normal mapping (surfaces are axis aligned, so the tangent frame is cheap) ----

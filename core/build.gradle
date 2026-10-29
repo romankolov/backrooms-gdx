@@ -18,13 +18,8 @@ sourceSets {
 
 dependencies {
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
-    // libGDX core can load OBJ and G3D models but not glTF. The rigged entity needs glTF, so this is
-    // the one third-party runtime dependency in the project.
-    // gdx-gltf is a multi-module project and only published through JitPack, where the modules
-    // become separate artifacts. `gdx-gltf` itself is the aggregator (its jar is empty); the runtime
-    // code is in `gltf`. transitive = false keeps the desktop/IBL siblings out, which bundle LWJGL 2
-    // and collide with the Android build.
-    api("com.github.mgsx-dev.gdx-gltf:gltf:2.3.0") { transitive = false }
+    // libGDX is the only runtime dependency: the world is generated, the geometry is meshed in
+    // Java and the only model the project ever loaded (the rigged one) is not in the game any more.
 
     testImplementation "junit:junit:4.13.2"
     testImplementation "com.badlogicgames.gdx:gdx:$gdxVersion"
