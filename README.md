@@ -145,7 +145,7 @@ core/src/main/java/com/backrooms/gdx
 ├── ui/VhsOsd.java             camcorder OSD drawn from a 5x7 character generator
 ├── audio/Acoustics.java       probes the walls around a step and returns the room's answer
 ├── audio/AudioManager.java    muxer: placed footsteps, echo taps, buzz, tape hiss, its noises
-└── ui/Hud.java, screens/…     title screen, HUD, pause menu
+└── ui/Hud.java, screens/…     title screen, HUD, pause menu (with an fps and chunk readout)
 ```
 
 ### The level
